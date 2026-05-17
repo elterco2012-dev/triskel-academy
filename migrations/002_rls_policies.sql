@@ -1,29 +1,26 @@
 -- =====================================================
--- Triskel Academy — RLS Policies
--- Ejecutar en Supabase SQL Editor
+-- Triskel Academy — Fix acceso a tablas
+-- Ejecutar en Supabase → SQL Editor
 -- =====================================================
--- Habilitar RLS en todas las tablas
-ALTER TABLE triskel_horarios ENABLE ROW LEVEL SECURITY;
-ALTER TABLE triskel_alumnas ENABLE ROW LEVEL SECURITY;
-ALTER TABLE triskel_inscripciones ENABLE ROW LEVEL SECURITY;
-ALTER TABLE triskel_clases ENABLE ROW LEVEL SECURITY;
-ALTER TABLE triskel_pagos ENABLE ROW LEVEL SECURITY;
 
--- Eliminar políticas existentes para evitar conflictos
-DROP POLICY IF EXISTS "auth_all" ON triskel_horarios;
-DROP POLICY IF EXISTS "auth_all" ON triskel_alumnas;
-DROP POLICY IF EXISTS "auth_all" ON triskel_inscripciones;
-DROP POLICY IF EXISTS "auth_all" ON triskel_clases;
-DROP POLICY IF EXISTS "auth_all" ON triskel_pagos;
-DROP POLICY IF EXISTS "allow_authenticated" ON triskel_horarios;
-DROP POLICY IF EXISTS "allow_authenticated" ON triskel_alumnas;
-DROP POLICY IF EXISTS "allow_authenticated" ON triskel_inscripciones;
-DROP POLICY IF EXISTS "allow_authenticated" ON triskel_clases;
-DROP POLICY IF EXISTS "allow_authenticated" ON triskel_pagos;
+-- Deshabilitar RLS en todas las tablas triskel_
+-- (panel de uso interno, el acceso lo controla el login de Supabase Auth)
+ALTER TABLE triskel_horarios     DISABLE ROW LEVEL SECURITY;
+ALTER TABLE triskel_alumnas      DISABLE ROW LEVEL SECURITY;
+ALTER TABLE triskel_inscripciones DISABLE ROW LEVEL SECURITY;
+ALTER TABLE triskel_clases       DISABLE ROW LEVEL SECURITY;
+ALTER TABLE triskel_pagos        DISABLE ROW LEVEL SECURITY;
 
--- Permitir todo para usuarios autenticados
-CREATE POLICY "auth_all" ON triskel_horarios FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "auth_all" ON triskel_alumnas FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "auth_all" ON triskel_inscripciones FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "auth_all" ON triskel_clases FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "auth_all" ON triskel_pagos FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- Dar permisos completos al rol authenticated
+GRANT ALL ON triskel_horarios      TO authenticated;
+GRANT ALL ON triskel_alumnas       TO authenticated;
+GRANT ALL ON triskel_inscripciones TO authenticated;
+GRANT ALL ON triskel_clases        TO authenticated;
+GRANT ALL ON triskel_pagos         TO authenticated;
+
+-- Dar permisos de lectura al rol anon (necesario para el apikey header)
+GRANT SELECT ON triskel_horarios      TO anon;
+GRANT SELECT ON triskel_alumnas       TO anon;
+GRANT SELECT ON triskel_inscripciones TO anon;
+GRANT SELECT ON triskel_clases        TO anon;
+GRANT SELECT ON triskel_pagos         TO anon;

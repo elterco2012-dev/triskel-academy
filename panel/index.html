@@ -171,7 +171,16 @@
       <button onclick="logout()" style="margin-top:2px;">↩ Salir</button>
     </div>
   </aside>
-  <main class="main" id="main"></main>
+  <main class="main" id="main">
+    <div id="db-warn" style="display:none;align-items:center;gap:12px;background:#fef3c7;border:1px solid #d97706;border-radius:10px;padding:.85rem 1.1rem;margin-bottom:1.25rem;font-size:13px;color:#92400e;">
+      <span style="font-size:18px;">⚠️</span>
+      <div>
+        <strong>No se pudieron cargar los datos desde Supabase.</strong><br>
+        Ejecutá <code style="background:#fde68a;padding:1px 5px;border-radius:4px;">migrations/002_rls_policies.sql</code> en el <strong>SQL Editor de Supabase</strong> y recargá la página.
+      </div>
+      <button onclick="loadAll()" style="margin-left:auto;padding:5px 12px;border:1px solid #d97706;border-radius:7px;background:white;color:#92400e;cursor:pointer;white-space:nowrap;font-size:12px;">↺ Reintentar</button>
+    </div>
+  </main>
 </div>
 
 <!-- MODALES -->
@@ -720,6 +729,12 @@ async function loadAll(){
   DB.inscripciones=Array.isArray(i)?i:[];
   DB.clases=Array.isArray(c)?c:[];
   DB.pagos=Array.isArray(p)?p:[];
+  console.log('DB cargado — horarios:',DB.horarios.length,'alumnas:',DB.alumnas.length);
+  if(DB.horarios.length===0){
+    document.getElementById('db-warn').style.display='flex';
+  } else {
+    document.getElementById('db-warn').style.display='none';
+  }
   render();
 }
 
@@ -1156,6 +1171,7 @@ async function saveClase(){
   const horario_id=parseInt(document.getElementById('mcl-horario').value);
   const fecha=document.getElementById('mcl-fecha').value;
   const notas=document.getElementById('mcl-notas').value.trim()||null;
+  if(!horario_id){document.getElementById('mcl-err').textContent='Seleccioná un horario. Si no aparece ninguno, ejecutá la migración SQL en Supabase.';return;}
   if(!fecha){document.getElementById('mcl-err').textContent='La fecha es obligatoria.';return;}
   const ejercicios=_claseEjs.filter(e=>e.nombre.trim()).map((e,i)=>({orden:i+1,nombre:e.nombre.trim(),vt:e.vt?.trim()||null}));
   const body={horario_id,fecha,ejercicios,notas};
