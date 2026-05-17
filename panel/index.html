@@ -7,6 +7,7 @@
   <title>Triskel Academy — Panel</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
     :root{
@@ -282,7 +283,7 @@
 <script>
 const SB_URL='https://aywkeoxwybzcexaichtv.supabase.co';
 const SB_KEY='sb_publishable_8j3ihLED6ui6L32T0QQ5EQ_soH0TSQb';
-const PASS_HASH='amira2025tk';
+const sb=supabase.createClient(SB_URL,SB_KEY);
 
 const DIA_LABEL={lun:'Lunes',mar:'Martes',mie:'Miércoles',jue:'Jueves',vie:'Viernes'};
 const DIA_ORDER={lun:0,mar:1,mie:2,jue:3,vie:4};
@@ -625,37 +626,21 @@ async function login(){
   const e=document.getElementById('email').value.trim();
   const p=document.getElementById('pwd').value;
   document.getElementById('lerr').style.display='none';
-  try{
-    const r=await fetch(`${SB_URL}/auth/v1/token?grant_type=password`,{
-      method:'POST',headers:{'Content-Type':'application/json','apikey':SB_KEY},
-      body:JSON.stringify({email:e,password:p})
-    });
-    const d=await r.json();
-    if(d.access_token){
-      localStorage.setItem('tk-token',d.access_token);
-      localStorage.setItem('tk-refresh',d.refresh_token||'');
-      showPanel();
-    } else {
-      document.getElementById('lerr').style.display='block';
-    }
-  }catch(err){document.getElementById('lerr').style.display='block';}
+  const{data,error}=await sb.auth.signInWithPassword({email:e,password:p});
+  if(error||!data.session){document.getElementById('lerr').style.display='block';return;}
+  showPanel();
 }
 
-function logout(){
-  localStorage.removeItem('tk-token');
-  localStorage.removeItem('tk-refresh');
+async function logout(){
+  await sb.auth.signOut();
   document.getElementById('LS').style.display='flex';
   document.getElementById('PS').style.display='none';
 }
 
-function getToken(){return localStorage.getItem('tk-token')||'';}
-
 async function initAuth(){
-  const tok=getToken();
-  if(!tok){document.getElementById('LS').style.display='flex';return;}
-  const r=await fetch(`${SB_URL}/auth/v1/user`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+tok}});
-  if(r.ok) showPanel();
-  else {localStorage.removeItem('tk-token');document.getElementById('LS').style.display='flex';}
+  const{data:{session}}=await sb.auth.getSession();
+  if(session) showPanel();
+  else document.getElementById('LS').style.display='flex';
 }
 
 function showPanel(){
@@ -673,69 +658,46 @@ function toggleDark(){
 }
 
 // ─── SUPABASE ───────────────────────────────────────────
-async function sbGet(table,qs=''){
-  const url=`${SB_URL}/rest/v1/${table}${qs?'?'+qs:''}`;
-  const r=await fetch(url,{
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+getToken(),'Accept':'application/json'}
-  });
-  const txt=await r.text();
-  console.log(`sbGet ${table} → ${r.status}:`,txt.substring(0,300));
-  try{
-    const data=JSON.parse(txt);
-    if(!r.ok){console.error(`sbGet ${table} error:`,data);return[];}
-    if(!Array.isArray(data)){console.warn(`sbGet ${table} no es array:`,data);return[];}
-    return data;
-  }catch(e){console.error(`sbGet ${table} parse error:`,e,txt);return[];}
+async function sbInsert(table,body){
+  const{data,error}=await sb.from(table).insert(body).select();
+  if(error)console.error('sbInsert',table,error);
+  return data;
+}
+async function sbPatch(table,id,body){
+  const{data,error}=await sb.from(table).update(body).eq('id',id).select();
+  if(error)console.error('sbPatch',table,error);
+  return data;
+}
+async function sbDelete(table,id){
+  const{error}=await sb.from(table).delete().eq('id',id);
+  if(error)console.error('sbDelete',table,error);
 }
 
 async function diagnoseDB(){
-  const url=`${SB_URL}/rest/v1/triskel_horarios?limit=3`;
-  try{
-    const r=await fetch(url,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+getToken(),'Accept':'application/json'}});
-    const txt=await r.text();
-    document.getElementById('db-diag').textContent=`Status ${r.status}: ${txt.substring(0,400)}`;
-    document.getElementById('db-diag').style.display='block';
-  }catch(e){
-    document.getElementById('db-diag').textContent=`Error de red: ${e.message}`;
-    document.getElementById('db-diag').style.display='block';
+  const{data,error}=await sb.from('triskel_horarios').select('*').limit(1);
+  const diag=document.getElementById('db-diag');
+  if(diag){
+    diag.textContent=error?`Error: ${JSON.stringify(error)}`:`OK — ${data?.length??0} filas. ${JSON.stringify(data)}`;
+    diag.style.display='block';
   }
-}
-async function sbInsert(table,body){
-  const r=await fetch(`${SB_URL}/rest/v1/${table}`,{
-    method:'POST',
-    headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+getToken(),'Prefer':'return=representation'},
-    body:JSON.stringify(body)
-  });
-  return r.json();
-}
-async function sbPatch(table,id,body){
-  const r=await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{
-    method:'PATCH',
-    headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+getToken(),'Prefer':'return=representation'},
-    body:JSON.stringify(body)
-  });
-  return r.json();
-}
-async function sbDelete(table,id){
-  await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{
-    method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+getToken()}
-  });
 }
 
 // ─── LOAD ALL ───────────────────────────────────────────
 async function loadAll(){
   const [h,a,i,c,p]=await Promise.all([
-    sbGet('triskel_horarios','order=dia.asc,hora_inicio.asc'),
-    sbGet('triskel_alumnas','order=nombre.asc'),
-    sbGet('triskel_inscripciones','select=*,triskel_alumnas(nombre),triskel_horarios(dia,hora_inicio,hora_fin,modalidad)&activa=eq.true'),
-    sbGet('triskel_clases','order=fecha.desc&limit=200'),
-    sbGet('triskel_pagos','order=mes.desc&limit=500')
+    sb.from('triskel_horarios').select('*').order('dia').order('hora_inicio'),
+    sb.from('triskel_alumnas').select('*').order('nombre'),
+    sb.from('triskel_inscripciones').select('*,triskel_alumnas(nombre),triskel_horarios(dia,hora_inicio,hora_fin,modalidad)').eq('activa',true),
+    sb.from('triskel_clases').select('*').order('fecha',{ascending:false}).limit(200),
+    sb.from('triskel_pagos').select('*').order('mes',{ascending:false}).limit(500)
   ]);
-  DB.horarios=Array.isArray(h)?h:[];
-  DB.alumnas=Array.isArray(a)?a:[];
-  DB.inscripciones=Array.isArray(i)?i:[];
-  DB.clases=Array.isArray(c)?c:[];
-  DB.pagos=Array.isArray(p)?p:[];
+  DB.horarios=h.data||[];
+  DB.alumnas=a.data||[];
+  DB.inscripciones=i.data||[];
+  DB.clases=c.data||[];
+  DB.pagos=p.data||[];
+  if(h.error)console.error('horarios:',h.error);
+  if(a.error)console.error('alumnas:',a.error);
   console.log('DB cargado — horarios:',DB.horarios.length,'alumnas:',DB.alumnas.length);
   render();
 }
