@@ -295,6 +295,7 @@ let currentPage='inicio';
 let _claseEjs=[];
 let _editClaseId=null;
 let _editAlumnaId=null;
+let _loadError=false;
 
 const BANCO={
   mat:[
@@ -658,46 +659,36 @@ function toggleDark(){
 }
 
 // ─── SUPABASE ───────────────────────────────────────────
-async function sbInsert(table,body){
-  const{data,error}=await sb.from(table).insert(body).select();
-  if(error)console.error('sbInsert',table,error);
-  return data;
-}
-async function sbPatch(table,id,body){
-  const{data,error}=await sb.from(table).update(body).eq('id',id).select();
-  if(error)console.error('sbPatch',table,error);
-  return data;
-}
-async function sbDelete(table,id){
-  const{error}=await sb.from(table).delete().eq('id',id);
-  if(error)console.error('sbDelete',table,error);
+async function rpc(fn, params){
+  const{data,error}=await sb.rpc(fn, params||{});
+  if(error)console.error('rpc',fn,error);
+  return{data,error};
 }
 
 async function diagnoseDB(){
-  const{data,error}=await sb.from('triskel_horarios').select('*').limit(1);
+  const{data,error}=await sb.rpc('triskel_ping');
   const diag=document.getElementById('db-diag');
   if(diag){
-    diag.textContent=error?`Error: ${JSON.stringify(error)}`:`OK — ${data?.length??0} filas. ${JSON.stringify(data)}`;
+    diag.textContent=error?`Error: ${JSON.stringify(error)}`:`${data}`;
     diag.style.display='block';
   }
 }
 
 // ─── LOAD ALL ───────────────────────────────────────────
 async function loadAll(){
-  const [h,a,i,c,p]=await Promise.all([
-    sb.from('triskel_horarios').select('*').order('dia').order('hora_inicio'),
-    sb.from('triskel_alumnas').select('*').order('nombre'),
-    sb.from('triskel_inscripciones').select('*,triskel_alumnas(nombre),triskel_horarios(dia,hora_inicio,hora_fin,modalidad)').eq('activa',true),
-    sb.from('triskel_clases').select('*').order('fecha',{ascending:false}).limit(200),
-    sb.from('triskel_pagos').select('*').order('mes',{ascending:false}).limit(500)
-  ]);
-  DB.horarios=h.data||[];
-  DB.alumnas=a.data||[];
-  DB.inscripciones=i.data||[];
-  DB.clases=c.data||[];
-  DB.pagos=p.data||[];
-  if(h.error)console.error('horarios:',h.error);
-  if(a.error)console.error('alumnas:',a.error);
+  const{data,error}=await sb.rpc('triskel_load_all');
+  if(error){
+    console.error('loadAll:',error);
+    _loadError=true;
+    render();
+    return;
+  }
+  _loadError=false;
+  DB.horarios=data?.horarios||[];
+  DB.alumnas=data?.alumnas||[];
+  DB.inscripciones=data?.inscripciones||[];
+  DB.clases=data?.clases||[];
+  DB.pagos=data?.pagos||[];
   console.log('DB cargado — horarios:',DB.horarios.length,'alumnas:',DB.alumnas.length);
   render();
 }
@@ -725,7 +716,7 @@ function dbWarnHTML(){
 
 function render(){
   const m=document.getElementById('main');
-  const warn=DB.horarios.length===0?dbWarnHTML():'';
+  const warn=_loadError?dbWarnHTML():'';
   if(currentPage==='inicio')m.innerHTML=warn+rInicio();
   else if(currentPage==='alumnas')m.innerHTML=warn+rAlumnas();
   else if(currentPage==='horarios')m.innerHTML=warn+rHorarios();
@@ -1041,18 +1032,20 @@ function closeModalAlumna(){document.getElementById('modal-alumna').style.displa
 async function saveAlumna(){
   const nombre=document.getElementById('mal-nombre').value.trim();
   if(!nombre){document.getElementById('mal-err').textContent='El nombre es obligatorio.';return;}
-  const body={
-    nombre,
-    apellido:document.getElementById('mal-apellido').value.trim()||null,
-    tel:document.getElementById('mal-tel').value.trim()||null,
-    email:document.getElementById('mal-email').value.trim()||null,
-    notas:document.getElementById('mal-notas').value.trim()||null,
+  const params={
+    p_nombre:nombre,
+    p_apellido:document.getElementById('mal-apellido').value.trim()||null,
+    p_tel:document.getElementById('mal-tel').value.trim()||null,
+    p_email:document.getElementById('mal-email').value.trim()||null,
+    p_notas:document.getElementById('mal-notas').value.trim()||null,
   };
   if(_editAlumnaId){
-    await sbPatch('triskel_alumnas',_editAlumnaId,body);
+    const{error}=await rpc('triskel_save_alumna',{...params,p_id:_editAlumnaId});
+    if(error){document.getElementById('mal-err').textContent='Error al guardar.';return;}
     showMsg('✓ Alumna actualizada');
   } else {
-    await sbInsert('triskel_alumnas',{...body,estado:'activa'});
+    const{error}=await rpc('triskel_save_alumna',{...params,p_estado:'activa'});
+    if(error){document.getElementById('mal-err').textContent='Error al guardar.';return;}
     showMsg('✓ Alumna creada');
   }
   closeModalAlumna();
@@ -1077,14 +1070,15 @@ async function saveInscripcion(){
   const precio=parseFloat(document.getElementById('mi-precio').value)||0;
   const existe=DB.inscripciones.find(i=>i.alumna_id===alumna_id&&i.horario_id===horario_id);
   if(existe){document.getElementById('mi-err').textContent='Esta alumna ya está inscripta en ese horario.';return;}
-  await sbInsert('triskel_inscripciones',{alumna_id,horario_id,precio,activa:true});
+  const{error}=await rpc('triskel_insert_inscripcion',{p_alumna_id:alumna_id,p_horario_id:horario_id,p_precio:precio});
+  if(error){document.getElementById('mi-err').textContent='Error al guardar.';return;}
   showMsg('✓ Inscripción guardada');
   closeModalInsc();
   await loadAll();
 }
 async function desinscribir(id){
   if(!confirm('¿Dar de baja esta inscripción?'))return;
-  await sbPatch('triskel_inscripciones',id,{activa:false});
+  await rpc('triskel_deactivate_inscripcion',{p_id:id});
   showMsg('✓ Inscripción dada de baja');
   await loadAll();
 }
@@ -1151,20 +1145,17 @@ async function saveClase(){
   if(!horario_id){document.getElementById('mcl-err').textContent='Seleccioná un horario. Si no aparece ninguno, ejecutá la migración SQL en Supabase.';return;}
   if(!fecha){document.getElementById('mcl-err').textContent='La fecha es obligatoria.';return;}
   const ejercicios=_claseEjs.filter(e=>e.nombre.trim()).map((e,i)=>({orden:i+1,nombre:e.nombre.trim(),vt:e.vt?.trim()||null}));
-  const body={horario_id,fecha,ejercicios,notas};
-  if(_editClaseId){
-    await sbPatch('triskel_clases',_editClaseId,body);
-    showMsg('✓ Clase actualizada');
-  } else {
-    await sbInsert('triskel_clases',body);
-    showMsg('✓ Clase registrada');
-  }
+  const params={p_horario_id:horario_id,p_fecha:fecha,p_ejercicios:ejercicios,p_notas:notas};
+  if(_editClaseId) params.p_id=_editClaseId;
+  const{error}=await rpc('triskel_save_clase',params);
+  if(error){document.getElementById('mcl-err').textContent='Error al guardar.';return;}
+  showMsg(_editClaseId?'✓ Clase actualizada':'✓ Clase registrada');
   closeModalClase();
   await loadAll();
 }
 async function deleteClase(id){
   if(!confirm('¿Borrar esta clase?'))return;
-  await sbDelete('triskel_clases',id);
+  await rpc('triskel_delete_clase',{p_id:id});
   showMsg('✓ Clase borrada');
   await loadAll();
 }
@@ -1200,18 +1191,19 @@ async function savePago(){
   const mes=document.getElementById('mp-mes').value;
   const monto=parseFloat(document.getElementById('mp-monto').value)||0;
   if(!mes){document.getElementById('mp-err').textContent='El mes es obligatorio.';return;}
-  await sbInsert('triskel_pagos',{alumna_id,inscripcion_id,mes,monto,pagado:false});
+  const{error}=await rpc('triskel_insert_pago',{p_alumna_id:alumna_id,p_inscripcion_id:inscripcion_id,p_mes:mes,p_monto:monto});
+  if(error){document.getElementById('mp-err').textContent='Error al guardar.';return;}
   showMsg('✓ Pago registrado');
   closeModalPago();
   await loadAll();
 }
 async function marcarPago(id){
-  await sbPatch('triskel_pagos',id,{pagado:true,fecha_pago:new Date().toISOString().split('T')[0]});
+  await rpc('triskel_mark_pago',{p_id:id,p_pagado:true,p_fecha_pago:new Date().toISOString().split('T')[0]});
   showMsg('✓ Pago marcado');
   await loadAll();
 }
 async function desmarcarPago(id){
-  await sbPatch('triskel_pagos',id,{pagado:false,fecha_pago:null});
+  await rpc('triskel_mark_pago',{p_id:id,p_pagado:false,p_fecha_pago:null});
   showMsg('Pago desmarcado');
   await loadAll();
 }
