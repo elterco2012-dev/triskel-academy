@@ -121,6 +121,14 @@
     .ej-del{color:var(--th);background:none;border:none;font-size:16px;padding:2px 6px;flex-shrink:0;}
     .ej-del:hover{color:var(--rd);}
 
+    /* Banco de ejercicios */
+    .banco-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;margin-top:.5rem;max-height:60vh;overflow-y:auto;}
+    .banco-card{background:var(--s2);border:1.5px solid var(--b);border-radius:var(--rs);padding:.75rem;cursor:pointer;transition:border-color .15s,background .15s;}
+    .banco-card:hover{border-color:var(--v);background:var(--vl);}
+    .banco-card-title{font-size:12px;font-weight:600;margin-bottom:4px;color:var(--t);}
+    .banco-card-sub{font-size:11px;color:var(--tm);line-height:1.4;}
+    .banco-card-count{font-size:10px;font-weight:600;color:var(--vm);margin-top:4px;text-transform:uppercase;letter-spacing:.04em;}
+
     /* Msg */
     #msg{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--t);color:var(--bg);padding:.65rem 1.1rem;border-radius:var(--rs);font-size:13px;display:none;z-index:200;max-width:320px;}
   </style>
@@ -223,7 +231,10 @@
 
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;margin-top:.25rem;">
       <div style="font-size:12px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;">Ejercicios</div>
-      <button class="btn btn-s btn-p" onclick="addEjercicio()">+ Agregar</button>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-s" onclick="openModalBanco()">📋 Cargar plan</button>
+        <button class="btn btn-s btn-p" onclick="addEjercicio()">+ Agregar</button>
+      </div>
     </div>
     <div id="mcl-ejercicios"></div>
 
@@ -254,6 +265,18 @@
   </div>
 </div>
 
+<!-- MODAL BANCO DE EJERCICIOS -->
+<div class="modal-bg" id="modal-banco" style="display:none" onclick="if(event.target===this)closeModalBanco()">
+  <div class="modal" style="max-width:680px;">
+    <h3 id="mb-title">Cargar planificación</h3>
+    <p id="mb-sub" style="font-size:12px;color:var(--tm);margin-bottom:.75rem;"></p>
+    <div id="mb-list" class="banco-grid"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:.75rem;">
+      <button class="btn" onclick="closeModalBanco()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <div id="msg"></div>
 
 <script>
@@ -271,6 +294,328 @@ let currentPage='inicio';
 let _claseEjs=[];
 let _editClaseId=null;
 let _editAlumnaId=null;
+
+const BANCO={
+  mat:[
+    {titulo:'Banda elástica I',ejs:[
+      {nombre:'Banda elástica en tobillos, elevo brazos cabeza y hombros',vt:'rotado al lateral derecho, elevo pierna derecha'},
+      {nombre:'Cien',vt:'apertura'},
+      {nombre:'Idem 1',vt:''},
+      {nombre:'Cien',vt:'círculos con brazos'},
+      {nombre:'De lateral, pierna extendida',vt:'círculos'},
+    ]},
+    {titulo:'Disco I',ejs:[
+      {nombre:'Sentadas con piernas extendidas, disco en mano derecha',vt:'apertura al lateral'},
+      {nombre:'Spine stretch',vt:''},
+      {nombre:'Idem 1',vt:''},
+      {nombre:'Piernas en apertura, rotar al lateral, llevar el disco por encima de la cabeza',vt:''},
+      {nombre:'Pies al ancho de la cadera, llevo el disco por encima',vt:'disco detrás de la cabeza'},
+      {nombre:'Idem 4',vt:''},
+      {nombre:'Leg push con remo cerrado',vt:''},
+      {nombre:'Swimming con flete rodillas',vt:''},
+      {nombre:'Idem 7',vt:''},
+      {nombre:'Teaser',vt:''},
+    ]},
+    {titulo:'Disco II',ejs:[
+      {nombre:'Sentadas con piernas extendidas, disco en mano derecha',vt:'apertura al lateral'},
+      {nombre:'Spine stretch',vt:''},
+      {nombre:'Idem 1',vt:''},
+      {nombre:'Piernas extendidas',vt:'flexión de un codo a 90°'},
+      {nombre:'Thing stretch',vt:''},
+      {nombre:'Idem 4',vt:''},
+      {nombre:'Piernas en apertura, rotar al lateral, llevar el disco por encima de la cabeza',vt:''},
+      {nombre:'Pies al ancho de la cadera, llevo el disco por encima',vt:'disco detrás de la cabeza'},
+      {nombre:'Idem 4',vt:''},
+      {nombre:'Leg push con remo cerrado',vt:''},
+      {nombre:'Swimming con flete rodillas',vt:''},
+      {nombre:'Idem 7',vt:''},
+      {nombre:'Teaser',vt:''},
+    ]},
+    {titulo:'Disco III',ejs:[
+      {nombre:'Estocada con disco',vt:'vuelo lateral'},
+      {nombre:'Peso muerto, un pie atrás',vt:'elevo el disco'},
+      {nombre:'Sentadilla lateral',vt:'vuelo frontal con el disco'},
+      {nombre:'Sentadilla común',vt:'elevar el disco por encima de la cabeza'},
+      {nombre:'Idem 3',vt:''},
+      {nombre:'Idem 2',vt:''},
+      {nombre:'Idem 1',vt:''},
+      {nombre:'Tracciono disco (arrodillada)',vt:'elevo pierna en extensión'},
+      {nombre:'Thing stretch',vt:''},
+      {nombre:'Idem 8',vt:''},
+      {nombre:'Stomage',vt:''},
+    ]},
+    {titulo:'Bastón I',ejs:[
+      {nombre:'Bastón con brazos extendidos, pies al suelo, elevo cabeza y hombros luego extiendo piernas',vt:'círculos hacia un lado al final'},
+      {nombre:'Teaser',vt:'apertura'},
+      {nombre:'Cien',vt:'rotar el bastón de un lateral a otro'},
+      {nombre:'Idem 1',vt:'círculos al lado contrario al final'},
+      {nombre:'Puente de hombros con flexión de pierna derecha',vt:'llevar el bastón hacia atrás'},
+      {nombre:'Cien para aductores',vt:''},
+      {nombre:'Idem 5',vt:''},
+      {nombre:'De lateral, elevación de pierna',vt:'círculos'},
+      {nombre:'Stomage llevando el bastón por encima de la cabeza',vt:''},
+      {nombre:'Llevarlo atrás',vt:'por encima de la cabeza'},
+      {nombre:'Stomage masaje',vt:''},
+      {nombre:'Idem 8',vt:''},
+      {nombre:'Leg push hacia el otro lado',vt:''},
+      {nombre:'Plancha iso',vt:''},
+    ]},
+    {titulo:'Bastón II',ejs:[
+      {nombre:'Estocada con bastón detrás del homoplato',vt:'llevo el bastón por encima de la cabeza'},
+      {nombre:'Peso muerto, un pie atrás',vt:'elevo el bastón'},
+      {nombre:'Sentadilla lateral',vt:'bastón por encima de la cabeza, elevo el talón de la pierna en flexión'},
+      {nombre:'Sentadilla común',vt:'elevar el disco por encima de la cabeza'},
+      {nombre:'Trabajo para tobillos',vt:''},
+      {nombre:'Idem 3',vt:''},
+      {nombre:'Idem 2',vt:''},
+      {nombre:'Idem 1',vt:''},
+      {nombre:'Pierna en extensión (arrodillada)',vt:'inclino el tronco hacia la pierna extendida'},
+      {nombre:'Thing stretch',vt:''},
+      {nombre:'Idem 9',vt:''},
+      {nombre:'Apoyo codo, plancha lateral, despego la cadera',vt:'elevo la pierna'},
+      {nombre:'Leg push',vt:''},
+      {nombre:'Plancha alta abro y cierro',vt:''},
+      {nombre:'Idem 7',vt:''},
+      {nombre:'Idem 6',vt:''},
+      {nombre:'Idem 5',vt:''},
+      {nombre:'Stomage',vt:''},
+    ]},
+    {titulo:'Funcional I (estocada)',ejs:[
+      {nombre:'Estocada',vt:'llevo el pie de atrás al lateral'},
+      {nombre:'Peso muerto, un pie atrás',vt:'elevo los brazos'},
+      {nombre:'Sentadilla lateral',vt:'brazos al lateral de la cabeza, elevo el talón de la pierna en flexión'},
+      {nombre:'Sentadilla común',vt:'elevar brazos al lateral de la cabeza'},
+      {nombre:'Idem 3',vt:''},
+      {nombre:'Idem 2',vt:''},
+      {nombre:'Idem 1',vt:''},
+      {nombre:'Peso muerto a 2 pies',vt:''},
+      {nombre:'Plancha elevando una pierna (arrodillada)',vt:''},
+      {nombre:'Flexiones de brazos',vt:''},
+      {nombre:'Idem 9',vt:''},
+      {nombre:'Stomage',vt:''},
+    ]},
+    {titulo:'Banda elástica II',ejs:[
+      {nombre:'Banda elástica en tobillos, elevo brazos cabeza y hombros',vt:'elevo pierna derecha'},
+      {nombre:'Cien',vt:'apertura'},
+      {nombre:'Idem 1',vt:''},
+      {nombre:'Cien',vt:'tijera'},
+      {nombre:'De lateral, piernas extendidas',vt:'círculos'},
+      {nombre:'Apoyo codo, elevo pierna dándole tensión a la banda',vt:''},
+      {nombre:'Leg push',vt:''},
+      {nombre:'Plancha alta abro y cierro',vt:''},
+      {nombre:'Idem 7',vt:''},
+      {nombre:'Idem 6',vt:''},
+      {nombre:'Idem 5',vt:''},
+      {nombre:'Stomage',vt:''},
+    ]},
+    {titulo:'Clásico I',ejs:[
+      {nombre:'Leg circle a un pie',vt:''},
+      {nombre:'Double leg stretch',vt:''},
+      {nombre:'Idem 1',vt:''},
+      {nombre:'Leg pull back a una pierna',vt:''},
+      {nombre:'Cien',vt:''},
+      {nombre:'Idem 4',vt:''},
+      {nombre:'Shoulder bridge a una pierna',vt:''},
+      {nombre:'Leg circle con ambas piernas',vt:''},
+      {nombre:'Idem 8',vt:''},
+      {nombre:'Hip circle',vt:''},
+      {nombre:'Stomage',vt:''},
+      {nombre:'Basic back extension',vt:''},
+    ]},
+    {titulo:'Clásico II',ejs:[
+      {nombre:'Círculo a una pierna',vt:''},
+      {nombre:'Vela',vt:''},
+      {nombre:'Idem 1',vt:''},
+      {nombre:'De cúbito lateral, trabajo para oblicuo y aductor',vt:''},
+      {nombre:'Elevación de pierna',vt:''},
+      {nombre:'Thing stretch',vt:''},
+      {nombre:'Idem 5',vt:''},
+      {nombre:'Idem 4',vt:''},
+      {nombre:'Swimming',vt:''},
+      {nombre:'Leg push',vt:''},
+      {nombre:'Plancha',vt:''},
+      {nombre:'Idem 11',vt:''},
+      {nombre:'Stomage',vt:''},
+    ]},
+    {titulo:'Clásico III',ejs:[
+      {nombre:'Leg circle pierna derecha',vt:''},
+      {nombre:'Cien',vt:''},
+      {nombre:'Idem 1',vt:''},
+      {nombre:'The coordination',vt:''},
+      {nombre:'Sirena',vt:''},
+      {nombre:'Postural con un brazo al lateral',vt:''},
+      {nombre:'Postural codos a 90°',vt:''},
+      {nombre:'Idem otro brazo',vt:''},
+      {nombre:'Idem 5',vt:''},
+      {nombre:'De lateral para oblicuo',vt:''},
+      {nombre:'Stomage',vt:''},
+      {nombre:'Idem 11',vt:''},
+    ]},
+    {titulo:'Brazos',ejs:[
+      {nombre:'Sirena para tríceps',vt:''},
+      {nombre:'Elevación de pierna con patada adelante',vt:''},
+      {nombre:'Leg push',vt:''},
+      {nombre:'Plancha abro y cierro',vt:''},
+      {nombre:'Flexiones de brazos',vt:''},
+      {nombre:'Plancha toco hombros',vt:''},
+      {nombre:'Leg push',vt:''},
+      {nombre:'Idem 2',vt:''},
+      {nombre:'Idem 1',vt:''},
+      {nombre:'Plancha subo y bajo',vt:''},
+    ]},
+    {titulo:'Manos a la cabeza',ejs:[
+      {nombre:'Manos a la cabeza, pies al suelo, elevo cabeza y hombros luego extiendo piernas',vt:'círculos hacia un lado al final'},
+      {nombre:'Teaser',vt:'apertura'},
+      {nombre:'Cien',vt:''},
+      {nombre:'Idem 1',vt:'círculos al lado contrario'},
+      {nombre:'Roll up',vt:''},
+      {nombre:'Sentadas, apertura de brazo derecho al lateral',vt:'círculos'},
+      {nombre:'Codos a 90° abriendo al lateral',vt:'flexión y extensión de codo'},
+      {nombre:'Sentadas, llevar los brazos hacia atrás',vt:''},
+      {nombre:'Leg push',vt:''},
+      {nombre:'Plancha tocando hombros',vt:''},
+      {nombre:'Leg push hacia el otro lado',vt:''},
+      {nombre:'Plancha iso',vt:''},
+    ]},
+  ],
+  funcional:[
+    {titulo:'Agosto',ejs:[
+      {nombre:'CORE · Plancha toco hombros',vt:'Press de hombros'},
+      {nombre:'CORE · Sit ups con elevación de disco',vt:'Disco arriba tijera'},
+      {nombre:'PIERNAS · Estocada hacia adelante',vt:'abro y cierro con salto'},
+      {nombre:'PIERNAS · Sentadilla con Rusa',vt:'Sentadilla de lateral al step'},
+      {nombre:'CARDIO · Saltos al frente (step)',vt:'Plancha'},
+      {nombre:'CARDIO · Escalera abro y cierro',vt:'Vuelvo en trote'},
+      {nombre:'ESPALDA · Remo abierto con discos',vt:'Vuelo Frontal'},
+      {nombre:'ESPALDA · Apertura hacia el lateral',vt:'Bíceps'},
+      {nombre:'PIERNAS · Sentadilla abriendo y cerrando (banda elástica)',vt:'Apertura de lateral dando tensión a la banda'},
+      {nombre:'CORE · Mountain Climbers',vt:'Sentadilla'},
+      {nombre:'PECHO · Flexiones de brazos',vt:'Plancha'},
+      {nombre:'PECHO · Codos a 90° con discos',vt:'Vuelo Frontal'},
+      {nombre:'CORE · Bicicleta',vt:'Barquito'},
+      {nombre:'CORE · Plancha paso el disco de un lado a otro',vt:'Abro y cierro pies'},
+      {nombre:'PIERNAS · Sentadilla Sumo',vt:'Vuelo Frontal'},
+      {nombre:'PIERNAS · Estocada con step y rusa',vt:'Rodilla al pecho'},
+      {nombre:'CARDIO · Saltos al Stepp de frente',vt:'Mountain Climbers'},
+      {nombre:'CARDIO · Correr de lateral',vt:'Vuelvo con rodillas arriba'},
+      {nombre:'ESPALDA · Remo cerrado',vt:'Vuelo lateral'},
+      {nombre:'ESPALDA · Remo cerrado',vt:'Tríceps'},
+      {nombre:'PIERNAS · Sentadilla ISO (banda elástica)',vt:'Abro y cierro'},
+      {nombre:'CORE · Plancha Oruga',vt:'Salto'},
+      {nombre:'PECHO · Flexión de Brazos',vt:'Plancha lateral'},
+      {nombre:'PECHO · Disco al Pecho',vt:'Press de hombros'},
+    ]},
+    {titulo:'Septiembre',ejs:[
+      {nombre:'CORE · Manos a la pelota plancha, rodillas al pecho (pelota 2kg)',vt:'Press de hombros con pelota'},
+      {nombre:'PIERNAS · Estocada hacia atrás (pelota 3kg)',vt:'Sentadilla lateral'},
+      {nombre:'CARDIO · Sentadilla pop con aro',vt:'Salto adentro del aro'},
+      {nombre:'CORE · Mountain Climbers',vt:'Sentadilla'},
+      {nombre:'PIERNAS · Sentadilla sumo',vt:'Vuelo frontal'},
+      {nombre:'ESPALDA · Remo cerrado',vt:'Press de hombros'},
+      {nombre:'PECHO · Flexiones de brazos',vt:'Plancha'},
+      {nombre:'CARDIO · Trote lateral',vt:'Rodillas arriba'},
+      {nombre:'CORE · Sit ups con disco',vt:'Disco arriba tijera'},
+      {nombre:'PIERNAS · Estocada adelante',vt:'Abro y cierro con salto'},
+    ]},
+    {titulo:'Octubre',ejs:[
+      {nombre:'CORE · Manos a la pelota plancha, rodillas al pecho (balón)',vt:'Press de hombros con pelota'},
+      {nombre:'CARDIO · Sentadilla pop con escalera',vt:'Trote'},
+      {nombre:'ESPALDA · Remo cerrado con barra',vt:'Sentadilla pop'},
+      {nombre:'CORE · Mountain Climbers',vt:'Sentadilla'},
+      {nombre:'PIERNAS · Estocada adelante',vt:'Rodilla al pecho'},
+      {nombre:'PECHO · Flexiones de brazos',vt:'Plancha lateral'},
+      {nombre:'PIERNAS · Sentadilla sumo',vt:'Vuelo frontal'},
+      {nombre:'ESPALDA · Apertura lateral',vt:'Bíceps'},
+      {nombre:'CARDIO · Saltos de frente',vt:'Mountain Climbers'},
+      {nombre:'CORE · Bicicleta',vt:'Barquito'},
+    ]},
+    {titulo:'Noviembre',ejs:[
+      {nombre:'ESPALDA · Remo cerrado con banda amarilla',vt:'Tríceps'},
+      {nombre:'CORE · Cortitos con disco arriba',vt:'Bisagra con disco arriba'},
+      {nombre:'PIERNAS · Peso muerto romano',vt:'Giro de disco'},
+      {nombre:'CARDIO · Trote lateral',vt:'Rodillas arriba'},
+      {nombre:'CORE · Mountain Climbers',vt:'Sentadilla'},
+      {nombre:'PIERNAS · Estocada adelante',vt:'Abro y cierro con salto'},
+      {nombre:'PECHO · Flexiones de brazos',vt:'Plancha'},
+      {nombre:'ESPALDA · Remo abierto',vt:'Vuelo frontal'},
+      {nombre:'CORE · Plancha toco hombros',vt:'Press de hombros'},
+      {nombre:'PIERNAS · Sentadilla sumo',vt:'Vuelo frontal'},
+    ]},
+    {titulo:'Diciembre',ejs:[
+      {nombre:'CORE · Plancha baja al step',vt:'Saltos de frente'},
+      {nombre:'ESPALDA · Vuelo lateral con tronco a 45°',vt:'Pullover'},
+      {nombre:'CARDIO · En step de lateral',vt:'Sentadilla común'},
+      {nombre:'CORE · Mountain Climbers',vt:'Sentadilla'},
+      {nombre:'PIERNAS · Estocada con barra',vt:'Rodilla al pecho'},
+      {nombre:'PECHO · Flexiones de brazos',vt:'Plancha lateral'},
+      {nombre:'PIERNAS · Sentadilla ISO',vt:'Abro y cierro'},
+      {nombre:'ESPALDA · Remo cerrado',vt:'Press de hombros'},
+      {nombre:'CORE · Sit ups con disco',vt:'Disco arriba tijera'},
+      {nombre:'CARDIO · Correr de lateral',vt:'Rodillas arriba'},
+    ]},
+    {titulo:'Enero',ejs:[
+      {nombre:'CORE · Manos a la pelota plancha, rodillas al pecho (pelota 2kg)',vt:'Press de hombros con pelota'},
+      {nombre:'PIERNAS · Estocada adelante con barra',vt:'Despego talones'},
+      {nombre:'ESPALDA · Boca arriba con discos, llevo discos a 90°',vt:'Pullover'},
+      {nombre:'CORE · Mountain Climbers',vt:'Sentadilla'},
+      {nombre:'PIERNAS · Sentadilla sumo',vt:'Vuelo frontal'},
+      {nombre:'PECHO · Flexiones de brazos',vt:'Plancha'},
+      {nombre:'ESPALDA · Remo cerrado',vt:'Tríceps'},
+      {nombre:'CARDIO · Saltos al frente',vt:'Mountain Climbers'},
+      {nombre:'CORE · Bicicleta',vt:'Barquito'},
+      {nombre:'PIERNAS · Peso muerto a un pie',vt:'Rodilla al pecho'},
+    ]},
+    {titulo:'Febrero',ejs:[
+      {nombre:'CORE · Plancha baja',vt:'Elevación de cadera para oblicuo con apoyo de rodilla'},
+      {nombre:'ESPALDA · Remo cerrado con barra',vt:'Press de hombros'},
+      {nombre:'PIERNAS · Sentadilla común con discos',vt:''},
+      {nombre:'CORE · Mountain Climbers',vt:'Sentadilla'},
+      {nombre:'PIERNAS · Estocada lateral',vt:'Rodilla al pecho'},
+      {nombre:'PECHO · Codos a 90° con disco',vt:'Vuelo frontal'},
+      {nombre:'ESPALDA · Remo abierto',vt:'Bíceps'},
+      {nombre:'CARDIO · Trote lateral',vt:'Rodillas arriba'},
+      {nombre:'CORE · Sit ups',vt:'Tijera'},
+      {nombre:'PIERNAS · Peso muerto romano',vt:'Giro de disco'},
+    ]},
+    {titulo:'Marzo',ejs:[
+      {nombre:'CORE · Bisagra a un pie con discos (10 rep)',vt:'Extensión de piernas subir y bajar'},
+      {nombre:'PIERNAS · Estocada adelante con step',vt:'Bíceps (4 rep)'},
+      {nombre:'ESPALDA · Brazos extendidos, llevo la banda hacia el pecho (banda elástica)',vt:'Tracción al frente'},
+      {nombre:'CORE · Mountain Climbers',vt:'Sentadilla'},
+      {nombre:'PIERNAS · Sentadilla sumo (6 rep)',vt:'Vuelo frontal (4 rep)'},
+      {nombre:'PECHO · Flexiones de brazos',vt:'Plancha'},
+      {nombre:'ESPALDA · Remo cerrado',vt:'Press de hombros'},
+      {nombre:'CARDIO · Saltos de frente',vt:'Mountain Climbers'},
+      {nombre:'CORE · Plancha toco hombros',vt:'Press de hombros'},
+      {nombre:'PIERNAS · Peso muerto romano',vt:'Giro de disco'},
+    ]},
+    {titulo:'Abril',ejs:[
+      {nombre:'CORE · Ruedita',vt:''},
+      {nombre:'PIERNAS · Sentadilla pistols',vt:''},
+      {nombre:'ESPALDA · Remo cerrado con barra',vt:'Press de hombros'},
+      {nombre:'CORE · Mountain Climbers',vt:'Sentadilla'},
+      {nombre:'PIERNAS · Estocada adelante con step',vt:'Rodilla al pecho'},
+      {nombre:'PECHO · Flexiones de brazos',vt:'Plancha'},
+      {nombre:'ESPALDA · Apertura lateral',vt:'Bíceps'},
+      {nombre:'CARDIO · Trote con rodillas arriba',vt:''},
+      {nombre:'CORE · Sit ups con disco',vt:'Disco arriba tijera'},
+      {nombre:'PIERNAS · Sentadilla ISO con banda elástica',vt:'Abro y cierro'},
+    ]},
+    {titulo:'Mayo',ejs:[
+      {nombre:'CORE · Dead bug',vt:'Supine toe tops'},
+      {nombre:'PIERNAS · Pistols',vt:''},
+      {nombre:'ESPALDA · Jalón a pecho',vt:'Unilateral'},
+      {nombre:'CORE · Mountain Climbers',vt:'Sentadilla'},
+      {nombre:'PIERNAS · Thrusters con mancuernas',vt:''},
+      {nombre:'PECHO · Flexiones de brazos',vt:'Plancha'},
+      {nombre:'ESPALDA · Remo cerrado con barra',vt:'Press de hombros'},
+      {nombre:'CARDIO · Saltos de frente con step',vt:'Mountain Climbers'},
+      {nombre:'CORE · Plancha toco hombros',vt:''},
+      {nombre:'PIERNAS · Sentadilla sumo',vt:'Vuelo frontal'},
+    ]},
+  ],
+  reformer:[],
+};
 
 // ─── AUTH ───────────────────────────────────────────────
 let dark=localStorage.getItem('tk-dark')==='1';
@@ -332,7 +677,12 @@ async function sbGet(table,qs=''){
   const r=await fetch(`${SB_URL}/rest/v1/${table}?${qs}`,{
     headers:{'apikey':SB_KEY,'Authorization':'Bearer '+getToken(),'Accept':'application/json'}
   });
-  return r.ok?r.json():[];
+  if(!r.ok){
+    const err=await r.json().catch(()=>({}));
+    console.error(`sbGet ${table}:`,r.status,err);
+    return[];
+  }
+  return r.json();
 }
 async function sbInsert(table,body){
   const r=await fetch(`${SB_URL}/rest/v1/${table}`,{
@@ -871,6 +1221,40 @@ async function desmarcarPago(id){
   await sbPatch('triskel_pagos',id,{pagado:false,fecha_pago:null});
   showMsg('Pago desmarcado');
   await loadAll();
+}
+
+// ─── BANCO DE EJERCICIOS ─────────────────────────────────
+function openModalBanco(){
+  const horarioId=parseInt(document.getElementById('mcl-horario').value);
+  const h=DB.horarios.find(x=>x.id===horarioId);
+  const mod=h?.modalidad||'mat';
+  const planes=BANCO[mod]||[];
+  document.getElementById('mb-title').textContent='Cargar planificación · '+MOD_LABEL[mod];
+  document.getElementById('mb-sub').textContent=
+    _claseEjs.length?'Al cargar se reemplazarán los ejercicios actuales.':'Seleccioná una planificación para cargarla.';
+  const list=document.getElementById('mb-list');
+  if(!planes.length){
+    list.innerHTML=`<div style="font-size:13px;color:var(--tm);padding:.5rem 0;">Sin planificaciones guardadas para ${MOD_LABEL[mod]} todavía.</div>`;
+  } else {
+    list.innerHTML=planes.map((p,i)=>{
+      const preview=p.ejs.slice(0,3).map(e=>`<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">· ${e.nombre}</div>`).join('');
+      return`<div class="banco-card" onclick="loadPlan('${mod}',${i})">
+        <div class="banco-card-title">${p.titulo}</div>
+        <div class="banco-card-sub">${preview}${p.ejs.length>3?`<div style="color:var(--th);">+${p.ejs.length-3} más</div>`:''}</div>
+        <div class="banco-card-count">${p.ejs.length} ejercicios</div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('modal-banco').style.display='flex';
+}
+function closeModalBanco(){document.getElementById('modal-banco').style.display='none';}
+function loadPlan(mod,idx){
+  const plan=BANCO[mod]?.[idx];
+  if(!plan)return;
+  _claseEjs=plan.ejs.map((e,i)=>({orden:i+1,nombre:e.nombre,vt:e.vt||''}));
+  renderEjerciciosModal();
+  closeModalBanco();
+  showMsg(`✓ Cargada: ${plan.titulo}`);
 }
 
 // ─── INIT ────────────────────────────────────────────────
