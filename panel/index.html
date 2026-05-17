@@ -172,13 +172,14 @@
     </div>
   </aside>
   <main class="main" id="main">
-    <div id="db-warn" style="display:none;align-items:center;gap:12px;background:#fef3c7;border:1px solid #d97706;border-radius:10px;padding:.85rem 1.1rem;margin-bottom:1.25rem;font-size:13px;color:#92400e;">
-      <span style="font-size:18px;">⚠️</span>
-      <div>
-        <strong>No se pudieron cargar los datos desde Supabase.</strong><br>
-        Ejecutá <code style="background:#fde68a;padding:1px 5px;border-radius:4px;">migrations/002_rls_policies.sql</code> en el <strong>SQL Editor de Supabase</strong> y recargá la página.
+    <div id="db-warn" style="display:none;flex-direction:column;gap:10px;background:#fef3c7;border:1px solid #d97706;border-radius:10px;padding:.85rem 1.1rem;margin-bottom:1.25rem;font-size:13px;color:#92400e;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:18px;">⚠️</span>
+        <div style="flex:1;"><strong>No se pudieron cargar los datos desde Supabase.</strong><br>El SQL ya fue ejecutado — hacé clic en "Diagnóstico" para ver el error exacto.</div>
+        <button onclick="diagnoseDB()" style="padding:5px 10px;border:1px solid #d97706;border-radius:7px;background:white;color:#92400e;cursor:pointer;font-size:12px;">🔍 Diagnóstico</button>
+        <button onclick="loadAll()" style="padding:5px 10px;border:1px solid #d97706;border-radius:7px;background:white;color:#92400e;cursor:pointer;font-size:12px;">↺ Reintentar</button>
       </div>
-      <button onclick="loadAll()" style="margin-left:auto;padding:5px 12px;border:1px solid #d97706;border-radius:7px;background:white;color:#92400e;cursor:pointer;white-space:nowrap;font-size:12px;">↺ Reintentar</button>
+      <pre id="db-diag" style="display:none;font-size:11px;background:#fff7ed;border-radius:6px;padding:.5rem;word-break:break-all;white-space:pre-wrap;max-height:120px;overflow-y:auto;color:#78350f;margin:0;"></pre>
     </div>
   </main>
 </div>
@@ -683,15 +684,31 @@ function toggleDark(){
 
 // ─── SUPABASE ───────────────────────────────────────────
 async function sbGet(table,qs=''){
-  const r=await fetch(`${SB_URL}/rest/v1/${table}?${qs}`,{
+  const url=`${SB_URL}/rest/v1/${table}${qs?'?'+qs:''}`;
+  const r=await fetch(url,{
     headers:{'apikey':SB_KEY,'Authorization':'Bearer '+getToken(),'Accept':'application/json'}
   });
-  if(!r.ok){
-    const err=await r.json().catch(()=>({}));
-    console.error(`sbGet ${table}:`,r.status,err);
-    return[];
+  const txt=await r.text();
+  console.log(`sbGet ${table} → ${r.status}:`,txt.substring(0,300));
+  try{
+    const data=JSON.parse(txt);
+    if(!r.ok){console.error(`sbGet ${table} error:`,data);return[];}
+    if(!Array.isArray(data)){console.warn(`sbGet ${table} no es array:`,data);return[];}
+    return data;
+  }catch(e){console.error(`sbGet ${table} parse error:`,e,txt);return[];}
+}
+
+async function diagnoseDB(){
+  const url=`${SB_URL}/rest/v1/triskel_horarios?limit=3`;
+  try{
+    const r=await fetch(url,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+getToken(),'Accept':'application/json'}});
+    const txt=await r.text();
+    document.getElementById('db-diag').textContent=`Status ${r.status}: ${txt.substring(0,400)}`;
+    document.getElementById('db-diag').style.display='block';
+  }catch(e){
+    document.getElementById('db-diag').textContent=`Error de red: ${e.message}`;
+    document.getElementById('db-diag').style.display='block';
   }
-  return r.json();
 }
 async function sbInsert(table,body){
   const r=await fetch(`${SB_URL}/rest/v1/${table}`,{
@@ -718,7 +735,7 @@ async function sbDelete(table,id){
 // ─── LOAD ALL ───────────────────────────────────────────
 async function loadAll(){
   const [h,a,i,c,p]=await Promise.all([
-    sbGet('triskel_horarios','order=dia.asc,hora_inicio.asc&activo=eq.true'),
+    sbGet('triskel_horarios','order=dia.asc,hora_inicio.asc'),
     sbGet('triskel_alumnas','order=nombre.asc'),
     sbGet('triskel_inscripciones','select=*,triskel_alumnas(nombre),triskel_horarios(dia,hora_inicio,hora_fin,modalidad)&activa=eq.true'),
     sbGet('triskel_clases','order=fecha.desc&limit=200'),
