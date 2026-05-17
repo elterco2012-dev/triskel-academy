@@ -169,7 +169,14 @@ RETURNS void LANGUAGE sql SECURITY DEFINER AS $$
   WHERE id = p_id;
 $$;
 
+-- ─── PING (diagnóstico) ────────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION triskel_ping()
+RETURNS text LANGUAGE sql SECURITY DEFINER AS $$
+  SELECT 'pong — ' || now()::text;
+$$;
+
 -- ─── GRANTS ────────────────────────────────────────────────────────────────
+GRANT EXECUTE ON FUNCTION triskel_ping()                                              TO authenticated, anon;
 GRANT EXECUTE ON FUNCTION triskel_load_all()                                          TO authenticated, anon;
 GRANT EXECUTE ON FUNCTION triskel_save_alumna(text,text,text,text,text,text,integer)  TO authenticated;
 GRANT EXECUTE ON FUNCTION triskel_insert_inscripcion(integer,integer,numeric)         TO authenticated;
