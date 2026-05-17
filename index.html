@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Triskel Academy — Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --v:#7C5CBF;--vl:#EDE9F8;--vm:#A07ED4;--vd:#5B3F9E;
+      --mat:#1D9E75;--matl:#E1F5EE;
+      --ref:#2563EB;--refl:#EFF6FF;
+      --fun:#D97706;--funl:#FFFBEB;
+      --rd:#A32D2D;--rl:#FCEBEB;
+      --bg:#f8f8f6;--s:#fff;--s2:#f3f4f2;--bg2:#ebebea;
+      --t:#1a1a1a;--tm:#6b7280;--th:#9ca3af;
+      --b:rgba(0,0,0,0.07);--bm:rgba(0,0,0,0.13);
+      --r:14px;--rs:9px;
+    }
+    [data-theme=dark]{
+      --bg:#111110;--s:#1c1c1a;--s2:#242422;--bg2:#2e2e2b;
+      --t:#f0ede8;--tm:#9ca3af;--th:#6b7280;
+      --b:rgba(255,255,255,0.07);--bm:rgba(255,255,255,0.12);
+      --vl:#1e1535;--vm:#9b7ed4;
+      --matl:#0a2e20;--refl:#0f1e3a;--funl:#2a1a05;
+      --rd:#f09595;--rl:#2a1010;
+    }
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);transition:background .3s;}
+    input,select,textarea{width:100%;padding:8px 12px;border:1px solid var(--bm);border-radius:var(--rs);font-size:13px;font-family:'DM Sans',sans-serif;background:var(--s2);color:var(--t);margin-bottom:10px;transition:border-color .15s;}
+    input:focus,select:focus,textarea:focus{outline:none;border-color:var(--v);}
+    textarea{resize:vertical;height:60px;}
+    button{cursor:pointer;font-family:'DM Sans',sans-serif;}
+
+    /* Login */
+    .ls{min-height:100vh;display:flex;align-items:center;justify-content:center;}
+    .lb{background:var(--s);border:1px solid var(--b);border-radius:var(--r);padding:2rem;width:100%;max-width:340px;text-align:center;}
+    .ll{width:60px;height:60px;border-radius:50%;background:var(--vl);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 1rem;}
+    .lb h2{font-family:'DM Serif Display',serif;font-size:1.5rem;margin-bottom:.25rem;}
+    .lb p{font-size:13px;color:var(--tm);margin-bottom:1.5rem;}
+    .li{width:100%;padding:10px 14px;border:1px solid var(--bm);border-radius:var(--rs);font-size:14px;font-family:'DM Sans',sans-serif;background:var(--s2);color:var(--t);margin-bottom:10px;text-align:center;}
+    .lbtn{width:100%;padding:10px;background:var(--v);color:white;border:none;border-radius:var(--rs);font-size:14px;font-weight:500;}
+    .lerr{font-size:12px;color:var(--rd);margin-top:8px;display:none;}
+
+    /* Layout */
+    #PS{display:none;min-height:100vh;}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:180px;background:var(--s);border-right:1px solid var(--b);padding:1.25rem 0;z-index:10;}
+    .slogo{padding:0 1.25rem 1.25rem;border-bottom:1px solid var(--b);margin-bottom:.75rem;}
+    .slogo-name{font-weight:600;font-size:.9rem;}
+    .slogo-sub{font-size:.7rem;color:var(--tm);}
+    .snav{display:flex;flex-direction:column;gap:2px;padding:0 .5rem;}
+    .snav a{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--rs);font-size:13px;color:var(--tm);text-decoration:none;transition:background .15s,color .15s;}
+    .snav a:hover{background:var(--s2);color:var(--t);}
+    .snav a.active{background:var(--vl);color:var(--vd);font-weight:500;}
+    .snav .sep{font-size:10px;font-weight:600;color:var(--th);text-transform:uppercase;letter-spacing:.05em;padding:8px 10px 4px;}
+    .sbottom{position:absolute;bottom:0;left:0;right:0;padding:.75rem .5rem;border-top:1px solid var(--b);}
+    .sbottom button{width:100%;padding:7px 10px;border:none;background:none;color:var(--tm);font-size:12px;text-align:left;border-radius:var(--rs);display:flex;align-items:center;gap:6px;}
+    .sbottom button:hover{background:var(--s2);}
+    .main{margin-left:180px;padding:2rem;min-height:100vh;}
+    .ptitle{font-family:'DM Serif Display',serif;font-size:1.6rem;margin-bottom:1.5rem;}
+
+    /* Cards */
+    .card{background:var(--s);border:1px solid var(--b);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem;}
+    .ctitle{font-size:11px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem;}
+    .metric{background:var(--s);border:1px solid var(--b);border-radius:var(--rs);padding:.75rem 1rem;}
+    .mlabel{font-size:11px;color:var(--tm);margin-bottom:.2rem;}
+    .mval{font-size:1.5rem;font-weight:700;color:var(--t);}
+    .mval.g{color:var(--v);}
+
+    /* Btn */
+    .btn{padding:6px 14px;border:1px solid var(--bm);border-radius:var(--rs);background:var(--s);color:var(--t);font-size:13px;transition:background .15s;}
+    .btn:hover{background:var(--s2);}
+    .btn-p{background:var(--v);border-color:var(--v);color:white;}
+    .btn-p:hover{background:var(--vd);border-color:var(--vd);}
+    .btn-s{padding:4px 10px;font-size:11px;}
+    .btn-danger{background:var(--rl);border-color:var(--rd);color:var(--rd);}
+
+    /* Badge modalidad */
+    .badge-mod{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:500;}
+    .badge-mat{background:var(--matl);color:var(--mat);}
+    .badge-ref{background:var(--refl);color:var(--ref);}
+    .badge-fun{background:var(--funl);color:var(--fun);}
+
+    /* Modal */
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;display:flex;align-items:center;justify-content:center;padding:1rem;}
+    .modal{background:var(--s);border-radius:var(--r);padding:1.5rem;width:100%;max-width:540px;max-height:88vh;overflow-y:auto;}
+    .modal h3{font-family:'DM Serif Display',serif;font-size:1.2rem;margin-bottom:1rem;}
+    .frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    label{font-size:12px;font-weight:500;color:var(--tm);display:block;margin-bottom:4px;}
+
+    /* Alumna row */
+    .arow{background:var(--s);border:1px solid var(--b);border-radius:var(--rs);padding:.75rem 1rem;display:flex;align-items:center;gap:12px;margin-bottom:.5rem;}
+    .arow:hover{border-color:var(--bm);}
+    .avatar{width:36px;height:36px;border-radius:50%;background:var(--vl);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;color:var(--vd);flex-shrink:0;}
+    .aname{font-weight:500;font-size:14px;}
+    .asub{font-size:11px;color:var(--tm);}
+
+    /* Horario grid */
+    .hgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+    .hday{font-size:11px;font-weight:600;color:var(--tm);text-transform:uppercase;text-align:center;padding:.4rem 0;border-bottom:2px solid var(--b);margin-bottom:4px;}
+    .hslot{border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;border:1.5px solid transparent;transition:transform .1s,box-shadow .1s;}
+    .hslot:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.1);}
+    .hslot.mat{background:var(--matl);border-color:var(--mat);}
+    .hslot.reformer{background:var(--refl);border-color:var(--ref);}
+    .hslot.funcional{background:var(--funl);border-color:var(--fun);}
+    .hslot-time{font-size:10px;font-weight:600;color:var(--tm);}
+    .hslot-mod{font-size:11px;font-weight:600;margin-top:2px;}
+    .hslot-mod.mat{color:var(--mat);}
+    .hslot-mod.reformer{color:var(--ref);}
+    .hslot-mod.funcional{color:var(--fun);}
+    .hslot-n{font-size:10px;color:var(--tm);margin-top:2px;}
+
+    /* Clase builder */
+    .ej-row{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--b);}
+    .ej-num{width:24px;height:24px;border-radius:50%;background:var(--vl);color:var(--vd);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:4px;}
+    .ej-body{flex:1;}
+    .ej-nombre{font-size:13px;font-weight:500;}
+    .ej-vt{font-size:11px;color:var(--vm);margin-top:2px;}
+    .ej-del{color:var(--th);background:none;border:none;font-size:16px;padding:2px 6px;flex-shrink:0;}
+    .ej-del:hover{color:var(--rd);}
+
+    /* Msg */
+    #msg{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--t);color:var(--bg);padding:.65rem 1.1rem;border-radius:var(--rs);font-size:13px;display:none;z-index:200;max-width:320px;}
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="LS" class="ls">
+  <div class="lb">
+    <div class="ll">🌿</div>
+    <h2>Triskel Academy</h2>
+    <p>Panel de gestión</p>
+    <input class="li" type="email" id="email" placeholder="tu@email.com" onkeydown="if(event.key==='Enter')login()">
+    <input class="li" type="password" id="pwd" placeholder="Contraseña" onkeydown="if(event.key==='Enter')login()">
+    <button class="lbtn" onclick="login()">Ingresar</button>
+    <div class="lerr" id="lerr">Email o contraseña incorrectos</div>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div id="PS">
+  <aside class="sidebar">
+    <div class="slogo">
+      <div class="slogo-name">🌿 Triskel Academy</div>
+      <div class="slogo-sub">Panel de gestión</div>
+    </div>
+    <nav class="snav" id="nav">
+      <div class="sep">Principal</div>
+      <a href="#" onclick="goTo('inicio')" id="n-inicio">🏠 Inicio</a>
+      <a href="#" onclick="goTo('alumnas')" id="n-alumnas">👤 Alumnas</a>
+      <div class="sep">Clases</div>
+      <a href="#" onclick="goTo('horarios')" id="n-horarios">📅 Horarios</a>
+      <a href="#" onclick="goTo('clases')" id="n-clases">📝 Planificar</a>
+      <a href="#" onclick="goTo('historial')" id="n-historial">📚 Historial</a>
+      <div class="sep">Gestión</div>
+      <a href="#" onclick="goTo('pagos')" id="n-pagos">💰 Pagos</a>
+    </nav>
+    <div class="sbottom">
+      <button id="tic" onclick="toggleDark()">🌙 Modo oscuro</button>
+      <button onclick="logout()" style="margin-top:2px;">↩ Salir</button>
+    </div>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
+
+<!-- MODALES -->
+<div class="modal-bg" id="modal-alumna" style="display:none" onclick="if(event.target===this)closeModalAlumna()">
+  <div class="modal">
+    <h3 id="mal-title">Nueva alumna</h3>
+    <div class="frow">
+      <div><label>Nombre *</label><input id="mal-nombre" placeholder="Ej: María"></div>
+      <div><label>Apellido</label><input id="mal-apellido" placeholder="Ej: González"></div>
+    </div>
+    <div class="frow">
+      <div><label>Teléfono (WhatsApp)</label><input id="mal-tel" placeholder="5491112345678"></div>
+      <div><label>Email</label><input id="mal-email" placeholder="maria@gmail.com"></div>
+    </div>
+    <label>Notas</label>
+    <textarea id="mal-notas" placeholder="Lesiones, preferencias, observaciones..."></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:.5rem;">
+      <button class="btn" onclick="closeModalAlumna()">Cancelar</button>
+      <button class="btn btn-p" onclick="saveAlumna()">Guardar</button>
+    </div>
+    <div id="mal-err" style="font-size:12px;color:var(--rd);margin-top:.5rem;"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-inscripcion" style="display:none" onclick="if(event.target===this)closeModalInsc()">
+  <div class="modal">
+    <h3>Inscribir en horario</h3>
+    <label>Alumna</label>
+    <select id="mi-alumna"></select>
+    <label>Horario</label>
+    <select id="mi-horario"></select>
+    <label>Precio mensual ($)</label>
+    <input id="mi-precio" type="number" placeholder="0">
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:.5rem;">
+      <button class="btn" onclick="closeModalInsc()">Cancelar</button>
+      <button class="btn btn-p" onclick="saveInscripcion()">Inscribir</button>
+    </div>
+    <div id="mi-err" style="font-size:12px;color:var(--rd);margin-top:.5rem;"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-clase" style="display:none" onclick="if(event.target===this)closeModalClase()">
+  <div class="modal" style="max-width:640px;">
+    <h3 id="mcl-title">Nueva clase</h3>
+    <div class="frow">
+      <div>
+        <label>Horario</label>
+        <select id="mcl-horario"></select>
+      </div>
+      <div>
+        <label>Fecha</label>
+        <input id="mcl-fecha" type="date">
+      </div>
+    </div>
+    <label>Notas de la clase</label>
+    <textarea id="mcl-notas" placeholder="Observaciones generales..."></textarea>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;margin-top:.25rem;">
+      <div style="font-size:12px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;">Ejercicios</div>
+      <button class="btn btn-s btn-p" onclick="addEjercicio()">+ Agregar</button>
+    </div>
+    <div id="mcl-ejercicios"></div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:.75rem;">
+      <button class="btn" onclick="closeModalClase()">Cancelar</button>
+      <button class="btn btn-p" onclick="saveClase()">Guardar clase</button>
+    </div>
+    <div id="mcl-err" style="font-size:12px;color:var(--rd);margin-top:.5rem;"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-pago" style="display:none" onclick="if(event.target===this)closeModalPago()">
+  <div class="modal">
+    <h3>Registrar pago</h3>
+    <label>Alumna</label>
+    <select id="mp-alumna" onchange="renderPagoHorarios()"></select>
+    <label>Horario / Modalidad</label>
+    <select id="mp-insc"></select>
+    <div class="frow">
+      <div><label>Mes</label><input id="mp-mes" type="month"></div>
+      <div><label>Monto ($)</label><input id="mp-monto" type="number" placeholder="0"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:.5rem;">
+      <button class="btn" onclick="closeModalPago()">Cancelar</button>
+      <button class="btn btn-p" onclick="savePago()">Guardar</button>
+    </div>
+    <div id="mp-err" style="font-size:12px;color:var(--rd);margin-top:.5rem;"></div>
+  </div>
+</div>
+
+<div id="msg"></div>
+
+<script>
+const SB_URL='https://aywkeoxwybzcexaichtv.supabase.co';
+const SB_KEY='sb_publishable_8j3ihLED6ui6L32T0QQ5EQ_soH0TSQb';
+const PASS_HASH='amira2025tk';
+
+const DIA_LABEL={lun:'Lunes',mar:'Martes',mie:'Miércoles',jue:'Jueves',vie:'Viernes'};
+const DIA_ORDER={lun:0,mar:1,mie:2,jue:3,vie:4};
+const MOD_LABEL={mat:'Mat',reformer:'Reformer',funcional:'Funcional'};
+const MOD_CLASS={mat:'mat',reformer:'reformer',funcional:'funcional'};
+
+let DB={horarios:[],alumnas:[],inscripciones:[],clases:[],pagos:[]};
+let currentPage='inicio';
+let _claseEjs=[];
+let _editClaseId=null;
+let _editAlumnaId=null;
+
+// ─── AUTH ───────────────────────────────────────────────
+let dark=localStorage.getItem('tk-dark')==='1';
+if(dark)document.documentElement.setAttribute('data-theme','dark');
+
+async function login(){
+  const e=document.getElementById('email').value.trim();
+  const p=document.getElementById('pwd').value;
+  document.getElementById('lerr').style.display='none';
+  try{
+    const r=await fetch(`${SB_URL}/auth/v1/token?grant_type=password`,{
+      method:'POST',headers:{'Content-Type':'application/json','apikey':SB_KEY},
+      body:JSON.stringify({email:e,password:p})
+    });
+    const d=await r.json();
+    if(d.access_token){
+      localStorage.setItem('tk-token',d.access_token);
+      localStorage.setItem('tk-refresh',d.refresh_token||'');
+      showPanel();
+    } else {
+      document.getElementById('lerr').style.display='block';
+    }
+  }catch(err){document.getElementById('lerr').style.display='block';}
+}
+
+function logout(){
+  localStorage.removeItem('tk-token');
+  localStorage.removeItem('tk-refresh');
+  document.getElementById('LS').style.display='flex';
+  document.getElementById('PS').style.display='none';
+}
+
+function getToken(){return localStorage.getItem('tk-token')||'';}
+
+async function initAuth(){
+  const tok=getToken();
+  if(!tok){document.getElementById('LS').style.display='flex';return;}
+  const r=await fetch(`${SB_URL}/auth/v1/user`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+tok}});
+  if(r.ok) showPanel();
+  else {localStorage.removeItem('tk-token');document.getElementById('LS').style.display='flex';}
+}
+
+function showPanel(){
+  document.getElementById('LS').style.display='none';
+  document.getElementById('PS').style.display='block';
+  document.getElementById('tic').textContent=dark?'☀️ Modo claro':'🌙 Modo oscuro';
+  loadAll();
+}
+
+function toggleDark(){
+  dark=!dark;
+  document.documentElement.setAttribute('data-theme',dark?'dark':'light');
+  localStorage.setItem('tk-dark',dark?'1':'0');
+  document.getElementById('tic').textContent=dark?'☀️ Modo claro':'🌙 Modo oscuro';
+}
+
+// ─── SUPABASE ───────────────────────────────────────────
+async function sbGet(table,qs=''){
+  const r=await fetch(`${SB_URL}/rest/v1/${table}?${qs}`,{
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+getToken(),'Accept':'application/json'}
+  });
+  return r.ok?r.json():[];
+}
+async function sbInsert(table,body){
+  const r=await fetch(`${SB_URL}/rest/v1/${table}`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+getToken(),'Prefer':'return=representation'},
+    body:JSON.stringify(body)
+  });
+  return r.json();
+}
+async function sbPatch(table,id,body){
+  const r=await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{
+    method:'PATCH',
+    headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+getToken(),'Prefer':'return=representation'},
+    body:JSON.stringify(body)
+  });
+  return r.json();
+}
+async function sbDelete(table,id){
+  await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{
+    method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+getToken()}
+  });
+}
+
+// ─── LOAD ALL ───────────────────────────────────────────
+async function loadAll(){
+  const [h,a,i,c,p]=await Promise.all([
+    sbGet('triskel_horarios','order=dia.asc,hora_inicio.asc&activo=eq.true'),
+    sbGet('triskel_alumnas','order=nombre.asc'),
+    sbGet('triskel_inscripciones','select=*,triskel_alumnas(nombre),triskel_horarios(dia,hora_inicio,hora_fin,modalidad)&activa=eq.true'),
+    sbGet('triskel_clases','order=fecha.desc&limit=200'),
+    sbGet('triskel_pagos','order=mes.desc&limit=500')
+  ]);
+  DB.horarios=Array.isArray(h)?h:[];
+  DB.alumnas=Array.isArray(a)?a:[];
+  DB.inscripciones=Array.isArray(i)?i:[];
+  DB.clases=Array.isArray(c)?c:[];
+  DB.pagos=Array.isArray(p)?p:[];
+  render();
+}
+
+// ─── ROUTING ────────────────────────────────────────────
+function goTo(page){
+  currentPage=page;
+  document.querySelectorAll('.snav a').forEach(a=>a.classList.remove('active'));
+  const n=document.getElementById('n-'+page);
+  if(n)n.classList.add('active');
+  render();
+}
+
+function render(){
+  const m=document.getElementById('main');
+  if(currentPage==='inicio')m.innerHTML=rInicio();
+  else if(currentPage==='alumnas')m.innerHTML=rAlumnas();
+  else if(currentPage==='horarios')m.innerHTML=rHorarios();
+  else if(currentPage==='clases')m.innerHTML=rClases();
+  else if(currentPage==='historial')m.innerHTML=rHistorial();
+  else if(currentPage==='pagos')m.innerHTML=rPagos();
+}
+
+// ─── HELPERS ────────────────────────────────────────────
+function modBadge(mod){
+  const cls=MOD_CLASS[mod]||'';
+  return`<span class="badge-mod badge-${cls}">${MOD_LABEL[mod]||mod}</span>`;
+}
+function horarioLabel(h){
+  if(!h)return'—';
+  const hObj=typeof h==='object'?h:DB.horarios.find(x=>x.id===h);
+  if(!hObj)return'—';
+  return`${DIA_LABEL[hObj.dia]||hObj.dia} ${hObj.hora_inicio}–${hObj.hora_fin} ${modBadge(hObj.modalidad)}`;
+}
+function alumnaInits(nombre,apellido){
+  return((nombre||'?')[0]+((apellido||'')[0]||'')).toUpperCase();
+}
+function mesLabel(m){
+  if(!m)return'';
+  const [y,mo]=m.split('-');
+  const meses=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  return`${meses[parseInt(mo)]} ${y}`;
+}
+function showMsg(txt,dur=3000){
+  const el=document.getElementById('msg');
+  el.textContent=txt;el.style.display='block';
+  setTimeout(()=>{el.style.display='none';},dur);
+}
+function alumnaById(id){return DB.alumnas.find(a=>a.id===id);}
+function inscByAlumna(aid){return DB.inscripciones.filter(i=>i.alumna_id===aid);}
+
+// ─── INICIO ─────────────────────────────────────────────
+function rInicio(){
+  const activas=DB.alumnas.filter(a=>a.estado==='activa').length;
+  const mesActual=new Date().toISOString().slice(0,7);
+  const pagosMes=DB.pagos.filter(p=>p.mes===mesActual);
+  const pagados=pagosMes.filter(p=>p.pagado).length;
+  const pendientes=pagosMes.filter(p=>!p.pagado).length;
+  const totalMes=pagosMes.filter(p=>p.pagado).reduce((s,p)=>s+(p.monto||0),0);
+
+  const modCount={mat:0,reformer:0,funcional:0};
+  DB.inscripciones.forEach(i=>{const mod=i.triskel_horarios?.modalidad;if(mod)modCount[mod]=(modCount[mod]||0)+1;});
+
+  const ultimasClases=DB.clases.slice(0,5);
+
+  return`<div class="ptitle">Inicio</div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem;">
+    <div class="metric"><div class="mlabel">Alumnas activas</div><div class="mval g">${activas}</div></div>
+    <div class="metric"><div class="mlabel">Pagaron ${mesLabel(mesActual)}</div><div class="mval g">${pagados}</div></div>
+    <div class="metric"><div class="mlabel">Pendientes</div><div class="mval" style="color:var(--fun);">${pendientes}</div></div>
+    <div class="metric"><div class="mlabel">Recaudado ${mesLabel(mesActual)}</div><div class="mval">$${totalMes.toLocaleString('es-AR')}</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+    <div class="card">
+      <div class="ctitle">Alumnas por modalidad</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          ${modBadge('reformer')}<strong>${modCount.reformer}</strong>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          ${modBadge('mat')}<strong>${modCount.mat}</strong>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          ${modBadge('funcional')}<strong>${modCount.funcional}</strong>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ctitle">Últimas clases</div>
+      ${ultimasClases.length?ultimasClases.map(c=>{
+        const h=DB.horarios.find(x=>x.id===c.horario_id);
+        const nEjs=Array.isArray(c.ejercicios)?c.ejercicios.length:0;
+        return`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--b);">
+          <div style="flex:1;font-size:13px;">${c.fecha} ${h?modBadge(h.modalidad):''}</div>
+          <div style="font-size:11px;color:var(--tm);">${nEjs} ejs.</div>
+        </div>`;
+      }).join(''):`<div style="font-size:13px;color:var(--tm);">Sin clases registradas aún.</div>`}
+    </div>
+  </div>`;
+}
+
+// ─── ALUMNAS ────────────────────────────────────────────
+function rAlumnas(){
+  const activas=DB.alumnas.filter(a=>a.estado==='activa');
+  const otras=DB.alumnas.filter(a=>a.estado!=='activa');
+  const mesActual=new Date().toISOString().slice(0,7);
+
+  function alumnaCard(a){
+    const inscs=inscByAlumna(a.id);
+    const pagoMes=DB.pagos.filter(p=>p.alumna_id===a.id&&p.mes===mesActual);
+    const todoPago=inscs.length>0&&inscs.every(i=>pagoMes.some(p=>p.inscripcion_id===i.id&&p.pagado));
+    const pago=todoPago?`<span style="font-size:10px;background:var(--matl);color:var(--mat);padding:1px 7px;border-radius:99px;">✓ Pagó</span>`
+      :`<span style="font-size:10px;background:var(--funl);color:var(--fun);padding:1px 7px;border-radius:99px;">Pendiente</span>`;
+    return`<div class="arow">
+      <div class="avatar">${alumnaInits(a.nombre,a.apellido)}</div>
+      <div style="flex:1;">
+        <div class="aname">${a.nombre} ${a.apellido||''}</div>
+        <div class="asub" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;">
+          ${inscs.map(i=>modBadge(i.triskel_horarios?.modalidad)).join('')}
+          ${a.tel?`<a href="https://wa.me/${a.tel}" target="_blank" style="font-size:11px;color:var(--mat);">💬 WA</a>`:''}
+        </div>
+      </div>
+      ${inscs.length>0?pago:''}
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-s" onclick="openModalInsc(${a.id})">+ Horario</button>
+        <button class="btn btn-s" onclick="openModalAlumna(${a.id})">Editar</button>
+      </div>
+    </div>`;
+  }
+
+  return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+    <div class="ptitle" style="margin:0;">Alumnas (${activas.length})</div>
+    <button class="btn btn-p" onclick="openModalAlumna()">+ Nueva alumna</button>
+  </div>
+  <div class="card">
+    <div class="ctitle">Activas</div>
+    ${activas.length?activas.map(alumnaCard).join(''):`<div style="font-size:13px;color:var(--tm);">Sin alumnas activas.</div>`}
+  </div>
+  ${otras.length?`<div class="card">
+    <div class="ctitle">Pausadas / Bajas</div>
+    ${otras.map(alumnaCard).join('')}
+  </div>`:''}`;
+}
+
+// ─── HORARIOS ───────────────────────────────────────────
+function rHorarios(){
+  const dias=['lun','mar','mie','jue','vie'];
+  const cols=dias.map(dia=>{
+    const slots=DB.horarios.filter(h=>h.dia===dia).sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
+    return`<div>
+      <div class="hday">${DIA_LABEL[dia]}</div>
+      ${slots.map(s=>{
+        const inscs=DB.inscripciones.filter(i=>i.horario_id===s.id);
+        return`<div class="hslot ${s.modalidad}" onclick="goToHorarioDetalle(${s.id})">
+          <div class="hslot-time">${s.hora_inicio}–${s.hora_fin}</div>
+          <div class="hslot-mod ${s.modalidad}">${MOD_LABEL[s.modalidad]||s.modalidad}</div>
+          <div class="hslot-n">${inscs.length} alumna${inscs.length!==1?'s':''}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+
+  return`<div class="ptitle">Horarios</div>
+  <div class="card">
+    <div class="hgrid">${cols}</div>
+  </div>
+  <div id="horario-detalle"></div>`;
+}
+
+function goToHorarioDetalle(horarioId){
+  const h=DB.horarios.find(x=>x.id===horarioId);
+  if(!h)return;
+  const inscs=DB.inscripciones.filter(i=>i.horario_id===horarioId);
+  const html=`<div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;">
+      <div><div class="ctitle" style="margin:0;">${DIA_LABEL[h.dia]} ${h.hora_inicio}–${h.hora_fin}</div>
+      <div style="margin-top:4px;">${modBadge(h.modalidad)}</div></div>
+      <button class="btn btn-s btn-p" onclick="openClaseParaHorario(${horarioId})">+ Registrar clase</button>
+    </div>
+    <div class="ctitle">Alumnas inscriptas (${inscs.length})</div>
+    ${inscs.length?inscs.map(i=>{
+      const a=alumnaById(i.alumna_id);
+      if(!a)return'';
+      return`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--b);">
+        <div class="avatar" style="width:30px;height:30px;font-size:11px;">${alumnaInits(a.nombre,a.apellido)}</div>
+        <div style="flex:1;font-size:13px;">${a.nombre} ${a.apellido||''}</div>
+        <div style="font-size:12px;color:var(--tm);">$${i.precio||0}/mes</div>
+        <button class="btn btn-s btn-danger" onclick="desinscribir(${i.id})">Baja</button>
+      </div>`;
+    }).join(''):`<div style="font-size:13px;color:var(--tm);">Sin alumnas inscriptas.</div>`}
+  </div>`;
+  document.getElementById('horario-detalle').innerHTML=html;
+  document.getElementById('horario-detalle').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ─── CLASES (planificador) ──────────────────────────────
+function rClases(){
+  const hoy=new Date().toISOString().split('T')[0];
+  return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+    <div class="ptitle" style="margin:0;">Planificar clase</div>
+    <button class="btn btn-p" onclick="openModalClase()">+ Nueva clase</button>
+  </div>
+  <div class="card">
+    <div class="ctitle">Próximas / sin registrar</div>
+    <p style="font-size:13px;color:var(--tm);">Creá una clase nueva para registrar los ejercicios de esa sesión.
+    El historial completo está en <strong>Historial</strong>.</p>
+    <div style="margin-top:.75rem;display:flex;gap:8px;flex-wrap:wrap;">
+      ${DB.horarios.map(h=>`<button class="btn" onclick="openClaseParaHorario(${h.id})" style="font-size:12px;">
+        ${DIA_LABEL[h.dia]} ${h.hora_inicio} ${modBadge(h.modalidad)}
+      </button>`).join('')}
+    </div>
+  </div>`;
+}
+
+// ─── HISTORIAL ──────────────────────────────────────────
+function rHistorial(){
+  const filtMod=document.getElementById('hist-mod')?.value||'';
+  const clases=DB.clases.filter(c=>{
+    if(!filtMod)return true;
+    const h=DB.horarios.find(x=>x.id===c.horario_id);
+    return h?.modalidad===filtMod;
+  });
+
+  return`<div class="ptitle">Historial de clases</div>
+  <div style="display:flex;gap:8px;margin-bottom:1rem;align-items:center;">
+    <select id="hist-mod" onchange="render()" style="margin:0;width:160px;">
+      <option value="">Todas</option>
+      <option value="mat">Mat</option>
+      <option value="reformer">Reformer</option>
+      <option value="funcional">Funcional</option>
+    </select>
+    <span style="font-size:12px;color:var(--tm);">${clases.length} clase${clases.length!==1?'s':''}</span>
+  </div>
+  ${clases.length?clases.map(c=>{
+    const h=DB.horarios.find(x=>x.id===c.horario_id);
+    const ejs=Array.isArray(c.ejercicios)?c.ejercicios:[];
+    return`<div class="card" style="margin-bottom:.6rem;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:.5rem;">
+        <div style="flex:1;">
+          <span style="font-weight:500;font-size:14px;">${c.fecha}</span>
+          ${h?`<span style="margin-left:8px;">${modBadge(h.modalidad)}</span>
+          <span style="margin-left:6px;font-size:12px;color:var(--tm);">${DIA_LABEL[h.dia]||''} ${h.hora_inicio}–${h.hora_fin}</span>`:''}
+        </div>
+        <button class="btn btn-s" onclick="openModalClase(${c.id})">Editar</button>
+        <button class="btn btn-s btn-danger" onclick="deleteClase(${c.id})">Borrar</button>
+      </div>
+      ${c.notas?`<div style="font-size:12px;color:var(--tm);margin-bottom:.5rem;">${c.notas}</div>`:''}
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        ${ejs.map((e,i)=>`<div class="ej-row" style="padding:4px 0;border-bottom:1px solid var(--b);">
+          <div class="ej-num">${e.orden||i+1}</div>
+          <div class="ej-body">
+            <div class="ej-nombre">${e.nombre}</div>
+            ${e.vt?`<div class="ej-vt">↪ VT: ${e.vt}</div>`:''}
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join(''):`<div class="card"><div style="font-size:13px;color:var(--tm);">Sin clases registradas.</div></div>`}`;
+}
+
+// ─── PAGOS ──────────────────────────────────────────────
+function rPagos(){
+  const mesActual=new Date().toISOString().slice(0,7);
+  const [filtMes,setFiltMes]=[document.getElementById('pag-mes')?.value||mesActual,null];
+
+  const pagosDelMes=DB.pagos.filter(p=>p.mes===filtMes);
+  const pagados=pagosDelMes.filter(p=>p.pagado);
+  const pendientes=pagosDelMes.filter(p=>!p.pagado);
+  const total=pagados.reduce((s,p)=>s+(p.monto||0),0);
+
+  function pagoRow(p){
+    const a=alumnaById(p.alumna_id);
+    const insc=DB.inscripciones.find(i=>i.id===p.inscripcion_id);
+    const h=insc?DB.horarios.find(x=>x.id===insc.horario_id):null;
+    return`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--b);">
+      <div class="avatar" style="width:30px;height:30px;font-size:11px;">${alumnaInits(a?.nombre,a?.apellido)}</div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:500;">${a?.nombre||'?'} ${a?.apellido||''}</div>
+        <div style="font-size:11px;color:var(--tm);">${h?`${DIA_LABEL[h.dia]} ${h.hora_inicio} · `:''}${h?MOD_LABEL[h.modalidad]||h.modalidad:''}</div>
+      </div>
+      <div style="font-size:13px;font-weight:500;">$${p.monto||0}</div>
+      ${p.pagado
+        ?`<span style="font-size:11px;background:var(--matl);color:var(--mat);padding:2px 8px;border-radius:99px;">✓ Pagó</span>
+          <button class="btn btn-s btn-danger" onclick="desmarcarPago(${p.id})">Desmarcar</button>`
+        :`<button class="btn btn-s btn-p" onclick="marcarPago(${p.id})">✓ Marcar pagado</button>`
+      }
+    </div>`;
+  }
+
+  return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+    <div class="ptitle" style="margin:0;">Pagos</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input type="month" id="pag-mes" value="${filtMes}" onchange="render()" style="margin:0;width:150px;">
+      <button class="btn btn-p" onclick="openModalPago()">+ Registrar pago</button>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem;">
+    <div class="metric"><div class="mlabel">Pagaron</div><div class="mval g">${pagados.length}</div></div>
+    <div class="metric"><div class="mlabel">Pendientes</div><div class="mval" style="color:var(--fun);">${pendientes.length}</div></div>
+    <div class="metric"><div class="mlabel">Total cobrado</div><div class="mval">$${total.toLocaleString('es-AR')}</div></div>
+  </div>
+  ${pendientes.length?`<div class="card">
+    <div class="ctitle" style="color:var(--fun);">Pendientes de pago</div>
+    ${pendientes.map(pagoRow).join('')}
+  </div>`:''}
+  ${pagados.length?`<div class="card">
+    <div class="ctitle">Pagaron ✓</div>
+    ${pagados.map(pagoRow).join('')}
+  </div>`:''}
+  ${!pagosDelMes.length?`<div class="card"><div style="font-size:13px;color:var(--tm);">Sin pagos registrados para ${mesLabel(filtMes)}.</div></div>`:''}`;
+}
+
+// ─── MODAL ALUMNA ───────────────────────────────────────
+function openModalAlumna(id){
+  _editAlumnaId=id||null;
+  document.getElementById('mal-err').textContent='';
+  const a=id?alumnaById(id):{};
+  document.getElementById('mal-title').textContent=id?'Editar alumna':'Nueva alumna';
+  document.getElementById('mal-nombre').value=a?.nombre||'';
+  document.getElementById('mal-apellido').value=a?.apellido||'';
+  document.getElementById('mal-tel').value=a?.tel||'';
+  document.getElementById('mal-email').value=a?.email||'';
+  document.getElementById('mal-notas').value=a?.notas||'';
+  document.getElementById('modal-alumna').style.display='flex';
+}
+function closeModalAlumna(){document.getElementById('modal-alumna').style.display='none';}
+async function saveAlumna(){
+  const nombre=document.getElementById('mal-nombre').value.trim();
+  if(!nombre){document.getElementById('mal-err').textContent='El nombre es obligatorio.';return;}
+  const body={
+    nombre,
+    apellido:document.getElementById('mal-apellido').value.trim()||null,
+    tel:document.getElementById('mal-tel').value.trim()||null,
+    email:document.getElementById('mal-email').value.trim()||null,
+    notas:document.getElementById('mal-notas').value.trim()||null,
+  };
+  if(_editAlumnaId){
+    await sbPatch('triskel_alumnas',_editAlumnaId,body);
+    showMsg('✓ Alumna actualizada');
+  } else {
+    await sbInsert('triskel_alumnas',{...body,estado:'activa'});
+    showMsg('✓ Alumna creada');
+  }
+  closeModalAlumna();
+  await loadAll();
+}
+
+// ─── MODAL INSCRIPCION ──────────────────────────────────
+function openModalInsc(alumnaId){
+  document.getElementById('mi-err').textContent='';
+  const selA=document.getElementById('mi-alumna');
+  const selH=document.getElementById('mi-horario');
+  selA.innerHTML=DB.alumnas.map(a=>`<option value="${a.id}"${a.id===alumnaId?' selected':''}>${a.nombre} ${a.apellido||''}</option>`).join('');
+  selH.innerHTML=DB.horarios.sort((a,b)=>DIA_ORDER[a.dia]-DIA_ORDER[b.dia]||a.hora_inicio.localeCompare(b.hora_inicio))
+    .map(h=>`<option value="${h.id}">${DIA_LABEL[h.dia]} ${h.hora_inicio}–${h.hora_fin} — ${MOD_LABEL[h.modalidad]}</option>`).join('');
+  document.getElementById('mi-precio').value='';
+  document.getElementById('modal-inscripcion').style.display='flex';
+}
+function closeModalInsc(){document.getElementById('modal-inscripcion').style.display='none';}
+async function saveInscripcion(){
+  const alumna_id=parseInt(document.getElementById('mi-alumna').value);
+  const horario_id=parseInt(document.getElementById('mi-horario').value);
+  const precio=parseFloat(document.getElementById('mi-precio').value)||0;
+  const existe=DB.inscripciones.find(i=>i.alumna_id===alumna_id&&i.horario_id===horario_id);
+  if(existe){document.getElementById('mi-err').textContent='Esta alumna ya está inscripta en ese horario.';return;}
+  await sbInsert('triskel_inscripciones',{alumna_id,horario_id,precio,activa:true});
+  showMsg('✓ Inscripción guardada');
+  closeModalInsc();
+  await loadAll();
+}
+async function desinscribir(id){
+  if(!confirm('¿Dar de baja esta inscripción?'))return;
+  await sbPatch('triskel_inscripciones',id,{activa:false});
+  showMsg('✓ Inscripción dada de baja');
+  await loadAll();
+}
+
+// ─── MODAL CLASE ────────────────────────────────────────
+function openClaseParaHorario(horarioId){
+  openModalClase(null,horarioId);
+}
+function openModalClase(claseId,horarioId){
+  _editClaseId=claseId||null;
+  _claseEjs=[];
+  document.getElementById('mcl-err').textContent='';
+  const selH=document.getElementById('mcl-horario');
+  selH.innerHTML=DB.horarios.sort((a,b)=>DIA_ORDER[a.dia]-DIA_ORDER[b.dia]||a.hora_inicio.localeCompare(b.hora_inicio))
+    .map(h=>`<option value="${h.id}"${h.id===horarioId?' selected':''}>${DIA_LABEL[h.dia]} ${h.hora_inicio}–${h.hora_fin} — ${MOD_LABEL[h.modalidad]}</option>`).join('');
+  const hoy=new Date().toISOString().split('T')[0];
+  if(claseId){
+    const c=DB.clases.find(x=>x.id===claseId);
+    if(c){
+      document.getElementById('mcl-title').textContent='Editar clase';
+      document.getElementById('mcl-fecha').value=c.fecha;
+      document.getElementById('mcl-notas').value=c.notas||'';
+      selH.value=c.horario_id;
+      _claseEjs=Array.isArray(c.ejercicios)?JSON.parse(JSON.stringify(c.ejercicios)):[];
+    }
+  } else {
+    document.getElementById('mcl-title').textContent='Nueva clase';
+    document.getElementById('mcl-fecha').value=hoy;
+    document.getElementById('mcl-notas').value='';
+    _claseEjs=[];
+  }
+  renderEjerciciosModal();
+  document.getElementById('modal-clase').style.display='flex';
+}
+function closeModalClase(){document.getElementById('modal-clase').style.display='none';}
+
+function renderEjerciciosModal(){
+  const cont=document.getElementById('mcl-ejercicios');
+  if(!_claseEjs.length){cont.innerHTML=`<div style="font-size:12px;color:var(--tm);padding:.5rem 0;">Sin ejercicios. Hacé clic en "+ Agregar".</div>`;return;}
+  cont.innerHTML=_claseEjs.map((e,i)=>`<div class="ej-row">
+    <div class="ej-num">${i+1}</div>
+    <div class="ej-body" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+      <input value="${e.nombre||''}" placeholder="Ejercicio" oninput="_claseEjs[${i}].nombre=this.value" style="margin:0;font-size:12px;">
+      <input value="${e.vt||''}" placeholder="VT (variante, opcional)" oninput="_claseEjs[${i}].vt=this.value" style="margin:0;font-size:12px;">
+    </div>
+    <button class="ej-del" onclick="removeEj(${i})">✕</button>
+  </div>`).join('');
+}
+function addEjercicio(){
+  _claseEjs.push({orden:_claseEjs.length+1,nombre:'',vt:''});
+  renderEjerciciosModal();
+  const inputs=document.querySelectorAll('#mcl-ejercicios input');
+  if(inputs.length)inputs[inputs.length-2].focus();
+}
+function removeEj(i){
+  _claseEjs.splice(i,1);
+  _claseEjs.forEach((e,j)=>{e.orden=j+1;});
+  renderEjerciciosModal();
+}
+async function saveClase(){
+  const horario_id=parseInt(document.getElementById('mcl-horario').value);
+  const fecha=document.getElementById('mcl-fecha').value;
+  const notas=document.getElementById('mcl-notas').value.trim()||null;
+  if(!fecha){document.getElementById('mcl-err').textContent='La fecha es obligatoria.';return;}
+  const ejercicios=_claseEjs.filter(e=>e.nombre.trim()).map((e,i)=>({orden:i+1,nombre:e.nombre.trim(),vt:e.vt?.trim()||null}));
+  const body={horario_id,fecha,ejercicios,notas};
+  if(_editClaseId){
+    await sbPatch('triskel_clases',_editClaseId,body);
+    showMsg('✓ Clase actualizada');
+  } else {
+    await sbInsert('triskel_clases',body);
+    showMsg('✓ Clase registrada');
+  }
+  closeModalClase();
+  await loadAll();
+}
+async function deleteClase(id){
+  if(!confirm('¿Borrar esta clase?'))return;
+  await sbDelete('triskel_clases',id);
+  showMsg('✓ Clase borrada');
+  await loadAll();
+}
+
+// ─── MODAL PAGO ─────────────────────────────────────────
+function openModalPago(){
+  document.getElementById('mp-err').textContent='';
+  const selA=document.getElementById('mp-alumna');
+  selA.innerHTML=DB.alumnas.filter(a=>a.estado==='activa').map(a=>`<option value="${a.id}">${a.nombre} ${a.apellido||''}</option>`).join('');
+  document.getElementById('mp-mes').value=new Date().toISOString().slice(0,7);
+  document.getElementById('mp-monto').value='';
+  renderPagoHorarios();
+  document.getElementById('modal-pago').style.display='flex';
+}
+function closeModalPago(){document.getElementById('modal-pago').style.display='none';}
+function renderPagoHorarios(){
+  const aid=parseInt(document.getElementById('mp-alumna')?.value);
+  if(!aid)return;
+  const inscs=inscByAlumna(aid);
+  const selI=document.getElementById('mp-insc');
+  selI.innerHTML=inscs.map(i=>{
+    const h=DB.horarios.find(x=>x.id===i.horario_id);
+    return`<option value="${i.id}">${h?`${DIA_LABEL[h.dia]} ${h.hora_inicio} — ${MOD_LABEL[h.modalidad]}`:i.id} ($${i.precio||0})</option>`;
+  }).join('');
+  if(inscs.length){
+    const pri=inscs[0];
+    document.getElementById('mp-monto').value=pri.precio||'';
+  }
+}
+async function savePago(){
+  const alumna_id=parseInt(document.getElementById('mp-alumna').value);
+  const inscripcion_id=parseInt(document.getElementById('mp-insc').value);
+  const mes=document.getElementById('mp-mes').value;
+  const monto=parseFloat(document.getElementById('mp-monto').value)||0;
+  if(!mes){document.getElementById('mp-err').textContent='El mes es obligatorio.';return;}
+  await sbInsert('triskel_pagos',{alumna_id,inscripcion_id,mes,monto,pagado:false});
+  showMsg('✓ Pago registrado');
+  closeModalPago();
+  await loadAll();
+}
+async function marcarPago(id){
+  await sbPatch('triskel_pagos',id,{pagado:true,fecha_pago:new Date().toISOString().split('T')[0]});
+  showMsg('✓ Pago marcado');
+  await loadAll();
+}
+async function desmarcarPago(id){
+  await sbPatch('triskel_pagos',id,{pagado:false,fecha_pago:null});
+  showMsg('Pago desmarcado');
+  await loadAll();
+}
+
+// ─── INIT ────────────────────────────────────────────────
+initAuth();
+</script>
+</body>
+</html>
