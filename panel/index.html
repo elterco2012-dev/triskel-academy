@@ -171,17 +171,7 @@
       <button onclick="logout()" style="margin-top:2px;">↩ Salir</button>
     </div>
   </aside>
-  <main class="main" id="main">
-    <div id="db-warn" style="display:none;flex-direction:column;gap:10px;background:#fef3c7;border:1px solid #d97706;border-radius:10px;padding:.85rem 1.1rem;margin-bottom:1.25rem;font-size:13px;color:#92400e;">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <span style="font-size:18px;">⚠️</span>
-        <div style="flex:1;"><strong>No se pudieron cargar los datos desde Supabase.</strong><br>El SQL ya fue ejecutado — hacé clic en "Diagnóstico" para ver el error exacto.</div>
-        <button onclick="diagnoseDB()" style="padding:5px 10px;border:1px solid #d97706;border-radius:7px;background:white;color:#92400e;cursor:pointer;font-size:12px;">🔍 Diagnóstico</button>
-        <button onclick="loadAll()" style="padding:5px 10px;border:1px solid #d97706;border-radius:7px;background:white;color:#92400e;cursor:pointer;font-size:12px;">↺ Reintentar</button>
-      </div>
-      <pre id="db-diag" style="display:none;font-size:11px;background:#fff7ed;border-radius:6px;padding:.5rem;word-break:break-all;white-space:pre-wrap;max-height:120px;overflow-y:auto;color:#78350f;margin:0;"></pre>
-    </div>
-  </main>
+  <main class="main" id="main"></main>
 </div>
 
 <!-- MODALES -->
@@ -747,11 +737,6 @@ async function loadAll(){
   DB.clases=Array.isArray(c)?c:[];
   DB.pagos=Array.isArray(p)?p:[];
   console.log('DB cargado — horarios:',DB.horarios.length,'alumnas:',DB.alumnas.length);
-  if(DB.horarios.length===0){
-    document.getElementById('db-warn').style.display='flex';
-  } else {
-    document.getElementById('db-warn').style.display='none';
-  }
   render();
 }
 
@@ -764,14 +749,27 @@ function goTo(page){
   render();
 }
 
+function dbWarnHTML(){
+  return`<div style="display:flex;flex-direction:column;gap:10px;background:#fef3c7;border:1px solid #d97706;border-radius:10px;padding:.85rem 1.1rem;margin-bottom:1.25rem;font-size:13px;color:#92400e;">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <span style="font-size:18px;">⚠️</span>
+      <div style="flex:1;"><strong>No se pudieron cargar los datos desde Supabase.</strong><br>Hacé clic en "Diagnóstico" para ver el error exacto.</div>
+      <button onclick="diagnoseDB()" style="padding:5px 10px;border:1px solid #d97706;border-radius:7px;background:white;color:#92400e;cursor:pointer;font-size:12px;">🔍 Diagnóstico</button>
+      <button onclick="loadAll()" style="padding:5px 10px;border:1px solid #d97706;border-radius:7px;background:white;color:#92400e;cursor:pointer;font-size:12px;">↺ Reintentar</button>
+    </div>
+    <pre id="db-diag" style="display:none;font-size:11px;background:#fff7ed;border-radius:6px;padding:.5rem;word-break:break-all;white-space:pre-wrap;max-height:120px;overflow-y:auto;color:#78350f;margin:0;"></pre>
+  </div>`;
+}
+
 function render(){
   const m=document.getElementById('main');
-  if(currentPage==='inicio')m.innerHTML=rInicio();
-  else if(currentPage==='alumnas')m.innerHTML=rAlumnas();
-  else if(currentPage==='horarios')m.innerHTML=rHorarios();
-  else if(currentPage==='clases')m.innerHTML=rClases();
-  else if(currentPage==='historial')m.innerHTML=rHistorial();
-  else if(currentPage==='pagos')m.innerHTML=rPagos();
+  const warn=DB.horarios.length===0?dbWarnHTML():'';
+  if(currentPage==='inicio')m.innerHTML=warn+rInicio();
+  else if(currentPage==='alumnas')m.innerHTML=warn+rAlumnas();
+  else if(currentPage==='horarios')m.innerHTML=warn+rHorarios();
+  else if(currentPage==='clases')m.innerHTML=warn+rClases();
+  else if(currentPage==='historial')m.innerHTML=warn+rHistorial();
+  else if(currentPage==='pagos')m.innerHTML=warn+rPagos();
 }
 
 // ─── HELPERS ────────────────────────────────────────────
