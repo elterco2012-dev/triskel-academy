@@ -956,12 +956,14 @@ function splitGroupPrice(groupKey){
   let total=parseFloat(totalInput.value)||0;
   const checked=document.querySelectorAll(`#mal-horarios-lista input[type=checkbox][data-group="${groupKey}"]:checked:not(:disabled)`);
   const count=checked.length;
-  // Auto-sugerir desde tarifas si el total no fue ingresado manualmente
-  if(!total&&count>0){
-    const mod=groupKey.split('|')[0];
-    const t=getTarifas();
-    total=t[`${mod}_${count}`]||0;
-    if(total)totalInput.value=total;
+  // Actualizar desde tarifas si el total está vacío O si coincide con una tarifa conocida
+  // (significa que se llenó automáticamente antes, no fue editado a mano)
+  const mod=groupKey.split('|')[0];
+  const t=getTarifas();
+  const tarifaConocida=[1,2,3,4].map(n=>t[`${mod}_${n}`]||0);
+  if(count>0&&(!total||tarifaConocida.includes(total))){
+    const nueva=t[`${mod}_${count}`]||0;
+    if(nueva){total=nueva;totalInput.value=total;}
   }
   const perDay=total>0&&count>0?Math.round(total/count):0;
   document.querySelectorAll(`#mal-horarios-lista input[data-dayinput="${groupKey}"]`).forEach(inp=>{inp.value=perDay||'';});
@@ -1397,8 +1399,8 @@ function rInicio(){
   const activas=DB.alumnas.filter(a=>a.estado==='activa').length;
   const mesActual=new Date().toISOString().slice(0,7);
   const pagosMes=DB.pagos.filter(p=>p.mes===mesActual);
-  const pagados=pagosMes.filter(p=>p.pagado).length;
-  const pendientes=pagosMes.filter(p=>!p.pagado).length;
+  const pagados=new Set(pagosMes.filter(p=>p.pagado).map(p=>p.alumna_id)).size;
+  const pendientes=new Set(DB.alumnas.filter(a=>a.estado==='activa'&&!pagosMes.some(p=>p.alumna_id===a.id&&p.pagado)).map(a=>a.id)).size;
   const totalMes=pagosMes.filter(p=>p.pagado).reduce((s,p)=>s+(p.monto||0),0);
 
   const modCount={mat:0,reformer:0,funcional:0};
