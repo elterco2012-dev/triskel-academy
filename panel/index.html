@@ -954,17 +954,18 @@ function splitGroupPrice(groupKey){
   const totalInput=document.getElementById(`hgp-${groupKey}`);
   if(!totalInput)return;
   let total=parseFloat(totalInput.value)||0;
-  const allCbs=document.querySelectorAll(`#mal-horarios-lista input[type=checkbox][data-group="${groupKey}"]`);
-  const checked=[...allCbs].filter(cb=>cb.checked&&!cb.disabled);
-  const count=checked.length;
+  const allCbs=[...document.querySelectorAll(`#mal-horarios-lista input[type=checkbox][data-group="${groupKey}"]`)];
+  const nuevos=allCbs.filter(cb=>cb.checked&&!cb.disabled);
+  const yaInscrip=allCbs.filter(cb=>cb.checked&&cb.dataset.locked==='true');
+  const count=nuevos.length+yaInscrip.length; // total días del plan (existentes + nuevos)
 
   // Limitar a 2 días: deshabilitar los no marcados si ya se llegó al máximo
   allCbs.forEach(cb=>{
-    if(cb.dataset.locked==='true')return; // no tocar los bloqueados por sistema
-    if(!cb.checked) cb.disabled=count>=2;
+    if(cb.dataset.locked==='true')return;
+    if(!cb.checked)cb.disabled=count>=2;
   });
 
-  // Actualizar tarifa según count (solo si el total está vacío o era una tarifa conocida)
+  // Actualizar tarifa según count total
   const mod=groupKey.split('|')[0];
   const t=getTarifas();
   const tarifasConocidas=[1,2].map(n=>t[`${mod}_${n}`]||0);
@@ -972,6 +973,7 @@ function splitGroupPrice(groupKey){
     const nueva=t[`${mod}_${count}`]||0;
     if(nueva){total=nueva;totalInput.value=total;}
   }
+  // El precio por día para las inscripciones NUEVAS (las ya inscriptas no se tocan)
   const perDay=total>0&&count>0?Math.round(total/count):0;
   document.querySelectorAll(`#mal-horarios-lista input[data-dayinput="${groupKey}"]`).forEach(inp=>{inp.value=perDay||'';});
 }
@@ -997,7 +999,10 @@ function renderModalHorarios(alumnaId){
       lastMod=g.modalidad;
     }
     const isGroup=g.items.length>1;
-    const groupEnrolledTotal=isGroup?g.items.filter(h=>existingIds.has(h.id)).reduce((s,h)=>s+(existingPrices[h.id]||0),0):0;
+    const enrolledInGroup=g.items.filter(h=>existingIds.has(h.id));
+    const enrolledCount=enrolledInGroup.length;
+    const tf=getTarifas();
+    const groupEnrolledTotal=isGroup&&enrolledCount>0?(tf[`${g.modalidad}_${enrolledCount}`]||enrolledInGroup.reduce((s,h)=>s+(existingPrices[h.id]||0),0)):0;
     html+=`<div style="border:1px solid var(--b);border-radius:var(--rs);overflow:hidden;margin-bottom:4px;">`;
     if(isGroup)html+=`<div style="padding:6px 10px;background:var(--s2);font-size:11px;font-weight:600;color:var(--tm);display:flex;align-items:center;justify-content:space-between;gap:8px;">
       <span>${g.hora_inicio}–${g.hora_fin} · elegí 1 o 2 días</span>
