@@ -1557,10 +1557,16 @@ function goToHorarioDetalle(horarioId){
     ${inscs.length?inscs.map(i=>{
       const a=alumnaById(i.alumna_id);
       if(!a)return'';
+      // Precio total del plan: sumar todas las inscripciones de esta alumna en el mismo turno (misma modalidad+hora)
+      const planTotal=DB.inscripciones.filter(x=>{
+        if(x.alumna_id!==i.alumna_id)return false;
+        const h2=DB.horarios.find(y=>y.id===x.horario_id);
+        return h2&&h2.modalidad===h.modalidad&&h2.hora_inicio===h.hora_inicio;
+      }).reduce((s,x)=>s+(x.precio||0),0);
       return`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--b);">
         <div class="avatar" style="width:30px;height:30px;font-size:11px;">${alumnaInits(a.nombre,a.apellido)}</div>
-        <div style="flex:1;font-size:13px;">${a.nombre} ${a.apellido||''}</div>
-        <div style="font-size:12px;color:var(--tm);">$${i.precio||0}/mes</div>
+        <div style="flex:1;font-size:13px;cursor:pointer;" onclick="goTo('ficha',${a.id})">${a.nombre} ${a.apellido||''}</div>
+        <div style="font-size:12px;color:var(--tm);">$${planTotal.toLocaleString('es-AR')}/mes</div>
         <button class="btn btn-s btn-danger" onclick="desinscribir(${i.id})">Baja</button>
       </div>`;
     }).join(''):`<div style="font-size:13px;color:var(--tm);">Sin alumnas inscriptas.</div>`}
@@ -1573,11 +1579,21 @@ function goToHorarioDetalle(horarioId){
 function rClases(){
   const dias=['lun','mar','mie','jue','vie'];
   const diasFull={lun:'Lunes',mar:'Martes',mie:'Miércoles',jue:'Jueves',vie:'Viernes'};
-  return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+  // Rango de la semana actual (lunes a viernes)
+  const hoy=new Date();
+  const dow=hoy.getDay()||7; // 1=lun..7=dom
+  const lunes=new Date(hoy);lunes.setDate(hoy.getDate()-(dow-1));
+  const viernes=new Date(lunes);viernes.setDate(lunes.getDate()+4);
+  const semStart=lunes.toISOString().split('T')[0];
+  const semEnd=viernes.toISOString().split('T')[0];
+  const semLabel=lunes.toLocaleDateString('es-AR',{day:'numeric',month:'short'})+' – '+viernes.toLocaleDateString('es-AR',{day:'numeric',month:'short'});
+
+  return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
     <div class="ptitle" style="margin:0;">Planificar clase</div>
     <button class="btn btn-p" onclick="openModalClase()">+ Nueva clase</button>
   </div>
-  <p style="font-size:13px;color:var(--tm);margin-bottom:1rem;">Tocá un horario para registrar los ejercicios de esa sesión. El historial completo está en <strong>Historial</strong>.</p>
+  <p style="font-size:13px;color:var(--tm);margin-bottom:1rem;">Tocá un horario para registrar la clase de esa sesión. Cada semana se crea una nueva entrada. El historial completo está en <strong>Historial</strong>.</p>
+  <div style="font-size:12px;font-weight:600;color:var(--v);margin-bottom:.75rem;">📅 Semana del ${semLabel}</div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;">
     ${dias.map(dia=>{
       const slots=DB.horarios.filter(h=>h.dia===dia).sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
@@ -1587,12 +1603,17 @@ function rClases(){
         <div style="display:flex;flex-direction:column;gap:6px;">
           ${slots.map(h=>{
             const n=DB.inscripciones.filter(i=>i.horario_id===h.id).length;
-            return`<button onclick="openClaseParaHorario(${h.id})" style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid var(--b);border-radius:var(--rs);background:var(--s);cursor:pointer;text-align:left;width:100%;">
+            const claseHoy=DB.clases.find(c=>c.horario_id===h.id&&c.fecha>=semStart&&c.fecha<=semEnd);
+            const registrada=!!claseHoy;
+            return`<button onclick="openClaseParaHorario(${h.id})" style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid ${registrada?'var(--mat)':'var(--b)'};border-radius:var(--rs);background:${registrada?'var(--matl)':'var(--s)'};cursor:pointer;text-align:left;width:100%;">
               <div>
                 <div style="font-size:13px;font-weight:500;">${h.hora_inicio}–${h.hora_fin}</div>
                 <div style="margin-top:2px;">${modBadge(h.modalidad)}</div>
               </div>
-              <div style="font-size:11px;color:var(--tm);text-align:right;">${n} alumna${n!==1?'s':''}</div>
+              <div style="text-align:right;">
+                <div style="font-size:10px;color:var(--tm);">${n} alumna${n!==1?'s':''}</div>
+                ${registrada?`<div style="font-size:10px;color:var(--mat);font-weight:600;">✓ lista</div>`:`<div style="font-size:10px;color:var(--th);">pendiente</div>`}
+              </div>
             </button>`;
           }).join('')}
         </div>
