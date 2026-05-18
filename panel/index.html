@@ -201,7 +201,11 @@
       </div>
       <div></div>
     </div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:.5rem;">
+    <div style="margin-top:.75rem;">
+      <label>Horarios — seleccioná los días que asiste</label>
+      <div id="mal-horarios-lista" style="margin-top:6px;max-height:260px;overflow-y:auto;"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:.75rem;">
       <button class="btn" onclick="closeModalAlumna()">Cancelar</button>
       <button class="btn btn-p" onclick="saveAlumna()">Guardar</button>
     </div>
@@ -820,6 +824,63 @@ function showMsg(txt,dur=3000){
   el.textContent=txt;el.style.display='block';
   setTimeout(()=>{el.style.display='none';},dur);
 }
+function capColor(n,cap){
+  if(!cap)return'var(--tm)';
+  const p=n/cap;
+  return p>=1?'var(--rd)':p>=0.8?'var(--fun)':'var(--mat)';
+}
+function capText(n,cap){
+  if(!cap)return`${n} alumna${n!==1?'s':''}`;
+  const left=cap-n;
+  if(left<=0)return`${n}/${cap} · COMPLETO`;
+  return`${n}/${cap} · ${left} libre${left!==1?'s':''}`;
+}
+
+function renderModalHorarios(alumnaId){
+  const lista=document.getElementById('mal-horarios-lista');
+  if(!lista)return;
+  const existingIds=alumnaId?new Set(inscByAlumna(alumnaId).map(i=>i.horario_id)):new Set();
+  const modOrder={reformer:0,mat:1,funcional:2};
+  const groups={};
+  DB.horarios.forEach(h=>{
+    const key=`${h.modalidad}|${h.hora_inicio}`;
+    if(!groups[key])groups[key]={modalidad:h.modalidad,hora_inicio:h.hora_inicio,hora_fin:h.hora_fin,items:[]};
+    const n=DB.inscripciones.filter(i=>i.horario_id===h.id).length;
+    groups[key].items.push({...h,inscCount:n});
+  });
+  const sorted=Object.values(groups).sort((a,b)=>(modOrder[a.modalidad]-modOrder[b.modalidad])||a.hora_inicio.localeCompare(b.hora_inicio));
+  sorted.forEach(g=>g.items.sort((a,b)=>DIA_ORDER[a.dia]-DIA_ORDER[b.dia]));
+  let html='';let lastMod=null;
+  sorted.forEach(g=>{
+    if(g.modalidad!==lastMod){
+      html+=`<div style="font-size:10px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;padding:8px 0 3px;">${MOD_LABEL[g.modalidad]}</div>`;
+      lastMod=g.modalidad;
+    }
+    const isGroup=g.items.length>1;
+    html+=`<div style="border:1px solid var(--b);border-radius:var(--rs);overflow:hidden;margin-bottom:4px;">`;
+    if(isGroup)html+=`<div style="padding:4px 10px;background:var(--s2);font-size:11px;font-weight:600;color:var(--tm);">${g.hora_inicio}–${g.hora_fin} · podés inscribirte en 1 o 2 días</div>`;
+    g.items.forEach(h=>{
+      const isFull=h.capacidad&&h.inscCount>=h.capacidad;
+      const isEnrolled=existingIds.has(h.id);
+      const left=h.capacidad?h.capacidad-h.inscCount:null;
+      const cc=isFull?'var(--rd)':left!==null&&left<=2?'var(--fun)':'var(--mat)';
+      const ct=left!==null?(isFull?'COMPLETO':`${left} lugar${left!==1?'es':''}`):h.inscCount+' inscriptas';
+      html+=`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:${isEnrolled?'var(--vl)':'var(--s)'};border-top:${isGroup?'1px solid var(--b)':'none'};">
+        <input type="checkbox" id="hc-${h.id}" value="${h.id}" ${isEnrolled?'checked disabled':isFull&&!isEnrolled?'disabled':''} style="width:15px;height:15px;accent-color:var(--v);flex-shrink:0;">
+        <label for="hc-${h.id}" style="flex:1;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <strong>${DIA_LABEL[h.dia]}</strong>
+          ${!isGroup?`<span style="color:var(--tm);">${h.hora_inicio}–${h.hora_fin}</span>`:''}
+          <span style="font-size:10px;color:${cc};">${ct}</span>
+          ${isEnrolled?`<span style="font-size:10px;color:var(--v);font-weight:600;">✓ ya inscripta</span>`:''}
+        </label>
+        ${!isEnrolled&&!isFull?`<input id="hp-${h.id}" type="number" placeholder="$/mes" min="0" style="width:72px;margin:0;font-size:11px;padding:4px 6px;" onclick="event.stopPropagation()">`:``}
+      </div>`;
+    });
+    html+=`</div>`;
+  });
+  lista.innerHTML=html||`<div style="font-size:12px;color:var(--tm);">Sin horarios configurados.</div>`;
+}
+
 function alumnaById(id){return DB.alumnas.find(a=>a.id===id);}
 function inscByAlumna(aid){return DB.inscripciones.filter(i=>i.alumna_id===aid);}
 
@@ -1096,10 +1157,11 @@ function rHorarios(){
       <div class="hday">${DIA_LABEL[dia]}</div>
       ${slots.map(s=>{
         const inscs=DB.inscripciones.filter(i=>i.horario_id===s.id);
+        const cc=capColor(inscs.length,s.capacidad);
         return`<div class="hslot ${s.modalidad}" onclick="goToHorarioDetalle(${s.id})">
           <div class="hslot-time">${s.hora_inicio}–${s.hora_fin}</div>
           <div class="hslot-mod ${s.modalidad}">${MOD_LABEL[s.modalidad]||s.modalidad}</div>
-          <div class="hslot-n">${inscs.length} alumna${inscs.length!==1?'s':''}</div>
+          <div class="hslot-n" style="color:${cc};font-weight:500;">${capText(inscs.length,s.capacidad)}</div>
         </div>`;
       }).join('')}
     </div>`;
@@ -1122,7 +1184,7 @@ function goToHorarioDetalle(horarioId){
       <div style="margin-top:4px;">${modBadge(h.modalidad)}</div></div>
       <button class="btn btn-s btn-p" onclick="openClaseParaHorario(${horarioId})">+ Registrar clase</button>
     </div>
-    <div class="ctitle">Alumnas inscriptas (${inscs.length})</div>
+    <div class="ctitle" style="color:${capColor(inscs.length,h.capacidad)};">Alumnas inscriptas · ${capText(inscs.length,h.capacidad)}</div>
     ${inscs.length?inscs.map(i=>{
       const a=alumnaById(i.alumna_id);
       if(!a)return'';
@@ -1267,30 +1329,33 @@ function openModalAlumna(id){
   document.getElementById('mal-email').value=a?.email||'';
   document.getElementById('mal-notas').value=a?.notas||'';
   document.getElementById('mal-diapago').value=a?.dia_pago||'';
+  renderModalHorarios(id||null);
   document.getElementById('modal-alumna').style.display='flex';
 }
 function closeModalAlumna(){document.getElementById('modal-alumna').style.display='none';}
 async function saveAlumna(){
   const nombre=document.getElementById('mal-nombre').value.trim();
   if(!nombre){document.getElementById('mal-err').textContent='El nombre es obligatorio.';return;}
-  const diapago=parseInt(document.getElementById('mal-diapago').value)||null;
   const params={
     p_nombre:nombre,
     p_apellido:document.getElementById('mal-apellido').value.trim()||null,
     p_tel:document.getElementById('mal-tel').value.trim()||null,
     p_email:document.getElementById('mal-email').value.trim()||null,
     p_notas:document.getElementById('mal-notas').value.trim()||null,
-    p_dia_pago:diapago,
+    p_dia_pago:parseInt(document.getElementById('mal-diapago').value)||null,
   };
-  if(_editAlumnaId){
-    const{error}=await rpc('triskel_save_alumna',{...params,p_id:_editAlumnaId});
-    if(error){document.getElementById('mal-err').textContent='Error al guardar.';return;}
-    showMsg('✓ Alumna actualizada');
-  } else {
-    const{error}=await rpc('triskel_save_alumna',{...params,p_estado:'activa'});
-    if(error){document.getElementById('mal-err').textContent='Error al guardar.';return;}
-    showMsg('✓ Alumna creada');
+  if(_editAlumnaId)params.p_id=_editAlumnaId;
+  else params.p_estado='activa';
+  const{data:alumnaId,error}=await rpc('triskel_save_alumna',params);
+  if(error){document.getElementById('mal-err').textContent='Error al guardar.';return;}
+  // Crear inscripciones para los horarios seleccionados (solo los no existentes)
+  const checks=document.querySelectorAll('#mal-horarios-lista input[type=checkbox]:checked:not(:disabled)');
+  for(const cb of checks){
+    const hId=parseInt(cb.value);
+    const precio=parseFloat(document.getElementById(`hp-${hId}`)?.value)||0;
+    await rpc('triskel_insert_inscripcion',{p_alumna_id:alumnaId,p_horario_id:hId,p_precio:precio});
   }
+  showMsg(_editAlumnaId?'✓ Alumna actualizada':'✓ Alumna creada');
   closeModalAlumna();
   await loadAll();
 }
