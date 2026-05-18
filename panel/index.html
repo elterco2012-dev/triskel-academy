@@ -230,9 +230,12 @@
     <div class="frow" style="margin-top:4px;">
       <div>
         <label>Día de pago (1–31)</label>
-        <input id="mal-diapago" type="number" min="1" max="31" placeholder="Ej: 10 (día del mes que paga)">
+        <input id="mal-diapago" type="number" min="1" max="31" placeholder="Ej: 10">
       </div>
-      <div></div>
+      <div>
+        <label>Cumpleaños (DD/MM)</label>
+        <input id="mal-cumple" placeholder="Ej: 15/06">
+      </div>
     </div>
     <div style="margin-top:.75rem;">
       <label>Horarios — seleccioná los días que asiste</label>
@@ -327,6 +330,21 @@
   </div>
 </div>
 
+<!-- MODAL RESUMEN MENSUAL -->
+<div class="modal-bg" id="modal-resumen" style="display:none" onclick="if(event.target===this)closeResumenMes()">
+  <div class="modal" style="max-width:480px;">
+    <h3>Resumen mensual</h3>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:1rem;">
+      <input type="month" id="res-mes" onchange="generarResumen()" style="margin:0;flex:1;">
+      <button class="btn btn-p" onclick="copiarResumen()">📋 Copiar</button>
+    </div>
+    <pre id="res-output" style="background:var(--s2);border-radius:var(--rs);padding:.75rem;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word;max-height:360px;overflow-y:auto;font-family:'DM Sans',sans-serif;"></pre>
+    <div style="display:flex;justify-content:flex-end;margin-top:.75rem;">
+      <button class="btn" onclick="closeResumenMes()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <!-- BARRA INFERIOR MOBILE -->
 <nav class="bnav" id="bnav">
   <a href="#" onclick="goTo('inicio');return false;" id="bn-inicio"><span class="bi">🏠</span><span>Inicio</span></a>
@@ -345,9 +363,9 @@ const sb=supabase.createClient(SB_URL,SB_KEY);
 const DIA_LABEL={lun:'Lunes',mar:'Martes',mie:'Miércoles',jue:'Jueves',vie:'Viernes'};
 const DIA_ORDER={lun:0,mar:1,mie:2,jue:3,vie:4};
 const MOD_LABEL={mat:'Mat',reformer:'Reformer',funcional:'Funcional'};
-const MOD_CLASS={mat:'mat',reformer:'reformer',funcional:'funcional'};
+const MOD_CLASS={mat:'mat',reformer:'ref',funcional:'fun'};
 
-let DB={horarios:[],alumnas:[],inscripciones:[],clases:[],pagos:[]};
+let DB={horarios:[],alumnas:[],inscripciones:[],clases:[],pagos:[],espera:[],observaciones:[]};
 let currentPage='inicio';
 let _claseEjs=[];
 let _editClaseId=null;
@@ -747,6 +765,8 @@ async function loadAll(){
   DB.inscripciones=data?.inscripciones||[];
   DB.clases=data?.clases||[];
   DB.pagos=data?.pagos||[];
+  DB.espera=data?.espera||[];
+  DB.observaciones=data?.observaciones||[];
   console.log('DB cargado — horarios:',DB.horarios.length,'alumnas:',DB.alumnas.length);
   render();
 }
@@ -927,6 +947,140 @@ function renderModalHorarios(alumnaId){
 function alumnaById(id){return DB.alumnas.find(a=>a.id===id);}
 function inscByAlumna(aid){return DB.inscripciones.filter(i=>i.alumna_id===aid);}
 
+// ─── PAUSA / ESTADO ─────────────────────────────────────
+async function pausarAlumna(id){
+  if(!confirm('¿Pausar a esta alumna? No recibirá recordatorios de pago.'))return;
+  await rpc('triskel_set_estado_alumna',{p_id:id,p_estado:'pausada'});
+  showMsg('Alumna pausada');await loadAll();
+}
+async function reactivarAlumna(id){
+  await rpc('triskel_set_estado_alumna',{p_id:id,p_estado:'activa'});
+  showMsg('✓ Alumna reactivada');await loadAll();
+}
+async function darDeBajaAlumna(id){
+  if(!confirm('¿Dar de baja definitiva a esta alumna?'))return;
+  await rpc('triskel_set_estado_alumna',{p_id:id,p_estado:'baja'});
+  showMsg('Alumna dada de baja');await loadAll();
+}
+
+// ─── LISTA DE ESPERA ────────────────────────────────────
+async function agregarEspera(alumnaId,horarioId){
+  await rpc('triskel_insert_espera',{p_alumna_id:alumnaId,p_horario_id:horarioId});
+  showMsg('✓ Agregada a lista de espera');await loadAll();
+}
+async function removerEspera(id){
+  await rpc('triskel_remove_espera',{p_id:id});
+  showMsg('Removida de lista de espera');await loadAll();
+}
+function rEsperaAlerta(){
+  const alertas=[];
+  DB.horarios.forEach(h=>{
+    const inscs=DB.inscripciones.filter(i=>i.horario_id===h.id);
+    const espera=DB.espera.filter(e=>e.horario_id===h.id);
+    if(espera.length>0&&h.capacidad&&inscs.length<h.capacidad){
+      alertas.push({h,espera,libres:h.capacidad-inscs.length});
+    }
+  });
+  if(!alertas.length)return'';
+  return`<div class="card" style="border-color:var(--ref);margin-bottom:1rem;">
+    <div class="ctitle" style="color:var(--ref);">🔔 Lugares disponibles con lista de espera</div>
+    ${alertas.map(({h,espera,libres})=>{
+      const e=espera[0];const a=alumnaById(e.alumna_id);
+      const wa=a?.tel?waMsg(a.tel,a?.nombre||'',0,'hoy'):'';
+      return`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--b);">
+        <div style="flex:1;font-size:13px;">${modBadge(h.modalidad)} ${DIA_LABEL[h.dia]} ${h.hora_inicio} · <strong>${libres} lugar${libres!==1?'es':''} libre${libres!==1?'s':''}</strong></div>
+        <div style="font-size:12px;color:var(--tm);">Espera: ${a?`${a.nombre} ${a.apellido||''}`:e.alumna_id}</div>
+        ${a?.tel?`<a href="https://wa.me/${a.tel}?text=${encodeURIComponent(`Hola ${a.nombre}! 🌿 Te avisamos que hay un lugar disponible en Reformer ${DIA_LABEL[h.dia]} ${h.hora_inicio}. ¿Te anotamos?`)}" target="_blank" class="btn btn-s" style="background:var(--matl);border-color:var(--mat);color:var(--mat);text-decoration:none;">💬 Avisar</a>`:''}
+        <button class="btn btn-s btn-danger" onclick="removerEspera(${e.id})">Quitar</button>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+// ─── CUMPLEAÑOS ──────────────────────────────────────────
+function parseCumple(str){
+  if(!str)return null;
+  const p=str.split('/');
+  if(p.length!==2)return null;
+  return{dia:parseInt(p[0]),mes:parseInt(p[1])};
+}
+function getBirthdays(){
+  const today=new Date();const res=[];
+  const dias=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  DB.alumnas.filter(a=>a.estado==='activa'&&a.cumpleanos).forEach(a=>{
+    const c=parseCumple(a.cumpleanos);if(!c)return;
+    for(let i=0;i<7;i++){
+      const d=new Date(today);d.setDate(today.getDate()+i);
+      if(d.getDate()===c.dia&&d.getMonth()+1===c.mes){
+        res.push({...a,diasFaltan:i,diaLabel:i===0?'HOY 🎉':i===1?'mañana':dias[d.getDay()]});
+        break;
+      }
+    }
+  });
+  return res.sort((a,b)=>a.diasFaltan-b.diasFaltan);
+}
+function rCumpleanos(){
+  const bd=getBirthdays();if(!bd.length)return'';
+  return`<div class="card" style="border-color:var(--fun);margin-bottom:1rem;">
+    <div class="ctitle" style="color:var(--fun);">🎂 Cumpleaños esta semana</div>
+    ${bd.map(a=>{
+      const wa=a.tel?`https://wa.me/${a.tel}?text=${encodeURIComponent(`Hola ${a.nombre}! 🌿🎉 Desde Triskel Academy te deseamos un muy feliz cumpleaños! Que sea un día muy especial. Un abrazo!`)}`:null;
+      return`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--b);">
+        <div class="avatar" style="width:30px;height:30px;font-size:11px;">${alumnaInits(a.nombre,a.apellido)}</div>
+        <div style="flex:1;font-size:13px;font-weight:500;">${a.nombre} ${a.apellido||''}</div>
+        <div style="font-size:12px;color:var(--fun);font-weight:500;">${a.diaLabel}</div>
+        ${wa?`<a href="${wa}" target="_blank" style="padding:4px 10px;border:1px solid var(--fun);border-radius:var(--rs);background:var(--funl);color:var(--fun);font-size:11px;text-decoration:none;">💬 Saludar</a>`:''}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+// ─── OBSERVACIONES ───────────────────────────────────────
+async function saveObs(alumnaId){
+  const txt=document.getElementById(`obs-txt-${alumnaId}`)?.value.trim();
+  const fecha=document.getElementById(`obs-fecha-${alumnaId}`)?.value||new Date().toISOString().split('T')[0];
+  if(!txt){showMsg('Escribí una observación');return;}
+  await rpc('triskel_save_observacion',{p_alumna_id:alumnaId,p_texto:txt,p_fecha:fecha});
+  showMsg('✓ Observación guardada');await loadAll();
+}
+async function deleteObs(id){
+  if(!confirm('¿Borrar esta observación?'))return;
+  await rpc('triskel_delete_observacion',{p_id:id});
+  showMsg('Observación borrada');await loadAll();
+}
+
+// ─── RESUMEN MENSUAL ─────────────────────────────────────
+function openResumenMes(){
+  const mes=document.getElementById('pag-mes')?.value||new Date().toISOString().slice(0,7);
+  document.getElementById('res-mes').value=mes;
+  generarResumen();
+  document.getElementById('modal-resumen').style.display='flex';
+}
+function closeResumenMes(){document.getElementById('modal-resumen').style.display='none';}
+function generarResumen(){
+  const mes=document.getElementById('res-mes').value;
+  const pagosDelMes=DB.pagos.filter(p=>p.mes===mes);
+  const pagados=pagosDelMes.filter(p=>p.pagado);
+  const pendientes=pagosDelMes.filter(p=>!p.pagado);
+  const total=pagados.reduce((s,p)=>s+(p.monto||0),0);
+  const clasesDelMes=DB.clases.filter(c=>c.fecha&&c.fecha.startsWith(mes));
+  const alumnasPagaron=[...new Set(pagados.map(p=>p.alumna_id))].map(id=>alumnaById(id)).filter(Boolean);
+  const alumnasPendientes=[...new Set(pendientes.map(p=>p.alumna_id))].map(id=>alumnaById(id)).filter(Boolean);
+
+  const txt=`RESUMEN ${mesLabel(mes).toUpperCase()} — TRISKEL ACADEMY
+${'─'.repeat(40)}
+💰 Total cobrado: $${total.toLocaleString('es-AR')}
+✅ Pagaron (${alumnasPagaron.length}): ${alumnasPagaron.map(a=>`${a.nombre} ${a.apellido||''}`).join(', ')||'—'}
+⏳ Pendientes (${alumnasPendientes.length}): ${alumnasPendientes.map(a=>`${a.nombre} ${a.apellido||''}`).join(', ')||'—'}
+📋 Clases dadas: ${clasesDelMes.length}
+${'─'.repeat(40)}`;
+
+  document.getElementById('res-output').textContent=txt;
+}
+function copiarResumen(){
+  navigator.clipboard.writeText(document.getElementById('res-output').textContent).then(()=>showMsg('✓ Copiado al portapapeles'));
+}
+
 // ─── VISTA DE HOY ───────────────────────────────────────
 function rVistaHoy(){
   const dow=new Date().getDay();
@@ -1008,6 +1162,8 @@ function rFicha(){
   const deuda=pagosList.filter(p=>!p.pagado).reduce((s,p)=>s+(p.monto||0),0);
   const horarioIds=new Set(inscs.map(i=>i.horario_id));
   const clasesAlumna=DB.clases.filter(c=>horarioIds.has(c.horario_id)).sort((x,y)=>y.fecha.localeCompare(x.fecha)).slice(0,12);
+  const obsAlumna=DB.observaciones.filter(o=>o.alumna_id===a.id);
+  const hoy=new Date().toISOString().split('T')[0];
   const desde=a.created_at?new Date(a.created_at).toLocaleDateString('es-AR',{month:'short',year:'numeric'}):'';
   return`
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.5rem;">
@@ -1077,6 +1233,20 @@ function rFicha(){
     }).join(''):`<div style="font-size:13px;color:var(--tm);">Sin pagos registrados.</div>`}
   </div>
 
+  <div class="card" style="margin-bottom:1rem;">
+    <div class="ctitle">Seguimiento / Observaciones</div>
+    <div style="display:flex;gap:6px;margin-bottom:.75rem;flex-wrap:wrap;">
+      <input id="obs-txt-${a.id}" type="text" placeholder="Ej: Mejoró estabilidad lumbar..." style="flex:1;min-width:160px;margin:0;font-size:12px;">
+      <input id="obs-fecha-${a.id}" type="date" value="${hoy}" style="width:130px;margin:0;font-size:12px;">
+      <button class="btn btn-p" style="white-space:nowrap;" onclick="saveObs(${a.id})">+ Agregar</button>
+    </div>
+    ${obsAlumna.length?obsAlumna.map(o=>`<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--b);align-items:flex-start;">
+      <div style="font-size:11px;color:var(--tm);white-space:nowrap;padding-top:2px;">${o.fecha}</div>
+      <div style="flex:1;font-size:13px;">${o.texto}</div>
+      <button class="btn btn-s btn-danger" onclick="deleteObs(${o.id})">✕</button>
+    </div>`).join(''):`<div style="font-size:12px;color:var(--th);">Sin observaciones aún.</div>`}
+  </div>
+
   ${clasesAlumna.length?`<div class="card">
     <div class="ctitle">Últimas clases de sus horarios</div>
     ${clasesAlumna.map(c=>{
@@ -1114,6 +1284,8 @@ function rInicio(){
   const ultimasClases=DB.clases.slice(0,5);
 
   return`<div class="ptitle">Inicio</div>
+  ${rCumpleanos()}
+  ${rEsperaAlerta()}
   ${rRecordatorios()}
   ${rVistaHoy()}
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem;">
@@ -1150,7 +1322,8 @@ function rInicio(){
 // ─── ALUMNAS ────────────────────────────────────────────
 function rAlumnas(){
   const activas=DB.alumnas.filter(a=>a.estado==='activa');
-  const otras=DB.alumnas.filter(a=>a.estado!=='activa');
+  const pausadas=DB.alumnas.filter(a=>a.estado==='pausada');
+  const otras=DB.alumnas.filter(a=>a.estado==='baja');
   const mesActual=new Date().toISOString().slice(0,7);
 
   function alumnaCard(a){
@@ -1170,9 +1343,11 @@ function rAlumnas(){
         </div>
       </div>
       ${inscs.length>0?pago:''}
-      <div style="display:flex;gap:6px;">
-        <button class="btn btn-s" onclick="openModalInsc(${a.id})">+ Horario</button>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <button class="btn btn-s" onclick="openModalAlumna(${a.id})">Editar</button>
+        ${a.estado==='activa'?`<button class="btn btn-s" onclick="pausarAlumna(${a.id})">⏸ Pausar</button>`:''}
+        ${a.estado==='pausada'?`<button class="btn btn-s btn-p" onclick="reactivarAlumna(${a.id})">▶ Reactivar</button>`:''}
+        ${a.estado!=='baja'?`<button class="btn btn-s btn-danger" onclick="darDeBajaAlumna(${a.id})">Baja</button>`:''}
       </div>
     </div>`;
   }
@@ -1185,8 +1360,12 @@ function rAlumnas(){
     <div class="ctitle">Activas</div>
     ${activas.length?activas.map(alumnaCard).join(''):`<div style="font-size:13px;color:var(--tm);">Sin alumnas activas.</div>`}
   </div>
+  ${pausadas.length?`<div class="card">
+    <div class="ctitle" style="color:var(--fun);">⏸ Pausadas (${pausadas.length})</div>
+    ${pausadas.map(alumnaCard).join('')}
+  </div>`:''}
   ${otras.length?`<div class="card">
-    <div class="ctitle">Pausadas / Bajas</div>
+    <div class="ctitle">Bajas</div>
     ${otras.map(alumnaCard).join('')}
   </div>`:''}`;
 }
@@ -1228,6 +1407,14 @@ function goToHorarioDetalle(horarioId){
       <button class="btn btn-s btn-p" onclick="openClaseParaHorario(${horarioId})">+ Registrar clase</button>
     </div>
     <div class="ctitle" style="color:${capColor(inscs.length,h.capacidad)};">Alumnas inscriptas · ${capText(inscs.length,h.capacidad)}</div>
+    ${(()=>{
+      const esp=DB.espera.filter(e=>e.horario_id===horarioId);
+      if(!esp.length)return'';
+      return`<div style="margin-bottom:.5rem;padding:.5rem .75rem;background:var(--refl);border-radius:var(--rs);font-size:12px;">
+        <strong style="color:var(--ref);">Lista de espera (${esp.length}):</strong> ${esp.map(e=>{const a=alumnaById(e.alumna_id);return a?`${a.nombre} ${a.apellido||''}`:e.alumna_id;}).join(', ')}
+        ${esp.map(e=>`<button class="btn btn-s btn-danger" style="margin-left:4px;" onclick="removerEspera(${e.id})">✕ ${alumnaById(e.alumna_id)?.nombre||''}</button>`).join('')}
+      </div>`;
+    })()}
     ${inscs.length?inscs.map(i=>{
       const a=alumnaById(i.alumna_id);
       if(!a)return'';
@@ -1341,6 +1528,7 @@ function rPagos(){
     <div class="ptitle" style="margin:0;">Pagos</div>
     <div style="display:flex;gap:8px;align-items:center;">
       <input type="month" id="pag-mes" value="${filtMes}" onchange="render()" style="margin:0;width:150px;">
+      <button class="btn" onclick="openResumenMes()">📊 Resumen</button>
       <button class="btn btn-p" onclick="openModalPago()">+ Registrar pago</button>
     </div>
   </div>
@@ -1372,6 +1560,7 @@ function openModalAlumna(id){
   document.getElementById('mal-email').value=a?.email||'';
   document.getElementById('mal-notas').value=a?.notas||'';
   document.getElementById('mal-diapago').value=a?.dia_pago||'';
+  document.getElementById('mal-cumple').value=a?.cumpleanos||'';
   renderModalHorarios(id||null);
   document.getElementById('modal-alumna').style.display='flex';
 }
@@ -1386,6 +1575,7 @@ async function saveAlumna(){
     p_email:document.getElementById('mal-email').value.trim()||null,
     p_notas:document.getElementById('mal-notas').value.trim()||null,
     p_dia_pago:parseInt(document.getElementById('mal-diapago').value)||null,
+    p_cumpleanos:document.getElementById('mal-cumple').value.trim()||null,
   };
   if(_editAlumnaId)params.p_id=_editAlumnaId;
   else params.p_estado='activa';
