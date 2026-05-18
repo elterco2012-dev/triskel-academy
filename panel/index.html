@@ -1382,7 +1382,10 @@ function rInicio(){
   const totalMes=pagosMes.filter(p=>p.pagado).reduce((s,p)=>s+(p.monto||0),0);
 
   const modCount={mat:0,reformer:0,funcional:0};
-  DB.inscripciones.forEach(i=>{const mod=i.triskel_horarios?.modalidad;if(mod)modCount[mod]=(modCount[mod]||0)+1;});
+  // Contar alumnas únicas por modalidad (no inscripciones)
+  const modAlumnas={mat:new Set(),reformer:new Set(),funcional:new Set()};
+  DB.inscripciones.forEach(i=>{const mod=i.triskel_horarios?.modalidad;if(mod&&modAlumnas[mod])modAlumnas[mod].add(i.alumna_id);});
+  Object.keys(modCount).forEach(m=>modCount[m]=modAlumnas[m].size);
 
   const ultimasClases=DB.clases.slice(0,5);
 
