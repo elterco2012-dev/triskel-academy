@@ -954,14 +954,21 @@ function splitGroupPrice(groupKey){
   const totalInput=document.getElementById(`hgp-${groupKey}`);
   if(!totalInput)return;
   let total=parseFloat(totalInput.value)||0;
-  const checked=document.querySelectorAll(`#mal-horarios-lista input[type=checkbox][data-group="${groupKey}"]:checked:not(:disabled)`);
+  const allCbs=document.querySelectorAll(`#mal-horarios-lista input[type=checkbox][data-group="${groupKey}"]`);
+  const checked=[...allCbs].filter(cb=>cb.checked&&!cb.disabled);
   const count=checked.length;
-  // Actualizar desde tarifas si el total está vacío O si coincide con una tarifa conocida
-  // (significa que se llenó automáticamente antes, no fue editado a mano)
+
+  // Limitar a 2 días: deshabilitar los no marcados si ya se llegó al máximo
+  allCbs.forEach(cb=>{
+    if(cb.dataset.locked==='true')return; // no tocar los bloqueados por sistema
+    if(!cb.checked) cb.disabled=count>=2;
+  });
+
+  // Actualizar tarifa según count (solo si el total está vacío o era una tarifa conocida)
   const mod=groupKey.split('|')[0];
   const t=getTarifas();
-  const tarifaConocida=[1,2,3,4].map(n=>t[`${mod}_${n}`]||0);
-  if(count>0&&(!total||tarifaConocida.includes(total))){
+  const tarifasConocidas=[1,2].map(n=>t[`${mod}_${n}`]||0);
+  if(count>0&&(!total||tarifasConocidas.includes(total))){
     const nueva=t[`${mod}_${count}`]||0;
     if(nueva){total=nueva;totalInput.value=total;}
   }
@@ -1004,7 +1011,7 @@ function renderModalHorarios(alumnaId){
       const ct=left!==null?(isFull?'COMPLETO':`${left} lugar${left!==1?'es':''}`):h.inscCount+' inscriptas';
       const showPrice=!isEnrolled&&!isFull;
       html+=`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:${isEnrolled?'var(--vl)':'var(--s)'};border-top:1px solid var(--b);">
-        <input type="checkbox" id="hc-${h.id}" value="${h.id}" data-group="${g.key}" data-isgroup="${isGroup}" ${isEnrolled?'checked disabled':isFull&&!isEnrolled?'disabled':''} ${isGroup&&!isEnrolled?`onchange="splitGroupPrice('${g.key}')"`:''} style="width:15px;height:15px;accent-color:var(--v);flex-shrink:0;">
+        <input type="checkbox" id="hc-${h.id}" value="${h.id}" data-group="${g.key}" data-isgroup="${isGroup}" ${(isEnrolled||isFull)?'data-locked="true"':''} ${isEnrolled?'checked disabled':isFull&&!isEnrolled?'disabled':''} ${isGroup&&!isEnrolled&&!isFull?`onchange="splitGroupPrice('${g.key}')"`:''} style="width:15px;height:15px;accent-color:var(--v);flex-shrink:0;">
         <label for="hc-${h.id}" style="flex:1;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
           <strong>${DIA_LABEL[h.dia]}</strong>
           ${!isGroup?`<span style="color:var(--tm);">${h.hora_inicio}–${h.hora_fin}</span>`:''}
