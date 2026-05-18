@@ -1351,7 +1351,7 @@ function rFicha(){
             ?`<span style="font-size:11px;background:var(--matl);color:var(--mat);padding:2px 8px;border-radius:99px;">✓ ${fechaPago||'Pagó'}</span>
               <button class="btn btn-s btn-danger" onclick="desmarcarPagosPlan('${ids.join(',')}')" title="Desmarcar">✕</button>`
             :`<span style="font-size:11px;background:var(--rl);color:var(--rd);padding:2px 8px;border-radius:99px;">Pendiente</span>
-              ${ids.map(id=>`<button class="btn btn-s btn-p" onclick="marcarPago(${id})">✓ Marcar pagado</button>`).join('')}`
+              <button class="btn btn-s btn-p" onclick="marcarPagosPlan('${ids.join(',')}')">✓ Marcar pagado</button>`
           }
         </div>`;
       }).join('');
@@ -1564,20 +1564,33 @@ function goToHorarioDetalle(horarioId){
 
 // ─── CLASES (planificador) ──────────────────────────────
 function rClases(){
-  const hoy=new Date().toISOString().split('T')[0];
+  const dias=['lun','mar','mie','jue','vie'];
+  const diasFull={lun:'Lunes',mar:'Martes',mie:'Miércoles',jue:'Jueves',vie:'Viernes'};
   return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
     <div class="ptitle" style="margin:0;">Planificar clase</div>
     <button class="btn btn-p" onclick="openModalClase()">+ Nueva clase</button>
   </div>
-  <div class="card">
-    <div class="ctitle">Próximas / sin registrar</div>
-    <p style="font-size:13px;color:var(--tm);">Creá una clase nueva para registrar los ejercicios de esa sesión.
-    El historial completo está en <strong>Historial</strong>.</p>
-    <div style="margin-top:.75rem;display:flex;gap:8px;flex-wrap:wrap;">
-      ${DB.horarios.map(h=>`<button class="btn" onclick="openClaseParaHorario(${h.id})" style="font-size:12px;">
-        ${DIA_LABEL[h.dia]} ${h.hora_inicio} ${modBadge(h.modalidad)}
-      </button>`).join('')}
-    </div>
+  <p style="font-size:13px;color:var(--tm);margin-bottom:1rem;">Tocá un horario para registrar los ejercicios de esa sesión. El historial completo está en <strong>Historial</strong>.</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;">
+    ${dias.map(dia=>{
+      const slots=DB.horarios.filter(h=>h.dia===dia).sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
+      if(!slots.length)return'';
+      return`<div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--tm);padding:4px 0 8px;">${diasFull[dia]}</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          ${slots.map(h=>{
+            const n=DB.inscripciones.filter(i=>i.horario_id===h.id).length;
+            return`<button onclick="openClaseParaHorario(${h.id})" style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid var(--b);border-radius:var(--rs);background:var(--s);cursor:pointer;text-align:left;width:100%;">
+              <div>
+                <div style="font-size:13px;font-weight:500;">${h.hora_inicio}–${h.hora_fin}</div>
+                <div style="margin-top:2px;">${modBadge(h.modalidad)}</div>
+              </div>
+              <div style="font-size:11px;color:var(--tm);text-align:right;">${n} alumna${n!==1?'s':''}</div>
+            </button>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('')}
   </div>`;
 }
 
@@ -1633,28 +1646,52 @@ function rPagos(){
   const [filtMes,setFiltMes]=[document.getElementById('pag-mes')?.value||mesActual,null];
 
   const pagosDelMes=DB.pagos.filter(p=>p.mes===filtMes);
-  const pagados=pagosDelMes.filter(p=>p.pagado);
-  const pendientes=pagosDelMes.filter(p=>!p.pagado);
-  const total=pagados.reduce((s,p)=>s+(p.monto||0),0);
 
-  function pagoRow(p){
-    const a=alumnaById(p.alumna_id);
-    const insc=DB.inscripciones.find(i=>i.id===p.inscripcion_id);
-    const h=insc?DB.horarios.find(x=>x.id===insc.horario_id):null;
-    return`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--b);">
+  // Agrupar por alumna + plan (misma modalidad + hora)
+  function agruparPagos(lista){
+    const grupos={};
+    lista.forEach(p=>{
+      const insc=DB.inscripciones.find(i=>i.id===p.inscripcion_id);
+      const h=insc?DB.horarios.find(x=>x.id===insc.horario_id):null;
+      const key=h?`${p.alumna_id}|${h.modalidad}|${h.hora_inicio}`:`${p.alumna_id}|${p.id}`;
+      if(!grupos[key])grupos[key]={p,h,items:[]};
+      grupos[key].items.push(p);
+    });
+    return Object.values(grupos);
+  }
+
+  function planRow(g){
+    const a=alumnaById(g.p.alumna_id);
+    const h=g.h;
+    const total=g.items.reduce((s,p)=>s+(p.monto||0),0);
+    const esPlan=g.items.length>1;
+    const ids=g.items.map(p=>p.id);
+    const todoPagado=g.items.every(p=>p.pagado);
+    const diasLabel=esPlan?g.items.map(p=>{
+      const i2=DB.inscripciones.find(x=>x.id===p.inscripcion_id);
+      const h2=i2?DB.horarios.find(x=>x.id===i2.horario_id):null;
+      return h2?DIA_LABEL[h2.dia]:'';
+    }).filter(Boolean).join('+'):(h?DIA_LABEL[h.dia]:'');
+    return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--b);">
       <div class="avatar" style="width:30px;height:30px;font-size:11px;">${alumnaInits(a?.nombre,a?.apellido)}</div>
       <div style="flex:1;">
         <div style="font-size:13px;font-weight:500;">${a?.nombre||'?'} ${a?.apellido||''}</div>
-        <div style="font-size:11px;color:var(--tm);">${h?`${DIA_LABEL[h.dia]} ${h.hora_inicio} · `:''}${h?MOD_LABEL[h.modalidad]||h.modalidad:''}</div>
+        <div style="font-size:11px;color:var(--tm);">${diasLabel}${h?' '+h.hora_inicio+' · '+MOD_LABEL[h.modalidad]:''}${esPlan?' · Plan':''}</div>
       </div>
-      <div style="font-size:13px;font-weight:500;">$${p.monto||0}</div>
-      ${p.pagado
+      <div style="font-size:13px;font-weight:600;">$${total.toLocaleString('es-AR')}</div>
+      ${todoPagado
         ?`<span style="font-size:11px;background:var(--matl);color:var(--mat);padding:2px 8px;border-radius:99px;">✓ Pagó</span>
-          <button class="btn btn-s btn-danger" onclick="desmarcarPago(${p.id})">Desmarcar</button>`
-        :`<button class="btn btn-s btn-p" onclick="marcarPago(${p.id})">✓ Marcar pagado</button>`
+          <button class="btn btn-s btn-danger" onclick="desmarcarPagosPlan('${ids.join(',')}')">Desmarcar</button>`
+        :`<button class="btn btn-s btn-p" onclick="marcarPagosPlan('${ids.join(',')}')">✓ Marcar pagado</button>`
       }
     </div>`;
   }
+
+  const pagados=agruparPagos(pagosDelMes.filter(p=>p.pagado));
+  const pendientes=agruparPagos(pagosDelMes.filter(p=>!p.pagado));
+  const total=pagosDelMes.filter(p=>p.pagado).reduce((s,p)=>s+(p.monto||0),0);
+  const alumnasPagaron=new Set(pagosDelMes.filter(p=>p.pagado).map(p=>p.alumna_id)).size;
+  const alumnasPendientes=new Set(pagosDelMes.filter(p=>!p.pagado).map(p=>p.alumna_id)).size;
 
   return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
     <div class="ptitle" style="margin:0;">Pagos</div>
@@ -1665,17 +1702,17 @@ function rPagos(){
     </div>
   </div>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem;">
-    <div class="metric"><div class="mlabel">Pagaron</div><div class="mval g">${pagados.length}</div></div>
-    <div class="metric"><div class="mlabel">Pendientes</div><div class="mval" style="color:var(--fun);">${pendientes.length}</div></div>
+    <div class="metric"><div class="mlabel">Pagaron</div><div class="mval g">${alumnasPagaron}</div></div>
+    <div class="metric"><div class="mlabel">Pendientes</div><div class="mval" style="color:var(--fun);">${alumnasPendientes}</div></div>
     <div class="metric"><div class="mlabel">Total cobrado</div><div class="mval">$${total.toLocaleString('es-AR')}</div></div>
   </div>
   ${pendientes.length?`<div class="card">
     <div class="ctitle" style="color:var(--fun);">Pendientes de pago</div>
-    ${pendientes.map(pagoRow).join('')}
+    ${pendientes.map(planRow).join('')}
   </div>`:''}
   ${pagados.length?`<div class="card">
     <div class="ctitle">Pagaron ✓</div>
-    ${pagados.map(pagoRow).join('')}
+    ${pagados.map(planRow).join('')}
   </div>`:''}
   ${!pagosDelMes.length?`<div class="card"><div style="font-size:13px;color:var(--tm);">Sin pagos registrados para ${mesLabel(filtMes)}.</div></div>`:''}`;
 }
@@ -1919,6 +1956,13 @@ async function desmarcarPagosPlan(idsStr){
   for(const id of idsStr.split(',').map(Number))
     await rpc('triskel_mark_pago',{p_id:id,p_pagado:false,p_fecha_pago:null});
   showMsg('Pago desmarcado');
+  await loadAll();
+}
+async function marcarPagosPlan(idsStr){
+  const hoy=new Date().toISOString().split('T')[0];
+  for(const id of idsStr.split(',').map(Number))
+    await rpc('triskel_mark_pago',{p_id:id,p_pagado:true,p_fecha_pago:hoy});
+  showMsg('✓ Pago marcado');
   await loadAll();
 }
 
