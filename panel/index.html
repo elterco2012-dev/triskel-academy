@@ -1781,7 +1781,8 @@ async function savePago(){
   const mes=document.getElementById('mp-mes').value;
   const monto=parseFloat(document.getElementById('mp-monto').value)||0;
   if(!mes){document.getElementById('mp-err').textContent='El mes es obligatorio.';return;}
-  const{error}=await rpc('triskel_insert_pago',{p_alumna_id:alumna_id,p_inscripcion_id:inscripcion_id,p_mes:mes,p_monto:monto});
+  const hoy=new Date().toISOString().split('T')[0];
+  const{error}=await rpc('triskel_insert_pago',{p_alumna_id:alumna_id,p_inscripcion_id:inscripcion_id,p_mes:mes,p_monto:monto,p_pagado:true,p_fecha_pago:hoy});
   if(error){document.getElementById('mp-err').textContent='Error al guardar.';return;}
   showMsg('✓ Pago registrado');
   closeModalPago();
