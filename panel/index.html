@@ -2321,33 +2321,36 @@ function iniciarModoClase(claseId) {
   const notasDiv = document.getElementById('mc-overlay-notas');
   notasDiv.textContent = notas;
   notasDiv.style.display = notas ? 'block' : 'none';
-  // Alumnas inscriptas en este horario para notas rápidas
-  if(h){
-    const inscs=DB.inscripciones.filter(i=>i.horario_id===h.id);
-    const alumnasSec=document.getElementById('mc-overlay-alumnas');
-    const alumnasList=document.getElementById('mc-overlay-alumnas-list');
-    if(inscs.length){
-      alumnasList.innerHTML=inscs.map(i=>{
-        const a=alumnaById(i.alumna_id);
-        if(!a)return'';
-        return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f5f5f5;">
-          <div style="width:32px;height:32px;border-radius:50%;background:#ede9f7;color:#7C5CBF;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${alumnaInits(a.nombre,a.apellido)}</div>
-          <div style="flex:1;font-size:14px;font-weight:500;color:#1a1a2e;">${a.nombre} ${a.apellido||''}</div>
-          <button onclick="abrirNotaRapida(${a.id},this)" style="background:#f3f4f6;border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:#555;">+ Nota</button>
-        </div>
-        <div id="nota-rapida-${a.id}" style="display:none;padding:8px 0 12px 42px;">
-          <textarea id="nota-txt-${a.id}" placeholder="Ej: rodilla — evitar flexión profunda" style="width:100%;height:60px;font-size:13px;border:1px solid #ddd;border-radius:6px;padding:8px;resize:none;font-family:inherit;color:#1a1a2e;background:#fafafa;box-sizing:border-box;"></textarea>
-          <div style="display:flex;gap:6px;margin-top:4px;">
-            <button onclick="guardarNotaRapida(${a.id})" style="background:#7C5CBF;color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;">Guardar</button>
-            <button onclick="document.getElementById('nota-rapida-${a.id}').style.display='none'" style="background:#f3f4f6;border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;">Cancelar</button>
-          </div>
-        </div>`;
-      }).join('');
-      alumnasSec.style.display='block';
-    } else {
-      alumnasSec.style.display='none';
-    }
+  // Notas rápidas: siempre visible, con alumnas del horario destacadas + buscador para cualquier alumna
+  const alumnasSec=document.getElementById('mc-overlay-alumnas');
+  const alumnasList=document.getElementById('mc-overlay-alumnas-list');
+  const inscEnHorario=h?DB.inscripciones.filter(i=>i.horario_id===h.id).map(i=>alumnaById(i.alumna_id)).filter(Boolean):[];
+  const todasActivas=DB.alumnas.filter(a=>a.estado==='activa');
+  function rowNota(a,destacada){
+    return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f5f5f5;">
+      <div style="width:32px;height:32px;border-radius:50%;background:${destacada?'#ede9f7':'#f3f4f6'};color:${destacada?'#7C5CBF':'#555'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${alumnaInits(a.nombre,a.apellido)}</div>
+      <div style="flex:1;font-size:14px;font-weight:${destacada?'600':'400'};color:#1a1a2e;">${a.nombre} ${a.apellido||''}${destacada?'':' <span style="font-size:11px;color:#aaa;">(otra clase)</span>'}</div>
+      <button onclick="abrirNotaRapida(${a.id},this)" style="background:#f3f4f6;border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:#555;flex-shrink:0;">+ Nota</button>
+    </div>
+    <div id="nota-rapida-${a.id}" style="display:none;padding:8px 0 12px 42px;">
+      <textarea id="nota-txt-${a.id}" placeholder="Ej: rodilla — evitar flexión profunda" style="width:100%;height:60px;font-size:13px;border:1px solid #ddd;border-radius:6px;padding:8px;resize:none;font-family:inherit;color:#1a1a2e;background:#fafafa;box-sizing:border-box;"></textarea>
+      <div style="display:flex;gap:6px;margin-top:4px;">
+        <button onclick="guardarNotaRapida(${a.id})" style="background:#7C5CBF;color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;">Guardar</button>
+        <button onclick="document.getElementById('nota-rapida-${a.id}').style.display='none'" style="background:#f3f4f6;border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;">Cancelar</button>
+      </div>
+    </div>`;
   }
+  const inscIds=new Set(inscEnHorario.map(a=>a.id));
+  const otras=todasActivas.filter(a=>!inscIds.has(a.id));
+  alumnasList.innerHTML=`
+    ${inscEnHorario.length?`<div style="font-size:11px;font-weight:600;color:#7C5CBF;text-transform:uppercase;letter-spacing:.04em;padding:4px 0 6px;">Inscriptas en este horario</div>${inscEnHorario.map(a=>rowNota(a,true)).join('')}`:''}
+    ${otras.length?`<details style="margin-top:${inscEnHorario.length?'12px':'0'};">
+      <summary style="font-size:12px;color:#888;cursor:pointer;padding:4px 0;">Otras alumnas (${otras.length})</summary>
+      <div style="margin-top:6px;">${otras.map(a=>rowNota(a,false)).join('')}</div>
+    </details>`:''}
+    ${!inscEnHorario.length&&!otras.length?'<div style="font-size:13px;color:#aaa;">Sin alumnas activas cargadas.</div>':''}
+  `;
+  alumnasSec.style.display='block';
   document.getElementById('modo-clase-overlay').style.display = 'block';
   document.body.style.overflow = 'hidden';
 }
