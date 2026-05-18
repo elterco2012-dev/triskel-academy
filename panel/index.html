@@ -1244,18 +1244,38 @@ function getBirthdays(){
 }
 function rCumpleanos(){
   const bd=getBirthdays();if(!bd.length)return'';
-  return`<div class="card" style="border-color:var(--fun);margin-bottom:1rem;">
-    <div class="ctitle" style="color:var(--fun);">🎂 Cumpleaños esta semana</div>
-    ${bd.map(a=>{
-      const wa=a.tel?`https://wa.me/${a.tel}?text=${encodeURIComponent(`Hola ${a.nombre}! 🌿🎉 ¡Felices ${a.turningAge} años! Desde Triskel Academy te deseamos un muy feliz cumpleaños. Que sea un día muy especial. Un abrazo!`)}`:null;
-      return`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--b);">
-        <div class="avatar" style="width:30px;height:30px;font-size:11px;">${alumnaInits(a.nombre,a.apellido)}</div>
-        <div style="flex:1;font-size:13px;font-weight:500;">${a.nombre} ${a.apellido||''}</div>
-        <div style="font-size:12px;color:var(--fun);font-weight:500;">${a.diaLabel}</div>
-        ${wa?`<a href="${wa}" target="_blank" style="padding:4px 10px;border:1px solid var(--fun);border-radius:var(--rs);background:var(--funl);color:var(--fun);font-size:11px;text-decoration:none;">💬 Saludar</a>`:''}
-      </div>`;
-    }).join('')}
-  </div>`;
+  const hoy=bd.filter(a=>a.diasFaltan===0);
+  const proximos=bd.filter(a=>a.diasFaltan>0);
+  let html='';
+  if(hoy.length){
+    html+=`<div class="card" style="border:2px solid #f59e0b;background:linear-gradient(135deg,#fffbeb,#fef3c7);margin-bottom:1rem;text-align:center;">
+      <div style="font-size:24px;margin-bottom:.25rem;">🎂🎉</div>
+      <div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:.75rem;">¡Hoy cumple${hoy.length>1?'n':''}!</div>
+      ${hoy.map(a=>{
+        const wa=a.tel?`https://wa.me/${a.tel.replace(/\D/g,'')}?text=${encodeURIComponent(`¡Hola ${a.nombre}! 🌿🎂 ¡Felices ${a.turningAge} años! Desde Triskel Academy te deseamos un hermoso día. ¡Un abrazo grande! 🎉`)}`:null;
+        return`<div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:${hoy.length>1?'8px':'0'};">
+          <div class="avatar" style="width:36px;height:36px;font-size:14px;">${alumnaInits(a.nombre,a.apellido)}</div>
+          <div style="font-size:14px;font-weight:600;color:#92400e;">${a.nombre} ${a.apellido||''} · ${a.turningAge} años</div>
+          ${wa?`<a href="${wa}" target="_blank" style="padding:6px 16px;background:#f59e0b;color:#fff;border-radius:var(--rs);font-size:13px;font-weight:700;text-decoration:none;">🎊 Saludar por WA</a>`:''}
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+  if(proximos.length){
+    html+=`<div class="card" style="border-color:var(--fun);margin-bottom:1rem;">
+      <div class="ctitle" style="color:var(--fun);">🎂 Próximos cumpleaños</div>
+      ${proximos.map(a=>{
+        const wa=a.tel?`https://wa.me/${a.tel.replace(/\D/g,'')}?text=${encodeURIComponent(`¡Hola ${a.nombre}! 🌿🎉 ¡Felices ${a.turningAge} años! Desde Triskel Academy te deseamos un muy feliz cumpleaños. ¡Un abrazo!`)}`:null;
+        return`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--b);">
+          <div class="avatar" style="width:30px;height:30px;font-size:11px;">${alumnaInits(a.nombre,a.apellido)}</div>
+          <div style="flex:1;font-size:13px;font-weight:500;">${a.nombre} ${a.apellido||''}</div>
+          <div style="font-size:12px;color:var(--fun);font-weight:600;">${a.diaLabel}</div>
+          ${wa?`<a href="${wa}" target="_blank" style="padding:4px 10px;border:1px solid var(--fun);border-radius:var(--rs);background:var(--funl);color:var(--fun);font-size:11px;text-decoration:none;">💬 Saludar</a>`:''}
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+  return html;
 }
 
 // ─── OBSERVACIONES ───────────────────────────────────────
@@ -1338,6 +1358,34 @@ function rVistaHoy(){
 }
 
 // ─── GRÁFICO DE INGRESOS ────────────────────────────────
+function rProyeccionMes(){
+  const mesActual=new Date().toISOString().slice(0,7);
+  const pagosMes=DB.pagos.filter(p=>p.mes===mesActual);
+  const cobrado=pagosMes.filter(p=>p.pagado).reduce((s,p)=>s+(p.monto||0),0);
+  const esperado=pagosMes.reduce((s,p)=>s+(p.monto||0),0);
+  if(!esperado)return'';
+  const pct=Math.round((cobrado/esperado)*100);
+  const pendiente=esperado-cobrado;
+  const barColor=pct>=80?'var(--mat)':pct>=50?'var(--fun)':'var(--rd)';
+  const pendienteHtml=pendiente>0
+    ?`<div style="font-size:11px;color:var(--rd);margin-top:6px;">Falta cobrar: $${pendiente.toLocaleString('es-AR')}</div>`
+    :`<div style="font-size:11px;color:var(--mat);margin-top:6px;">✓ Todas las alumnas registradas pagaron</div>`;
+  return`<div class="card" style="margin-bottom:1rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;">
+      <div class="ctitle" style="margin:0;">💰 Proyección del mes</div>
+      <div style="font-size:11px;font-weight:700;color:${barColor};">${pct}% cobrado</div>
+    </div>
+    <div style="background:var(--s2);border-radius:99px;height:10px;overflow:hidden;margin-bottom:.6rem;">
+      <div style="height:100%;width:${pct}%;background:${barColor};border-radius:99px;transition:width .5s;min-width:${cobrado>0?'6px':'0'};"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;">
+      <div><span style="color:var(--tm);">Ya cobrado </span><strong style="color:${barColor};">$${cobrado.toLocaleString('es-AR')}</strong></div>
+      <div><span style="color:var(--tm);">Si cobran todas </span><strong>$${esperado.toLocaleString('es-AR')}</strong></div>
+    </div>
+    ${pendienteHtml}
+  </div>`;
+}
+
 function rGraficoIngresos(){
   const now=new Date();
   const months=[];
@@ -1626,6 +1674,7 @@ function rInicio(){
     </div>
   </div>
   ${rResumenSemana()}
+  ${rProyeccionMes()}
   ${rGraficoIngresos()}`;
 }
 
