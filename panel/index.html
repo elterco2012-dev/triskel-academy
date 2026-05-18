@@ -944,7 +944,10 @@ function rRecordatorios(){
   }
 
   return`<div class="card" style="border-color:var(--fun);margin-bottom:1.25rem;">
-    <div class="ctitle" style="color:var(--fun);margin-bottom:.5rem;">⏰ Recordatorios de pago — ${total} alumna${total!==1?'s':''}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+      <div class="ctitle" style="margin:0;color:var(--fun);">⏰ Recordatorios — ${total} alumna${total!==1?'s':''}</div>
+      <button class="btn btn-s" onclick="openRecordatorioMasivo()" style="white-space:nowrap;">📲 Recordar a todas</button>
+    </div>
     ${rem.hoy.map(a=>remRow(a,'hoy','🔴 Vence HOY','var(--rd)')).join('')}
     ${rem.atrasadas.map(a=>remRow(a,'atrasada',`🟠 Atrasada ${a.diff} día${a.diff!==1?'s':''}`,`var(--fun)`)).join('')}
     ${rem.proximas.map(a=>remRow(a,'proxima',`🟡 Vence en ${a.diasFaltan} día${a.diasFaltan!==1?'s':''}`,`var(--tm)`)).join('')}
@@ -1267,33 +1270,50 @@ function rGraficoIngresos(){
     const d=new Date(now.getFullYear(),now.getMonth()-i,1);
     months.push(d.toISOString().slice(0,7));
   }
+  const MESES=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   const data=months.map(mes=>{
-    const total=DB.pagos.filter(p=>p.mes===mes&&p.pagado).reduce((s,p)=>s+(p.monto||0),0);
+    const pagosMes=DB.pagos.filter(p=>p.mes===mes&&p.pagado);
+    const total=pagosMes.reduce((s,p)=>s+(p.monto||0),0);
+    const pagaron=new Set(pagosMes.map(p=>p.alumna_id)).size;
     const [y,m]=mes.split('-');
-    const label=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][parseInt(m)]+` '${y.slice(2)}`;
-    return{mes,total,label};
+    const label=MESES[parseInt(m)]+` '${y.slice(2)}`;
+    return{mes,total,pagaron,label};
   });
   const max=Math.max(...data.map(d=>d.total),1);
-  const bars=data.map(d=>{
-    const pct=Math.round((d.total/max)*100);
-    const h=Math.max(d.total>0?Math.round(pct*0.9)+5:2,d.total>0?8:2);
-    const isCurrent=d.mes===months[months.length-1];
-    const amt=d.total>=1000?`$${Math.round(d.total/1000)}k`:d.total>0?`$${d.total}`:'—';
-    return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">
-      <div style="font-size:9px;font-weight:600;color:var(--tm);height:14px;display:flex;align-items:center;">${amt}</div>
-      <div style="flex:1;width:100%;display:flex;align-items:flex-end;padding:0 3px;">
-        <div style="width:100%;height:${h}%;min-height:${d.total>0?'6px':'2px'};background:${isCurrent?'var(--v)':'var(--vm)'};border-radius:4px 4px 0 0;opacity:${d.total===0?'0.25':'1'};"></div>
+  // Tendencia mes actual vs anterior
+  const cur=data[data.length-1].total;
+  const prev=data[data.length-2].total;
+  const tendencia=prev>0?Math.round(((cur-prev)/prev)*100):null;
+  const tendHtml=tendencia!==null
+    ?`<span style="font-size:11px;font-weight:600;color:${tendencia>=0?'var(--mat)':'var(--rd)'};">${tendencia>=0?'↑':'↓'}${Math.abs(tendencia)}% vs mes ant.</span>`:'';
+
+  const bars=data.map((d,idx)=>{
+    const pct=d.total>0?Math.max(Math.round((d.total/max)*85)+8,10):3;
+    const isCurrent=idx===data.length-1;
+    const amt=d.total>=1000?`$${(d.total/1000).toFixed(d.total%1000===0?0:1)}k`:d.total>0?`$${d.total}`:'—';
+    return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:default;" title="${d.label}: $${d.total.toLocaleString('es-AR')} · ${d.pagaron} pagaron">
+      <div style="font-size:9px;font-weight:700;color:${isCurrent?'var(--v)':'var(--tm)'};height:14px;display:flex;align-items:center;">${amt}</div>
+      <div style="flex:1;width:100%;display:flex;align-items:flex-end;padding:0 2px;">
+        <div style="width:100%;height:${pct}%;min-height:${d.total>0?'8px':'3px'};background:${isCurrent?'var(--v)':'var(--vm)'};border-radius:4px 4px 0 0;opacity:${d.total===0?'0.2':'1'};transition:height .3s;"></div>
       </div>
-      <div style="font-size:9px;color:var(--tm);text-align:center;">${d.label}</div>
+      <div style="font-size:9px;color:${isCurrent?'var(--v)':'var(--tm)'};font-weight:${isCurrent?'700':'400'};text-align:center;">${d.label}</div>
+      <div style="font-size:8px;color:var(--th);text-align:center;">${d.pagaron>0?d.pagaron+'p':''}</div>
     </div>`;
   }).join('');
+
   const totalPeriodo=data.reduce((s,d)=>s+d.total,0);
+  const promedioMensual=Math.round(data.filter(d=>d.total>0).reduce((s,d)=>s+d.total,0)/Math.max(data.filter(d=>d.total>0).length,1));
+
   return`<div class="card">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;">
-      <div class="ctitle" style="margin:0;">Ingresos últimos 6 meses</div>
-      <div style="font-size:12px;font-weight:600;color:var(--v);">$${totalPeriodo.toLocaleString('es-AR')} total</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.25rem;">
+      <div class="ctitle" style="margin:0;">📈 Ingresos últimos 6 meses</div>
+      <div style="text-align:right;">
+        <div style="font-size:12px;font-weight:700;color:var(--v);">$${totalPeriodo.toLocaleString('es-AR')} total</div>
+        ${tendHtml}
+      </div>
     </div>
-    <div style="display:flex;gap:8px;height:120px;">${bars}</div>
+    <div style="font-size:11px;color:var(--tm);margin-bottom:.75rem;">Promedio mensual: $${promedioMensual.toLocaleString('es-AR')} · <span style="font-size:9px;">p = alumnas que pagaron</span></div>
+    <div style="display:flex;gap:6px;height:130px;">${bars}</div>
   </div>`;
 }
 
@@ -1846,7 +1866,10 @@ function rPagos(){
     <div class="metric"><div class="mlabel">Total cobrado</div><div class="mval">$${total.toLocaleString('es-AR')}</div></div>
   </div>
   ${pendientes.length?`<div class="card">
-    <div class="ctitle" style="color:var(--fun);">Pendientes de pago</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+      <div class="ctitle" style="margin:0;color:var(--fun);">Pendientes de pago</div>
+      <button class="btn btn-s" onclick="openRecordatorioMasivo()" style="white-space:nowrap;">📲 Recordar a todas</button>
+    </div>
     ${pendientes.map(planRow).join('')}
   </div>`:''}
   ${pagados.length?`<div class="card">
@@ -2287,11 +2310,51 @@ document.addEventListener('click', e => {
   }
 });
 
+// ─── RECORDATORIO MASIVO ────────────────────────────────
+function openRecordatorioMasivo(){
+  const mesActual=new Date().toISOString().slice(0,7);
+  const alumnasPagaron=new Set(DB.pagos.filter(p=>p.mes===mesActual&&p.pagado).map(p=>p.alumna_id));
+  const pendientes=DB.alumnas.filter(a=>a.estado==='activa'&&!alumnasPagaron.has(a.id));
+  const lista=pendientes.map(a=>{
+    const monto=inscByAlumna(a.id).reduce((s,i)=>s+(i.precio||0),0);
+    const wa=waMsg(a.tel,a.nombre,monto,'atrasada');
+    return{a,monto,wa};
+  });
+  document.getElementById('rm-title').textContent=`Pendientes de pago — ${mesLabel(mesActual)} (${lista.length})`;
+  document.getElementById('rm-lista').innerHTML=lista.length
+    ?lista.map(({a,monto,wa})=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--b);">
+        <div class="avatar" style="width:32px;height:32px;font-size:11px;flex-shrink:0;">${alumnaInits(a.nombre,a.apellido)}</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:500;">${a.nombre} ${a.apellido||''}</div>
+          ${monto?`<div style="font-size:11px;color:var(--tm);">$${monto.toLocaleString('es-AR')}/mes</div>`:''}
+        </div>
+        ${wa?`<a href="${wa}" target="_blank" class="btn btn-s" style="background:var(--matl);color:var(--mat);border-color:var(--mat);text-decoration:none;flex-shrink:0;">💬 WA</a>`
+            :`<span style="font-size:10px;color:var(--th);flex-shrink:0;">Sin tel.</span>`}
+      </div>`).join('')
+    :`<div style="text-align:center;padding:1.5rem;font-size:14px;color:var(--mat);">✅ ¡Todas pagaron este mes!</div>`;
+  document.getElementById('modal-recordatorio-masivo').style.display='flex';
+}
+function closeRecordatorioMasivo(){document.getElementById('modal-recordatorio-masivo').style.display='none';}
+
 // ─── INIT ────────────────────────────────────────────────
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('/panel/sw.js').catch(()=>{});
 }
 initAuth();
 </script>
+<!-- MODAL RECORDATORIO MASIVO -->
+<div class="modal-bg" id="modal-recordatorio-masivo" style="display:none" onclick="if(event.target===this)closeRecordatorioMasivo()">
+  <div class="modal" style="max-width:480px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+      <h3 id="rm-title" style="margin:0;">Pendientes de pago</h3>
+      <button class="btn btn-s" onclick="closeRecordatorioMasivo()">✕</button>
+    </div>
+    <div id="rm-lista"></div>
+    <div style="margin-top:.75rem;text-align:right;">
+      <button class="btn" onclick="closeRecordatorioMasivo()">Cerrar</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
