@@ -1301,7 +1301,7 @@ function rFicha(){
           ${modBadge(g.h.modalidad)}
           <div style="flex:1;">
             <div style="font-size:13px;">${dias} ${g.h.hora_inicio}–${g.h.hora_fin}</div>
-            ${esPlan?`<div style="font-size:10px;color:var(--tm);">Plan ${g.items.length}× semana · $${g.items.map(x=>(x.i.precio||0).toLocaleString('es-AR')).join(' + ')} c/u</div>`:''}
+            ${esPlan?`<div style="font-size:10px;color:var(--tm);">Plan ${g.items.length} días × semana</div>`:''}
           </div>
           <span style="font-size:13px;font-weight:600;">$${total.toLocaleString('es-AR')}/mes</span>
           <div style="display:flex;gap:4px;">
@@ -1347,7 +1347,7 @@ function rFicha(){
           <div style="font-size:13px;font-weight:600;">$${total.toLocaleString('es-AR')}</div>
           ${todoPagado
             ?`<span style="font-size:11px;background:var(--matl);color:var(--mat);padding:2px 8px;border-radius:99px;">✓ ${fechaPago||'Pagó'}</span>
-              ${ids.map(id=>`<button class="btn btn-s btn-danger" onclick="desmarcarPago(${id})" title="Desmarcar">✕</button>`).join('')}`
+              <button class="btn btn-s btn-danger" onclick="desmarcarPagosPlan('${ids.join(',')}')" title="Desmarcar">✕</button>`
             :`<span style="font-size:11px;background:var(--rl);color:var(--rd);padding:2px 8px;border-radius:99px;">Pendiente</span>
               ${ids.map(id=>`<button class="btn btn-s btn-p" onclick="marcarPago(${id})">✓ Marcar pagado</button>`).join('')}`
           }
@@ -1910,6 +1910,12 @@ async function marcarPago(id){
 }
 async function desmarcarPago(id){
   await rpc('triskel_mark_pago',{p_id:id,p_pagado:false,p_fecha_pago:null});
+  showMsg('Pago desmarcado');
+  await loadAll();
+}
+async function desmarcarPagosPlan(idsStr){
+  for(const id of idsStr.split(',').map(Number))
+    await rpc('triskel_mark_pago',{p_id:id,p_pagado:false,p_fecha_pago:null});
   showMsg('Pago desmarcado');
   await loadAll();
 }
