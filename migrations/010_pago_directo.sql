@@ -19,7 +19,12 @@ BEGIN
   INSERT INTO triskel_pagos(alumna_id, inscripcion_id, mes, monto, pagado, fecha_pago)
   VALUES(p_alumna_id, p_inscripcion_id, p_mes, COALESCE(p_monto,0),
          COALESCE(p_pagado,true),
-         CASE WHEN COALESCE(p_pagado,true) THEN COALESCE(p_fecha_pago, CURRENT_DATE::text) ELSE NULL END)
+         CASE WHEN COALESCE(p_pagado,true) THEN COALESCE(p_fecha_pago, CURRENT_DATE::text)::date ELSE NULL END)
+  ON CONFLICT (alumna_id, inscripcion_id, mes)
+  DO UPDATE SET
+    monto      = EXCLUDED.monto,
+    pagado     = EXCLUDED.pagado,
+    fecha_pago = EXCLUDED.fecha_pago
   RETURNING id INTO v_id;
   RETURN v_id;
 END;
