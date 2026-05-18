@@ -903,11 +903,12 @@ function renderModalHorarios(alumnaId){
   const lista=document.getElementById('mal-horarios-lista');
   if(!lista)return;
   const existingIds=alumnaId?new Set(inscByAlumna(alumnaId).map(i=>i.horario_id)):new Set();
+  const existingPrices=alumnaId?inscByAlumna(alumnaId).reduce((m,i)=>{m[i.horario_id]=i.precio;return m;},{}):{};;
   const modOrder={reformer:0,mat:1,funcional:2};
   const groups={};
   DB.horarios.forEach(h=>{
     const key=`${h.modalidad}|${h.hora_inicio}`;
-    if(!groups[key])groups[key]={modalidad:h.modalidad,hora_inicio:h.hora_inicio,hora_fin:h.hora_fin,items:[]};
+    if(!groups[key])groups[key]={modalidad:h.modalidad,hora_inicio:h.hora_inicio,hora_fin:h.hora_fin,key,items:[]};
     const n=DB.inscripciones.filter(i=>i.horario_id===h.id).length;
     groups[key].items.push({...h,inscCount:n});
   });
@@ -920,23 +921,28 @@ function renderModalHorarios(alumnaId){
       lastMod=g.modalidad;
     }
     const isGroup=g.items.length>1;
+    // Para grupos, el precio se ingresa una sola vez (total del plan) y se divide entre los días elegidos
+    const groupEnrolledTotal=isGroup?g.items.filter(h=>existingIds.has(h.id)).reduce((s,h)=>s+(existingPrices[h.id]||0),0):0;
     html+=`<div style="border:1px solid var(--b);border-radius:var(--rs);overflow:hidden;margin-bottom:4px;">`;
-    if(isGroup)html+=`<div style="padding:4px 10px;background:var(--s2);font-size:11px;font-weight:600;color:var(--tm);">${g.hora_inicio}–${g.hora_fin} · podés inscribirte en 1 o 2 días</div>`;
+    if(isGroup)html+=`<div style="padding:6px 10px;background:var(--s2);font-size:11px;font-weight:600;color:var(--tm);display:flex;align-items:center;justify-content:space-between;gap:8px;">
+      <span>${g.hora_inicio}–${g.hora_fin} · elegí 1 o 2 días</span>
+      <input id="hgp-${g.key}" type="number" placeholder="$ plan total" min="0" value="${groupEnrolledTotal||''}" style="width:110px;margin:0;font-size:11px;padding:3px 6px;border:1px solid var(--b);border-radius:4px;" onclick="event.stopPropagation()">
+    </div>`;
     g.items.forEach(h=>{
       const isFull=h.capacidad&&h.inscCount>=h.capacidad;
       const isEnrolled=existingIds.has(h.id);
       const left=h.capacidad?h.capacidad-h.inscCount:null;
       const cc=isFull?'var(--rd)':left!==null&&left<=2?'var(--fun)':'var(--mat)';
       const ct=left!==null?(isFull?'COMPLETO':`${left} lugar${left!==1?'es':''}`):h.inscCount+' inscriptas';
-      html+=`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:${isEnrolled?'var(--vl)':'var(--s)'};border-top:${isGroup?'1px solid var(--b)':'none'};">
-        <input type="checkbox" id="hc-${h.id}" value="${h.id}" ${isEnrolled?'checked disabled':isFull&&!isEnrolled?'disabled':''} style="width:15px;height:15px;accent-color:var(--v);flex-shrink:0;">
+      html+=`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:${isEnrolled?'var(--vl)':'var(--s)'};border-top:1px solid var(--b);">
+        <input type="checkbox" id="hc-${h.id}" value="${h.id}" data-group="${g.key}" data-isgroup="${isGroup}" ${isEnrolled?'checked disabled':isFull&&!isEnrolled?'disabled':''} style="width:15px;height:15px;accent-color:var(--v);flex-shrink:0;">
         <label for="hc-${h.id}" style="flex:1;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
           <strong>${DIA_LABEL[h.dia]}</strong>
           ${!isGroup?`<span style="color:var(--tm);">${h.hora_inicio}–${h.hora_fin}</span>`:''}
           <span style="font-size:10px;color:${cc};">${ct}</span>
           ${isEnrolled?`<span style="font-size:10px;color:var(--v);font-weight:600;">✓ ya inscripta</span>`:''}
         </label>
-        ${!isEnrolled&&!isFull?`<input id="hp-${h.id}" type="number" placeholder="$/mes" min="0" style="width:72px;margin:0;font-size:11px;padding:4px 6px;" onclick="event.stopPropagation()">`:``}
+        ${!isGroup&&!isEnrolled&&!isFull?`<input id="hp-${h.id}" type="number" placeholder="$/mes" min="0" value="${existingPrices[h.id]||''}" style="width:72px;margin:0;font-size:11px;padding:4px 6px;" onclick="event.stopPropagation()">`:``}
       </div>`;
     });
     html+=`</div>`;
@@ -1342,15 +1348,19 @@ function rAlumnas(){
     const inscs=inscByAlumna(a.id);
     const pagoMes=DB.pagos.filter(p=>p.alumna_id===a.id&&p.mes===mesActual);
     const todoPago=inscs.length>0&&inscs.every(i=>pagoMes.some(p=>p.inscripcion_id===i.id&&p.pagado));
-    const pago=todoPago?`<span style="font-size:10px;background:var(--matl);color:var(--mat);padding:1px 7px;border-radius:99px;">✓ Pagó</span>`
-      :`<span style="font-size:10px;background:var(--funl);color:var(--fun);padding:1px 7px;border-radius:99px;">Pendiente</span>`;
+    const diaHoy=new Date().getDate();
+    const vencio=!a.dia_pago||a.dia_pago<=diaHoy;
+    const pago=todoPago
+      ?`<span style="font-size:10px;background:var(--matl);color:var(--mat);padding:1px 7px;border-radius:99px;">✓ Pagó</span>`
+      :vencio
+        ?`<span style="font-size:10px;background:#fee2e2;color:#dc2626;padding:1px 7px;border-radius:99px;">Pendiente</span>`
+        :`<span style="font-size:10px;background:var(--funl);color:var(--fun);padding:1px 7px;border-radius:99px;">Vence día ${a.dia_pago}</span>`;
     return`<div class="arow">
       <div class="avatar">${alumnaInits(a.nombre,a.apellido)}</div>
       <div style="flex:1;">
         <div class="aname" style="cursor:pointer;text-decoration:underline;text-underline-offset:3px;" onclick="goTo('ficha',${a.id})">${a.nombre} ${a.apellido||''}</div>
         <div class="asub" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;">
-          ${inscs.map(i=>modBadge(i.triskel_horarios?.modalidad)).join('')}
-          ${a.dia_pago?`<span style="font-size:10px;color:var(--tm);background:var(--s2);padding:1px 7px;border-radius:99px;">Paga día ${a.dia_pago}</span>`:''}
+          ${inscs.map(i=>{const h=i.triskel_horarios;return`<span style="display:inline-flex;align-items:center;gap:3px;">${modBadge(h?.modalidad)}<span style="font-size:10px;color:var(--tm);">${h?DIA_LABEL[h.dia]+' '+h.hora_inicio:''}</span></span>`;}).join('')}
           ${a.tel?`<a href="https://wa.me/${a.tel}" target="_blank" style="font-size:11px;color:var(--mat);">💬 WA</a>`:''}
         </div>
       </div>
@@ -1597,7 +1607,17 @@ async function saveAlumna(){
   const checks=document.querySelectorAll('#mal-horarios-lista input[type=checkbox]:checked:not(:disabled)');
   for(const cb of checks){
     const hId=parseInt(cb.value);
-    const precio=parseFloat(document.getElementById(`hp-${hId}`)?.value)||0;
+    const groupKey=cb.dataset.group;
+    const isGroupItem=cb.dataset.isgroup==='true';
+    let precio=0;
+    if(isGroupItem){
+      // Precio del plan dividido entre los días elegidos en el grupo
+      const groupChecks=document.querySelectorAll(`#mal-horarios-lista input[type=checkbox][data-group="${groupKey}"]:checked:not(:disabled)`);
+      const total=parseFloat(document.getElementById(`hgp-${groupKey}`)?.value)||0;
+      precio=groupChecks.length>0?Math.round(total/groupChecks.length):0;
+    }else{
+      precio=parseFloat(document.getElementById(`hp-${hId}`)?.value)||0;
+    }
     await rpc('triskel_insert_inscripcion',{p_alumna_id:alumnaId,p_horario_id:hId,p_precio:precio});
   }
   showMsg(_editAlumnaId?'✓ Alumna actualizada':'✓ Alumna creada');
