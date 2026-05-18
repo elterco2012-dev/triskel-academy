@@ -1980,8 +1980,12 @@ function copiarUltimaClase(){
 function abrirCloneSection(){
   const section=document.getElementById('mcl-clone-section');
   const selC=document.getElementById('mcl-clone-horario');
-  selC.innerHTML=DB.horarios.sort((a,b)=>DIA_ORDER[a.dia]-DIA_ORDER[b.dia]||a.hora_inicio.localeCompare(b.hora_inicio))
-    .map(h=>`<option value="${h.id}">${DIA_LABEL[h.dia]} ${h.hora_inicio}–${h.hora_fin} — ${MOD_LABEL[h.modalidad]}</option>`).join('');
+  const horarioActualId=parseInt(document.getElementById('mcl-horario').value);
+  const modActual=DB.horarios.find(h=>h.id===horarioActualId)?.modalidad;
+  selC.innerHTML=DB.horarios
+    .filter(h=>!modActual||h.modalidad===modActual)
+    .sort((a,b)=>DIA_ORDER[a.dia]-DIA_ORDER[b.dia]||a.hora_inicio.localeCompare(b.hora_inicio))
+    .map(h=>`<option value="${h.id}">${DIA_LABEL[h.dia]} ${h.hora_inicio}–${h.hora_fin}</option>`).join('');
   document.getElementById('mcl-clone-fecha').value=new Date().toISOString().split('T')[0];
   section.style.display='block';
 }
