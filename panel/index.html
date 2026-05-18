@@ -899,6 +899,15 @@ function capText(n,cap){
   return`${n}/${cap} · ${left} libre${left!==1?'s':''}`;
 }
 
+function splitGroupPrice(groupKey){
+  const totalInput=document.getElementById(`hgp-${groupKey}`);
+  if(!totalInput)return;
+  const total=parseFloat(totalInput.value)||0;
+  const checked=document.querySelectorAll(`#mal-horarios-lista input[type=checkbox][data-group="${groupKey}"]:checked:not(:disabled)`);
+  const count=Math.max(checked.length,1);
+  const perDay=total>0?Math.round(total/count):0;
+  document.querySelectorAll(`#mal-horarios-lista input[data-dayinput="${groupKey}"]`).forEach(inp=>{inp.value=perDay||'';});
+}
 function renderModalHorarios(alumnaId){
   const lista=document.getElementById('mal-horarios-lista');
   if(!lista)return;
@@ -921,12 +930,11 @@ function renderModalHorarios(alumnaId){
       lastMod=g.modalidad;
     }
     const isGroup=g.items.length>1;
-    // Para grupos, el precio se ingresa una sola vez (total del plan) y se divide entre los días elegidos
     const groupEnrolledTotal=isGroup?g.items.filter(h=>existingIds.has(h.id)).reduce((s,h)=>s+(existingPrices[h.id]||0),0):0;
     html+=`<div style="border:1px solid var(--b);border-radius:var(--rs);overflow:hidden;margin-bottom:4px;">`;
     if(isGroup)html+=`<div style="padding:6px 10px;background:var(--s2);font-size:11px;font-weight:600;color:var(--tm);display:flex;align-items:center;justify-content:space-between;gap:8px;">
       <span>${g.hora_inicio}–${g.hora_fin} · elegí 1 o 2 días</span>
-      <input id="hgp-${g.key}" type="number" placeholder="$ plan total" min="0" value="${groupEnrolledTotal||''}" style="width:110px;margin:0;font-size:11px;padding:3px 6px;border:1px solid var(--b);border-radius:4px;" onclick="event.stopPropagation()">
+      <input id="hgp-${g.key}" type="number" placeholder="$ plan total" min="0" value="${groupEnrolledTotal||''}" oninput="splitGroupPrice('${g.key}')" style="width:110px;margin:0;font-size:11px;padding:3px 6px;border:1px solid var(--b);border-radius:4px;" onclick="event.stopPropagation()">
     </div>`;
     g.items.forEach(h=>{
       const isFull=h.capacidad&&h.inscCount>=h.capacidad;
@@ -934,15 +942,16 @@ function renderModalHorarios(alumnaId){
       const left=h.capacidad?h.capacidad-h.inscCount:null;
       const cc=isFull?'var(--rd)':left!==null&&left<=2?'var(--fun)':'var(--mat)';
       const ct=left!==null?(isFull?'COMPLETO':`${left} lugar${left!==1?'es':''}`):h.inscCount+' inscriptas';
+      const showPrice=!isEnrolled&&!isFull;
       html+=`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:${isEnrolled?'var(--vl)':'var(--s)'};border-top:1px solid var(--b);">
-        <input type="checkbox" id="hc-${h.id}" value="${h.id}" data-group="${g.key}" data-isgroup="${isGroup}" ${isEnrolled?'checked disabled':isFull&&!isEnrolled?'disabled':''} style="width:15px;height:15px;accent-color:var(--v);flex-shrink:0;">
+        <input type="checkbox" id="hc-${h.id}" value="${h.id}" data-group="${g.key}" data-isgroup="${isGroup}" ${isEnrolled?'checked disabled':isFull&&!isEnrolled?'disabled':''} ${isGroup&&!isEnrolled?`onchange="splitGroupPrice('${g.key}')"`:''} style="width:15px;height:15px;accent-color:var(--v);flex-shrink:0;">
         <label for="hc-${h.id}" style="flex:1;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
           <strong>${DIA_LABEL[h.dia]}</strong>
           ${!isGroup?`<span style="color:var(--tm);">${h.hora_inicio}–${h.hora_fin}</span>`:''}
           <span style="font-size:10px;color:${cc};">${ct}</span>
           ${isEnrolled?`<span style="font-size:10px;color:var(--v);font-weight:600;">✓ ya inscripta</span>`:''}
         </label>
-        ${!isGroup&&!isEnrolled&&!isFull?`<input id="hp-${h.id}" type="number" placeholder="$/mes" min="0" value="${existingPrices[h.id]||''}" style="width:72px;margin:0;font-size:11px;padding:4px 6px;" onclick="event.stopPropagation()">`:``}
+        ${showPrice?`<input id="hp-${h.id}" ${isGroup?`data-dayinput="${g.key}"`:''}  type="number" placeholder="$/mes" min="0" value="${existingPrices[h.id]||''}" style="width:72px;margin:0;font-size:11px;padding:4px 6px;" onclick="event.stopPropagation()">`:``}
       </div>`;
     });
     html+=`</div>`;
@@ -1353,7 +1362,7 @@ function rAlumnas(){
     const pago=todoPago
       ?`<span style="font-size:10px;background:var(--matl);color:var(--mat);padding:1px 7px;border-radius:99px;">✓ Pagó</span>`
       :vencio
-        ?`<span style="font-size:10px;background:#fee2e2;color:#dc2626;padding:1px 7px;border-radius:99px;">Pendiente</span>`
+        ?`<span style="font-size:10px;background:#fee2e2;color:#dc2626;padding:1px 7px;border-radius:99px;">Pendiente de pago</span>`
         :`<span style="font-size:10px;background:var(--funl);color:var(--fun);padding:1px 7px;border-radius:99px;">Vence día ${a.dia_pago}</span>`;
     return`<div class="arow">
       <div class="avatar">${alumnaInits(a.nombre,a.apellido)}</div>
@@ -1607,17 +1616,7 @@ async function saveAlumna(){
   const checks=document.querySelectorAll('#mal-horarios-lista input[type=checkbox]:checked:not(:disabled)');
   for(const cb of checks){
     const hId=parseInt(cb.value);
-    const groupKey=cb.dataset.group;
-    const isGroupItem=cb.dataset.isgroup==='true';
-    let precio=0;
-    if(isGroupItem){
-      // Precio del plan dividido entre los días elegidos en el grupo
-      const groupChecks=document.querySelectorAll(`#mal-horarios-lista input[type=checkbox][data-group="${groupKey}"]:checked:not(:disabled)`);
-      const total=parseFloat(document.getElementById(`hgp-${groupKey}`)?.value)||0;
-      precio=groupChecks.length>0?Math.round(total/groupChecks.length):0;
-    }else{
-      precio=parseFloat(document.getElementById(`hp-${hId}`)?.value)||0;
-    }
+    const precio=parseFloat(document.getElementById(`hp-${hId}`)?.value)||0;
     await rpc('triskel_insert_inscripcion',{p_alumna_id:alumnaId,p_horario_id:hId,p_precio:precio});
   }
   showMsg(_editAlumnaId?'✓ Alumna actualizada':'✓ Alumna creada');
