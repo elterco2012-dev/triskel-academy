@@ -194,6 +194,14 @@
       </div>
       <div class="slogo-sub">Panel de gestión</div>
     </div>
+    <div style="padding:12px 16px;border-bottom:1px solid var(--b);">
+      <div style="position:relative;">
+        <input id="global-search" type="text" placeholder="🔍 Buscar alumna..."
+          oninput="buscarAlumna(this.value)"
+          style="margin:0;font-size:13px;padding:7px 10px;width:100%;box-sizing:border-box;">
+        <div id="global-search-results" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--s);border:1px solid var(--b);border-radius:var(--rs);z-index:60;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.12);"></div>
+      </div>
+    </div>
     <nav class="snav" id="nav">
       <div class="sep">Principal</div>
       <a href="#" onclick="goTo('inicio')" id="n-inicio">🏠 Inicio</a>
@@ -406,6 +414,21 @@
 </nav>
 
 <div id="msg"></div>
+
+<!-- MODO CLASE OVERLAY -->
+<div id="modo-clase-overlay" style="display:none;position:fixed;inset:0;background:#fff;z-index:200;overflow-y:auto;padding:2rem 1.5rem 4rem;">
+  <div style="max-width:700px;margin:0 auto;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:2rem;">
+      <div>
+        <div id="mc-overlay-titulo" style="font-size:18px;font-weight:700;color:#1a1a2e;"></div>
+        <div id="mc-overlay-fecha" style="font-size:14px;color:#666;margin-top:4px;"></div>
+      </div>
+      <button onclick="cerrarModoClase()" style="background:#f3f4f6;border:none;border-radius:8px;padding:8px 16px;font-size:14px;font-weight:600;cursor:pointer;color:#333;">✕ Salir</button>
+    </div>
+    <div id="mc-overlay-ejercicios"></div>
+    <div id="mc-overlay-notas" style="margin-top:2rem;font-size:15px;color:#888;font-style:italic;border-top:1px solid #eee;padding-top:1rem;"></div>
+  </div>
+</div>
 
 <script>
 const SB_URL='https://dplzkrdgnynyyunmrawr.supabase.co';
@@ -1657,7 +1680,7 @@ function rClases(){
           </div>
           <div style="text-align:right;">
             ${registrada
-              ?`<div style="font-size:12px;color:var(--mat);font-weight:700;">✓ Planificada</div><div style="font-size:11px;color:var(--tm);">${nEjs} ejercicio${nEjs!==1?'s':''} · tocá para ver</div>`
+              ?`<div style="font-size:12px;color:var(--mat);font-weight:700;">✓ Planificada</div><div style="font-size:11px;color:var(--tm);display:flex;align-items:center;gap:6px;">${nEjs} ejercicio${nEjs!==1?'s':''} · <button onclick="event.stopPropagation();iniciarModoClase(${claseHoy.id})" style="background:var(--mat);color:#fff;border:none;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;cursor:pointer;">▶ Iniciar clase</button></div>`
               :`<div style="font-size:12px;color:var(--v);font-weight:600;">+ Planificar</div><div style="font-size:11px;color:var(--tm);">Sin ejercicios aún</div>`}
           </div>
         </button>`;
@@ -1934,6 +1957,7 @@ function openModalClase(claseId,horarioId){
   sugDiv.style.display='none';
   cloneBtn.style.display='none';
   cloneSection.style.display='none';
+  document.getElementById('mcl-btn-iniciar').style.display='none';
 
   if(claseId){
     const c=DB.clases.find(x=>x.id===claseId);
@@ -1946,8 +1970,10 @@ function openModalClase(claseId,horarioId){
       selH.value=c.horario_id;
       _claseEjs=Array.isArray(c.ejercicios)?JSON.parse(JSON.stringify(c.ejercicios)):[];
       cloneBtn.style.display='inline-flex';
+      document.getElementById('mcl-btn-iniciar').style.display='inline-flex';
     }
   } else {
+    document.getElementById('mcl-btn-iniciar').style.display='none';
     document.getElementById('mcl-title').textContent='Nueva clase';
     // Fecha correcta según el día del horario (no siempre "hoy")
     const hDia=DB.horarios.find(x=>x.id===horarioId)?.dia;
@@ -2200,6 +2226,66 @@ function loadPlan(mod,idx){
   closeModalBanco();
   showMsg(`✓ Cargada: ${plan.titulo}`);
 }
+
+// ─── MODO CLASE ──────────────────────────────────────────
+function iniciarModoClase(claseId) {
+  const c = DB.clases.find(x => x.id === (claseId || _editClaseId));
+  if (!c) return;
+  const h = DB.horarios.find(x => x.id === c.horario_id);
+  document.getElementById('mc-overlay-titulo').textContent = h ? `${DIA_LABEL[h.dia]} ${h.hora_inicio}–${h.hora_fin} · ${MOD_LABEL[h.modalidad]}` : 'Clase';
+  document.getElementById('mc-overlay-fecha').textContent = c.fecha;
+  const ejs = Array.isArray(c.ejercicios) ? c.ejercicios : [];
+  document.getElementById('mc-overlay-ejercicios').innerHTML = ejs.length
+    ? ejs.map((e, i) => `<div style="display:flex;gap:16px;align-items:flex-start;padding:14px 0;border-bottom:1px solid #f0f0f0;">
+        <div style="width:36px;height:36px;border-radius:50%;background:#7C5CBF;color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;">${i + 1}</div>
+        <div>
+          <div style="font-size:22px;font-weight:600;color:#1a1a2e;line-height:1.3;">${e.nombre}</div>
+          ${e.vt ? `<div style="font-size:16px;color:#888;margin-top:4px;">${e.vt}</div>` : ''}
+        </div>
+      </div>`).join('')
+    : '<div style="font-size:18px;color:#aaa;">Sin ejercicios cargados.</div>';
+  const notas = c.notas || '';
+  const notasDiv = document.getElementById('mc-overlay-notas');
+  notasDiv.textContent = notas;
+  notasDiv.style.display = notas ? 'block' : 'none';
+  document.getElementById('modo-clase-overlay').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+function cerrarModoClase() {
+  document.getElementById('modo-clase-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// ─── BÚSQUEDA GLOBAL ─────────────────────────────────────
+function buscarAlumna(q) {
+  const res = document.getElementById('global-search-results');
+  if (!q || q.length < 2) { res.style.display = 'none'; return; }
+  const term = q.toLowerCase();
+  const matches = DB.alumnas.filter(a =>
+    `${a.nombre} ${a.apellido || ''}`.toLowerCase().includes(term)
+  ).slice(0, 6);
+  if (!matches.length) { res.innerHTML = '<div style="padding:10px 12px;font-size:12px;color:var(--tm);">Sin resultados</div>'; res.style.display = 'block'; return; }
+  res.innerHTML = matches.map(a => `
+    <div onclick="irAFichaDesdeSearch(${a.id})" style="padding:9px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:8px;">
+      <div style="width:26px;height:26px;border-radius:50%;background:var(--vl);color:var(--vd);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;">${(a.nombre[0]||'')+(a.apellido?.[0]||'')}</div>
+      <div>
+        <div style="font-weight:500;">${a.nombre} ${a.apellido || ''}</div>
+        <div style="font-size:11px;color:var(--tm);">${a.estado}</div>
+      </div>
+    </div>`).join('');
+  res.style.display = 'block';
+}
+function irAFichaDesdeSearch(id) {
+  document.getElementById('global-search').value = '';
+  document.getElementById('global-search-results').style.display = 'none';
+  goTo('ficha', id);
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#global-search') && !e.target.closest('#global-search-results')) {
+    const res = document.getElementById('global-search-results');
+    if (res) res.style.display = 'none';
+  }
+});
 
 // ─── INIT ────────────────────────────────────────────────
 if('serviceWorker' in navigator){
