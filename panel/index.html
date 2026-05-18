@@ -1317,23 +1317,43 @@ function rFicha(){
       <div class="ctitle" style="margin:0;">Historial de pagos</div>
       <button class="btn btn-s btn-p" onclick="openModalPagoParaAlumna(${a.id})">+ Registrar pago</button>
     </div>
-    ${pagosList.length?pagosList.map(p=>{
-      const insc=DB.inscripciones.find(i=>i.id===p.inscripcion_id);
-      const h=insc?DB.horarios.find(x=>x.id===insc.horario_id):null;
-      return`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--b);">
-        <div style="flex:1;">
-          <div style="font-size:13px;font-weight:500;">${mesLabel(p.mes)}</div>
-          ${h?`<div style="font-size:11px;color:var(--tm);">${DIA_LABEL[h.dia]} ${h.hora_inicio} · ${MOD_LABEL[h.modalidad]}</div>`:''}
-        </div>
-        <div style="font-size:13px;font-weight:600;">$${(p.monto||0).toLocaleString('es-AR')}</div>
-        ${p.pagado
-          ?`<span style="font-size:11px;background:var(--matl);color:var(--mat);padding:2px 8px;border-radius:99px;">✓ ${p.fecha_pago||'Pagó'}</span>
-            <button class="btn btn-s btn-danger" onclick="desmarcarPago(${p.id})">Desmarcar</button>`
-          :`<span style="font-size:11px;background:var(--rl);color:var(--rd);padding:2px 8px;border-radius:99px;">Pendiente</span>
-            <button class="btn btn-s btn-p" onclick="marcarPago(${p.id})">✓ Marcar pagado</button>`
-        }
-      </div>`;
-    }).join(''):`<div style="font-size:13px;color:var(--tm);">Sin pagos registrados.</div>`}
+    ${pagosList.length?(()=>{
+      // Agrupar pagos del mismo mes + mismo plan (modalidad+hora)
+      const pagoGrupos={};
+      pagosList.forEach(p=>{
+        const insc=DB.inscripciones.find(i=>i.id===p.inscripcion_id);
+        const h=insc?DB.horarios.find(x=>x.id===insc.horario_id):null;
+        const planKey=h?`${p.mes}|${h.modalidad}|${h.hora_inicio}`:`${p.mes}|single|${p.id}`;
+        if(!pagoGrupos[planKey])pagoGrupos[planKey]={mes:p.mes,h,items:[]};
+        pagoGrupos[planKey].items.push(p);
+      });
+      return Object.values(pagoGrupos).map(g=>{
+        const total=g.items.reduce((s,p)=>s+(p.monto||0),0);
+        const todoPagado=g.items.every(p=>p.pagado);
+        const fechaPago=g.items.find(p=>p.fecha_pago)?.fecha_pago||'';
+        const ids=g.items.map(p=>p.id);
+        const esPlan=g.items.length>1;
+        const diasLabel=esPlan&&g.h?g.items.map(p=>{
+          const insc=DB.inscripciones.find(i=>i.id===p.inscripcion_id);
+          const h2=insc?DB.horarios.find(x=>x.id===insc.horario_id):null;
+          return h2?DIA_LABEL[h2.dia]:'';
+        }).filter(Boolean).join('+'):'';
+        return`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--b);">
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:500;">${mesLabel(g.mes)}</div>
+            ${g.h?`<div style="font-size:11px;color:var(--tm);">${esPlan?diasLabel+' ':DIA_LABEL[g.h.dia]+' '}${g.h.hora_inicio} · ${MOD_LABEL[g.h.modalidad]}${esPlan?' · Plan':''}
+            </div>`:''}
+          </div>
+          <div style="font-size:13px;font-weight:600;">$${total.toLocaleString('es-AR')}</div>
+          ${todoPagado
+            ?`<span style="font-size:11px;background:var(--matl);color:var(--mat);padding:2px 8px;border-radius:99px;">✓ ${fechaPago||'Pagó'}</span>
+              ${ids.map(id=>`<button class="btn btn-s btn-danger" onclick="desmarcarPago(${id})" title="Desmarcar">✕</button>`).join('')}`
+            :`<span style="font-size:11px;background:var(--rl);color:var(--rd);padding:2px 8px;border-radius:99px;">Pendiente</span>
+              ${ids.map(id=>`<button class="btn btn-s btn-p" onclick="marcarPago(${id})">✓ Marcar pagado</button>`).join('')}`
+          }
+        </div>`;
+      }).join('');
+    })():`<div style="font-size:13px;color:var(--tm);">Sin pagos registrados.</div>`}
   </div>
 
   <div class="card" style="margin-bottom:1rem;">
