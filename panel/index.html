@@ -1571,7 +1571,44 @@ function rInicio(){
       }).join(''):`<div style="font-size:13px;color:var(--tm);">Sin clases registradas aún.</div>`}
     </div>
   </div>
+  ${rResumenSemana()}
   ${rGraficoIngresos()}`;
+}
+
+function rResumenSemana(){
+  const hoy = new Date();
+  const dow = hoy.getDay() || 7;
+  const lunes = new Date(hoy); lunes.setDate(hoy.getDate() - (dow - 1));
+  const viernes = new Date(lunes); viernes.setDate(lunes.getDate() + 4);
+  const semStart = lunes.toISOString().split('T')[0];
+  const semEnd = viernes.toISOString().split('T')[0];
+  const semLabel = lunes.toLocaleDateString('es-AR', {day:'numeric', month:'short'}) + ' – ' + viernes.toLocaleDateString('es-AR', {day:'numeric', month:'short'});
+
+  const clasesSem = DB.clases.filter(c => c.fecha >= semStart && c.fecha <= semEnd);
+  const totalSlots = DB.horarios.length;
+  const pendientesSem = DB.horarios.filter(h => {
+    return !DB.clases.some(c => c.horario_id === h.id && c.fecha >= semStart && c.fecha <= semEnd);
+  }).length;
+
+  const mesActual = hoy.toISOString().slice(0, 7);
+  const pagosMes = DB.pagos.filter(p => p.mes === mesActual && p.pagado);
+  const recaudadoMes = pagosMes.reduce((s, p) => s + (p.monto || 0), 0);
+  const pagaronMes = new Set(pagosMes.map(p => p.alumna_id)).size;
+
+  const nuevasSem = DB.alumnas.filter(a => a.created_at && a.created_at.slice(0,10) >= semStart && a.created_at.slice(0,10) <= semEnd).length;
+
+  return `<div class="card" style="margin-bottom:1rem;border-left:3px solid var(--v);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;">
+      <div class="ctitle" style="margin:0;">📊 Semana ${semLabel}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
+      <div style="font-size:13px;"><span style="font-weight:700;color:var(--v);">${clasesSem.length}</span> <span style="color:var(--tm);">clase${clasesSem.length!==1?'s':''} planificada${clasesSem.length!==1?'s':''}</span></div>
+      <div style="font-size:13px;"><span style="font-weight:700;color:${pendientesSem>0?'var(--fun)':'var(--mat)'};">${pendientesSem}</span> <span style="color:var(--tm);">pendiente${pendientesSem!==1?'s':''} de planificar</span></div>
+      <div style="font-size:13px;"><span style="font-weight:700;color:var(--mat);">$${recaudadoMes.toLocaleString('es-AR')}</span> <span style="color:var(--tm);">cobrado ${new Date().toLocaleDateString('es-AR',{month:'long'})}</span></div>
+      <div style="font-size:13px;"><span style="font-weight:700;color:var(--v);">${pagaronMes}</span> <span style="color:var(--tm);">alumna${pagaronMes!==1?'s':''} pagaron este mes</span></div>
+      ${nuevasSem > 0 ? `<div style="font-size:13px;grid-column:span 2;"><span style="font-weight:700;color:var(--mat);">+${nuevasSem}</span> <span style="color:var(--tm);">alumna${nuevasSem!==1?'s':''} nueva${nuevasSem!==1?'s':''} esta semana 🎉</span></div>` : ''}
+    </div>
+  </div>`;
 }
 
 // ─── ALUMNAS ────────────────────────────────────────────
@@ -2132,8 +2169,18 @@ function renderEjerciciosModal(){
       <input value="${e.nombre||''}" placeholder="Ejercicio" oninput="_claseEjs[${i}].nombre=this.value" style="margin:0;font-size:12px;">
       <input value="${e.vt||''}" placeholder="VT (variante, opcional)" oninput="_claseEjs[${i}].vt=this.value" style="margin:0;font-size:12px;">
     </div>
+    <div style="display:flex;flex-direction:column;gap:1px;margin-right:2px;">
+      <button onclick="moveEj(${i},-1)" ${i===0?'disabled':''} style="background:none;border:1px solid var(--b);border-radius:4px;width:20px;height:20px;cursor:pointer;font-size:10px;color:var(--tm);padding:0;line-height:1;">↑</button>
+      <button onclick="moveEj(${i},1)" ${i===_claseEjs.length-1?'disabled':''} style="background:none;border:1px solid var(--b);border-radius:4px;width:20px;height:20px;cursor:pointer;font-size:10px;color:var(--tm);padding:0;line-height:1;">↓</button>
+    </div>
     <button class="ej-del" onclick="removeEj(${i})">✕</button>
   </div>`).join('');
+}
+function moveEj(i, dir){
+  const j = i + dir;
+  if(j < 0 || j >= _claseEjs.length) return;
+  [_claseEjs[i], _claseEjs[j]] = [_claseEjs[j], _claseEjs[i]];
+  renderEjerciciosModal();
 }
 function addEjercicio(){
   _claseEjs.push({orden:_claseEjs.length+1,nombre:'',vt:''});
