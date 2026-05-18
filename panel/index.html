@@ -1527,6 +1527,7 @@ function rHorarios(){
   }).join('');
 
   return`<div class="ptitle">Horarios</div>
+  <p style="font-size:13px;color:var(--tm);margin-bottom:1rem;">Vista de turnos configurados — alumnas inscriptas y capacidad disponible. Para planificar ejercicios de una clase, usá <strong>Planificar</strong>.</p>
   <div class="card">
     <div class="hgrid">${cols}</div>
   </div>
@@ -1577,43 +1578,77 @@ function goToHorarioDetalle(horarioId){
 function rClases(){
   const dias=['lun','mar','mie','jue','vie'];
   const diasFull={lun:'Lunes',mar:'Martes',mie:'Miércoles',jue:'Jueves',vie:'Viernes'};
-  // Rango de la semana actual (lunes a viernes)
+  const diaKey=['dom','lun','mar','mie','jue','vie','sab'];
   const hoy=new Date();
-  const dow=hoy.getDay()||7; // 1=lun..7=dom
+  const dow=hoy.getDay()||7;
   const lunes=new Date(hoy);lunes.setDate(hoy.getDate()-(dow-1));
   const viernes=new Date(lunes);viernes.setDate(lunes.getDate()+4);
   const semStart=lunes.toISOString().split('T')[0];
   const semEnd=viernes.toISOString().split('T')[0];
   const semLabel=lunes.toLocaleDateString('es-AR',{day:'numeric',month:'short'})+' – '+viernes.toLocaleDateString('es-AR',{day:'numeric',month:'short'});
+  const diaHoyKey=diaKey[hoy.getDay()]; // 'lun','mar'...
+  const esFinDeSemana=hoy.getDay()===0||hoy.getDay()===6;
+
+  // Sección HOY
+  const slotshoy=esFinDeSemana?[]:DB.horarios.filter(h=>h.dia===diaHoyKey).sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
+  const secHoy=slotshoy.length?`<div class="card" style="margin-bottom:1rem;border:2px solid var(--v);">
+    <div class="ctitle" style="color:var(--v);margin-bottom:.75rem;">📌 Hoy — ${diasFull[diaHoyKey]} ${hoy.toLocaleDateString('es-AR',{day:'numeric',month:'long'})}</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      ${slotshoy.map(h=>{
+        const claseHoy=DB.clases.find(c=>c.horario_id===h.id&&c.fecha>=semStart&&c.fecha<=semEnd);
+        const nEjs=claseHoy&&Array.isArray(claseHoy.ejercicios)?claseHoy.ejercicios.length:0;
+        const registrada=!!claseHoy;
+        return`<button onclick="openClaseParaHorario(${h.id})" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid ${registrada?'var(--mat)':'var(--b)'};border-radius:var(--rs);background:${registrada?'var(--matl)':'var(--s)'};cursor:pointer;text-align:left;width:100%;">
+          <div>
+            <div style="font-size:14px;font-weight:600;">${h.hora_inicio}–${h.hora_fin}</div>
+            <div style="margin-top:3px;">${modBadge(h.modalidad)}</div>
+          </div>
+          <div style="text-align:right;">
+            ${registrada
+              ?`<div style="font-size:12px;color:var(--mat);font-weight:700;">✓ Planificada</div><div style="font-size:11px;color:var(--tm);">${nEjs} ejercicio${nEjs!==1?'s':''} · tocá para ver</div>`
+              :`<div style="font-size:12px;color:var(--v);font-weight:600;">+ Planificar</div><div style="font-size:11px;color:var(--tm);">Sin ejercicios aún</div>`}
+          </div>
+        </button>`;
+      }).join('')}
+    </div>
+  </div>`:(esFinDeSemana?`<div class="card" style="margin-bottom:1rem;"><div style="font-size:13px;color:var(--tm);">🌿 Fin de semana — sin clases hoy.</div></div>`:'');
+
+  function claseCard(h,semStart,semEnd){
+    const n=DB.inscripciones.filter(i=>i.horario_id===h.id).length;
+    const claseHoy=DB.clases.find(c=>c.horario_id===h.id&&c.fecha>=semStart&&c.fecha<=semEnd);
+    const nEjs=claseHoy&&Array.isArray(claseHoy.ejercicios)?claseHoy.ejercicios.length:0;
+    const registrada=!!claseHoy;
+    const esHoy=h.dia===diaHoyKey&&!esFinDeSemana;
+    return`<button onclick="openClaseParaHorario(${h.id})" style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid ${registrada?'var(--mat)':esHoy?'var(--v)':'var(--b)'};border-radius:var(--rs);background:${registrada?'var(--matl)':'var(--s)'};cursor:pointer;text-align:left;width:100%;">
+      <div>
+        <div style="font-size:13px;font-weight:${esHoy?'700':'500'};">${h.hora_inicio}–${h.hora_fin}</div>
+        <div style="margin-top:2px;">${modBadge(h.modalidad)}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:10px;color:var(--tm);">${n} alumna${n!==1?'s':''}</div>
+        ${registrada
+          ?`<div style="font-size:10px;color:var(--mat);font-weight:600;">✓ ${nEjs} ej.</div>`
+          :`<div style="font-size:10px;color:var(--th);">pendiente</div>`}
+      </div>
+    </button>`;
+  }
 
   return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
     <div class="ptitle" style="margin:0;">Planificar clase</div>
     <button class="btn btn-p" onclick="openModalClase()">+ Nueva clase</button>
   </div>
-  <p style="font-size:13px;color:var(--tm);margin-bottom:1rem;">Tocá un horario para registrar la clase de esa sesión. Cada semana se crea una nueva entrada. El historial completo está en <strong>Historial</strong>.</p>
+  <p style="font-size:13px;color:var(--tm);margin-bottom:1rem;">Cargá ejercicios y notas para cada clase. Las <span style="color:var(--mat);font-weight:600;">verdes</span> ya tienen plan; las <span style="color:var(--th);font-weight:600;">pendientes</span> todavía no. El historial completo está en <strong>Historial</strong>.</p>
+  ${secHoy}
   <div style="font-size:12px;font-weight:600;color:var(--v);margin-bottom:.75rem;">📅 Semana del ${semLabel}</div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;">
     ${dias.map(dia=>{
       const slots=DB.horarios.filter(h=>h.dia===dia).sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
       if(!slots.length)return'';
+      const esHoyCol=dia===diaHoyKey&&!esFinDeSemana;
       return`<div>
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--tm);padding:4px 0 8px;">${diasFull[dia]}</div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:${esHoyCol?'var(--v)':'var(--tm)'};padding:4px 0 8px;">${diasFull[dia]}${esHoyCol?' ← hoy':''}</div>
         <div style="display:flex;flex-direction:column;gap:6px;">
-          ${slots.map(h=>{
-            const n=DB.inscripciones.filter(i=>i.horario_id===h.id).length;
-            const claseHoy=DB.clases.find(c=>c.horario_id===h.id&&c.fecha>=semStart&&c.fecha<=semEnd);
-            const registrada=!!claseHoy;
-            return`<button onclick="openClaseParaHorario(${h.id})" style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid ${registrada?'var(--mat)':'var(--b)'};border-radius:var(--rs);background:${registrada?'var(--matl)':'var(--s)'};cursor:pointer;text-align:left;width:100%;">
-              <div>
-                <div style="font-size:13px;font-weight:500;">${h.hora_inicio}–${h.hora_fin}</div>
-                <div style="margin-top:2px;">${modBadge(h.modalidad)}</div>
-              </div>
-              <div style="text-align:right;">
-                <div style="font-size:10px;color:var(--tm);">${n} alumna${n!==1?'s':''}</div>
-                ${registrada?`<div style="font-size:10px;color:var(--mat);font-weight:600;">✓ lista</div>`:`<div style="font-size:10px;color:var(--th);">pendiente</div>`}
-              </div>
-            </button>`;
-          }).join('')}
+          ${slots.map(h=>claseCard(h,semStart,semEnd)).join('')}
         </div>
       </div>`;
     }).join('')}
@@ -1821,7 +1856,14 @@ async function desinscribir(id){
 
 // ─── MODAL CLASE ────────────────────────────────────────
 function openClaseParaHorario(horarioId){
-  openModalClase(null,horarioId);
+  const hoy=new Date();
+  const dow=hoy.getDay()||7;
+  const lunes=new Date(hoy);lunes.setDate(hoy.getDate()-(dow-1));
+  const viernes=new Date(lunes);viernes.setDate(lunes.getDate()+4);
+  const semStart=lunes.toISOString().split('T')[0];
+  const semEnd=viernes.toISOString().split('T')[0];
+  const claseExistente=DB.clases.find(c=>c.horario_id===horarioId&&c.fecha>=semStart&&c.fecha<=semEnd);
+  openModalClase(claseExistente?.id||null,horarioId);
 }
 function openModalClase(claseId,horarioId){
   _editClaseId=claseId||null;
@@ -1834,7 +1876,9 @@ function openModalClase(claseId,horarioId){
   if(claseId){
     const c=DB.clases.find(x=>x.id===claseId);
     if(c){
-      document.getElementById('mcl-title').textContent='Editar clase';
+      const h=DB.horarios.find(x=>x.id===c.horario_id);
+      const label=h?`${DIA_LABEL[h.dia]} ${h.hora_inicio} — ${MOD_LABEL[h.modalidad]}`:'';
+      document.getElementById('mcl-title').textContent=label?`Clase del ${c.fecha} · ${label}`:'Editar clase';
       document.getElementById('mcl-fecha').value=c.fecha;
       document.getElementById('mcl-notas').value=c.notas||'';
       selH.value=c.horario_id;
