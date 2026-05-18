@@ -270,6 +270,14 @@
 <div class="modal-bg" id="modal-clase" style="display:none" onclick="if(event.target===this)closeModalClase()">
   <div class="modal" style="max-width:640px;">
     <h3 id="mcl-title">Nueva clase</h3>
+
+    <!-- Sugerencia: copiar de clase anterior (solo para clases nuevas) -->
+    <div id="mcl-sugerencia" style="display:none;background:var(--vl);border:1px solid var(--vm);border-radius:var(--rs);padding:10px 12px;margin-bottom:.75rem;font-size:12px;color:var(--t);align-items:center;justify-content:space-between;gap:8px;">
+      <div id="mcl-sug-label" style="flex:1;"></div>
+      <button class="btn btn-s btn-p" onclick="copiarUltimaClase()" style="white-space:nowrap;">Copiar ejercicios</button>
+      <button class="btn btn-s" onclick="document.getElementById('mcl-sugerencia').style.display='none'" style="padding:2px 6px;font-size:11px;">✕</button>
+    </div>
+
     <div class="frow">
       <div>
         <label>Horario</label>
@@ -292,7 +300,27 @@
     </div>
     <div id="mcl-ejercicios"></div>
 
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:.75rem;">
+    <!-- Sección clonar (solo visible al hacer click en Clonar) -->
+    <div id="mcl-clone-section" style="display:none;background:var(--s2);border:1px solid var(--b);border-radius:var(--rs);padding:10px 12px;margin-top:.75rem;">
+      <div style="font-size:12px;font-weight:600;margin-bottom:.5rem;color:var(--t);">Clonar a otro horario</div>
+      <div class="frow" style="margin-bottom:.5rem;">
+        <div>
+          <label style="font-size:11px;">Horario destino</label>
+          <select id="mcl-clone-horario" style="margin:0;font-size:12px;"></select>
+        </div>
+        <div>
+          <label style="font-size:11px;">Fecha</label>
+          <input id="mcl-clone-fecha" type="date" style="margin:0;font-size:12px;">
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;justify-content:flex-end;">
+        <button class="btn btn-s" onclick="document.getElementById('mcl-clone-section').style.display='none'">Cancelar</button>
+        <button class="btn btn-s btn-p" onclick="confirmarClone()">Clonar</button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:.75rem;align-items:center;">
+      <button id="mcl-btn-clonar" class="btn btn-s" onclick="abrirCloneSection()" style="display:none;margin-right:auto;">📋 Clonar</button>
       <button class="btn" onclick="closeModalClase()">Cancelar</button>
       <button class="btn btn-p" onclick="saveClase()">Guardar clase</button>
     </div>
@@ -1873,6 +1901,13 @@ function openModalClase(claseId,horarioId){
   selH.innerHTML=DB.horarios.sort((a,b)=>DIA_ORDER[a.dia]-DIA_ORDER[b.dia]||a.hora_inicio.localeCompare(b.hora_inicio))
     .map(h=>`<option value="${h.id}"${h.id===horarioId?' selected':''}>${DIA_LABEL[h.dia]} ${h.hora_inicio}–${h.hora_fin} — ${MOD_LABEL[h.modalidad]}</option>`).join('');
   const hoy=new Date().toISOString().split('T')[0];
+  const sugDiv=document.getElementById('mcl-sugerencia');
+  const cloneBtn=document.getElementById('mcl-btn-clonar');
+  const cloneSection=document.getElementById('mcl-clone-section');
+  sugDiv.style.display='none';
+  cloneBtn.style.display='none';
+  cloneSection.style.display='none';
+
   if(claseId){
     const c=DB.clases.find(x=>x.id===claseId);
     if(c){
@@ -1883,17 +1918,63 @@ function openModalClase(claseId,horarioId){
       document.getElementById('mcl-notas').value=c.notas||'';
       selH.value=c.horario_id;
       _claseEjs=Array.isArray(c.ejercicios)?JSON.parse(JSON.stringify(c.ejercicios)):[];
+      cloneBtn.style.display='inline-flex';
     }
   } else {
     document.getElementById('mcl-title').textContent='Nueva clase';
     document.getElementById('mcl-fecha').value=hoy;
     document.getElementById('mcl-notas').value='';
     _claseEjs=[];
+    // Sugerir copiar de la clase anterior de este horario
+    if(horarioId){
+      const anterior=DB.clases.filter(c=>c.horario_id===horarioId).sort((a,b)=>b.fecha.localeCompare(a.fecha))[0];
+      if(anterior){
+        const nEjs=Array.isArray(anterior.ejercicios)?anterior.ejercicios.length:0;
+        document.getElementById('mcl-sug-label').textContent=`Última clase de este horario: ${anterior.fecha} · ${nEjs} ejercicio${nEjs!==1?'s':''}`;
+        sugDiv.style.display='flex';
+        sugDiv._anteriorId=anterior.id;
+      }
+    }
   }
   renderEjerciciosModal();
   document.getElementById('modal-clase').style.display='flex';
 }
 function closeModalClase(){document.getElementById('modal-clase').style.display='none';}
+
+function copiarUltimaClase(){
+  const sugDiv=document.getElementById('mcl-sugerencia');
+  const anteriorId=sugDiv._anteriorId;
+  if(!anteriorId)return;
+  const anterior=DB.clases.find(c=>c.id===anteriorId);
+  if(!anterior)return;
+  _claseEjs=Array.isArray(anterior.ejercicios)?JSON.parse(JSON.stringify(anterior.ejercicios)):[];
+  if(anterior.notas&&!document.getElementById('mcl-notas').value)document.getElementById('mcl-notas').value=anterior.notas;
+  renderEjerciciosModal();
+  sugDiv.style.display='none';
+  showMsg('✓ Ejercicios copiados — editá lo que necesites');
+}
+
+function abrirCloneSection(){
+  const section=document.getElementById('mcl-clone-section');
+  const selC=document.getElementById('mcl-clone-horario');
+  selC.innerHTML=DB.horarios.sort((a,b)=>DIA_ORDER[a.dia]-DIA_ORDER[b.dia]||a.hora_inicio.localeCompare(b.hora_inicio))
+    .map(h=>`<option value="${h.id}">${DIA_LABEL[h.dia]} ${h.hora_inicio}–${h.hora_fin} — ${MOD_LABEL[h.modalidad]}</option>`).join('');
+  document.getElementById('mcl-clone-fecha').value=new Date().toISOString().split('T')[0];
+  section.style.display='block';
+}
+
+async function confirmarClone(){
+  const ejsActuales=_claseEjs.filter(e=>e.nombre?.trim()).map((e,i)=>({orden:i+1,nombre:e.nombre.trim(),vt:e.vt?.trim()||null}));
+  const horario_id=parseInt(document.getElementById('mcl-clone-horario').value);
+  const fecha=document.getElementById('mcl-clone-fecha').value;
+  const notas=document.getElementById('mcl-notas').value.trim()||null;
+  if(!fecha){showMsg('Falta la fecha destino');return;}
+  const{error}=await rpc('triskel_save_clase',{p_horario_id:horario_id,p_fecha:fecha,p_ejercicios:ejsActuales,p_notas:notas});
+  if(error){showMsg('Error al clonar');return;}
+  document.getElementById('mcl-clone-section').style.display='none';
+  showMsg('✓ Clase clonada');
+  await loadAll();
+}
 
 function renderEjerciciosModal(){
   const cont=document.getElementById('mcl-ejercicios');
