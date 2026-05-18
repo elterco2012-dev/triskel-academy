@@ -399,7 +399,7 @@
 <!-- BARRA INFERIOR MOBILE -->
 <nav class="bnav" id="bnav">
   <a href="#" onclick="goTo('inicio');return false;" id="bn-inicio"><span class="bi">🏠</span><span>Inicio</span></a>
-  <a href="#" onclick="goTo('horarios');return false;" id="bn-horarios"><span class="bi">📅</span><span>Horarios</span></a>
+  <a href="#" onclick="goTo('clases');return false;" id="bn-clases"><span class="bi">📝</span><span>Planificar</span></a>
   <a href="#" onclick="goTo('alumnas');return false;" id="bn-alumnas"><span class="bi">👤</span><span>Alumnas</span></a>
   <a href="#" onclick="goTo('pagos');return false;" id="bn-pagos"><span class="bi">💰</span><span>Pagos</span></a>
 </nav>
@@ -1568,12 +1568,33 @@ function goToHorarioDetalle(horarioId){
   const h=DB.horarios.find(x=>x.id===horarioId);
   if(!h)return;
   const inscs=DB.inscripciones.filter(i=>i.horario_id===horarioId);
+  // Clase de esta semana para este horario
+  const hoy=new Date();const dow=hoy.getDay()||7;
+  const lunes=new Date(hoy);lunes.setDate(hoy.getDate()-(dow-1));
+  const viernes=new Date(lunes);viernes.setDate(lunes.getDate()+4);
+  const semStart=lunes.toISOString().split('T')[0];
+  const semEnd=viernes.toISOString().split('T')[0];
+  const claseSem=DB.clases.find(c=>c.horario_id===horarioId&&c.fecha>=semStart&&c.fecha<=semEnd);
+  const ejsSem=claseSem&&Array.isArray(claseSem.ejercicios)?claseSem.ejercicios:[];
+  const ejsHtml=ejsSem.length
+    ?`<div style="margin-bottom:.75rem;background:var(--matl);border:1px solid var(--mat);border-radius:var(--rs);padding:.6rem .75rem;">
+        <div style="font-size:11px;font-weight:700;color:var(--mat);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.4rem;">Ejercicios de esta semana</div>
+        <ol style="margin:0;padding-left:1.1rem;display:flex;flex-direction:column;gap:3px;">
+          ${ejsSem.map(e=>`<li style="font-size:12px;">${e.nombre}${e.vt?` <span style="color:var(--tm);">· ${e.vt}</span>`:''}</li>`).join('')}
+        </ol>
+        ${claseSem.notas?`<div style="font-size:11px;color:var(--tm);margin-top:.35rem;font-style:italic;">${claseSem.notas}</div>`:''}
+        <button class="btn btn-s btn-p" onclick="openClaseParaHorario(${horarioId})" style="margin-top:.5rem;">✏️ Editar plan</button>
+      </div>`
+    :`<div style="margin-bottom:.75rem;background:var(--funl);border:1px solid var(--fun);border-radius:var(--rs);padding:.6rem .75rem;font-size:12px;color:var(--t);display:flex;align-items:center;justify-content:space-between;">
+        <span>Sin ejercicios planificados para esta semana</span>
+        <button class="btn btn-s btn-p" onclick="openClaseParaHorario(${horarioId})">+ Planificar</button>
+      </div>`;
   const html=`<div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;">
       <div><div class="ctitle" style="margin:0;">${DIA_LABEL[h.dia]} ${h.hora_inicio}–${h.hora_fin}</div>
       <div style="margin-top:4px;">${modBadge(h.modalidad)}</div></div>
-      <button class="btn btn-s btn-p" onclick="openClaseParaHorario(${horarioId})">+ Registrar clase</button>
     </div>
+    ${ejsHtml}
     <div class="ctitle" style="color:${capColor(inscs.length,h.capacidad)};">Alumnas inscriptas · ${capText(inscs.length,h.capacidad)}</div>
     ${(()=>{
       const esp=DB.espera.filter(e=>e.horario_id===horarioId);
