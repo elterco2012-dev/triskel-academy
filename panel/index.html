@@ -954,17 +954,18 @@ function splitGroupPrice(groupKey){
   const totalInput=document.getElementById(`hgp-${groupKey}`);
   if(!totalInput)return;
   let total=parseFloat(totalInput.value)||0;
-  const allCbs=document.querySelectorAll(`#mal-horarios-lista input[type=checkbox][data-group="${groupKey}"]`);
-  const checked=[...allCbs].filter(cb=>cb.checked&&!cb.disabled);
-  const count=checked.length;
+  const allCbs=[...document.querySelectorAll(`#mal-horarios-lista input[type=checkbox][data-group="${groupKey}"]`)];
+  const nuevos=allCbs.filter(cb=>cb.checked&&!cb.disabled);
+  const yaInscrip=allCbs.filter(cb=>cb.checked&&cb.dataset.locked==='true');
+  const count=nuevos.length+yaInscrip.length; // total días del plan (existentes + nuevos)
 
   // Limitar a 2 días: deshabilitar los no marcados si ya se llegó al máximo
   allCbs.forEach(cb=>{
-    if(cb.dataset.locked==='true')return; // no tocar los bloqueados por sistema
-    if(!cb.checked) cb.disabled=count>=2;
+    if(cb.dataset.locked==='true')return;
+    if(!cb.checked)cb.disabled=count>=2;
   });
 
-  // Actualizar tarifa según count (solo si el total está vacío o era una tarifa conocida)
+  // Actualizar tarifa según count total
   const mod=groupKey.split('|')[0];
   const t=getTarifas();
   const tarifasConocidas=[1,2].map(n=>t[`${mod}_${n}`]||0);
@@ -972,6 +973,7 @@ function splitGroupPrice(groupKey){
     const nueva=t[`${mod}_${count}`]||0;
     if(nueva){total=nueva;totalInput.value=total;}
   }
+  // El precio por día para las inscripciones NUEVAS (las ya inscriptas no se tocan)
   const perDay=total>0&&count>0?Math.round(total/count):0;
   document.querySelectorAll(`#mal-horarios-lista input[data-dayinput="${groupKey}"]`).forEach(inp=>{inp.value=perDay||'';});
 }
@@ -997,7 +999,10 @@ function renderModalHorarios(alumnaId){
       lastMod=g.modalidad;
     }
     const isGroup=g.items.length>1;
-    const groupEnrolledTotal=isGroup?g.items.filter(h=>existingIds.has(h.id)).reduce((s,h)=>s+(existingPrices[h.id]||0),0):0;
+    const enrolledInGroup=g.items.filter(h=>existingIds.has(h.id));
+    const enrolledCount=enrolledInGroup.length;
+    const tf=getTarifas();
+    const groupEnrolledTotal=isGroup&&enrolledCount>0?(tf[`${g.modalidad}_${enrolledCount}`]||enrolledInGroup.reduce((s,h)=>s+(existingPrices[h.id]||0),0)):0;
     html+=`<div style="border:1px solid var(--b);border-radius:var(--rs);overflow:hidden;margin-bottom:4px;">`;
     if(isGroup)html+=`<div style="padding:6px 10px;background:var(--s2);font-size:11px;font-weight:600;color:var(--tm);display:flex;align-items:center;justify-content:space-between;gap:8px;">
       <span>${g.hora_inicio}–${g.hora_fin} · elegí 1 o 2 días</span>
@@ -1557,10 +1562,16 @@ function goToHorarioDetalle(horarioId){
     ${inscs.length?inscs.map(i=>{
       const a=alumnaById(i.alumna_id);
       if(!a)return'';
+      // Precio total del plan: sumar todas las inscripciones de esta alumna en el mismo turno (misma modalidad+hora)
+      const planTotal=DB.inscripciones.filter(x=>{
+        if(x.alumna_id!==i.alumna_id)return false;
+        const h2=DB.horarios.find(y=>y.id===x.horario_id);
+        return h2&&h2.modalidad===h.modalidad&&h2.hora_inicio===h.hora_inicio;
+      }).reduce((s,x)=>s+(x.precio||0),0);
       return`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--b);">
         <div class="avatar" style="width:30px;height:30px;font-size:11px;">${alumnaInits(a.nombre,a.apellido)}</div>
-        <div style="flex:1;font-size:13px;">${a.nombre} ${a.apellido||''}</div>
-        <div style="font-size:12px;color:var(--tm);">$${i.precio||0}/mes</div>
+        <div style="flex:1;font-size:13px;cursor:pointer;" onclick="goTo('ficha',${a.id})">${a.nombre} ${a.apellido||''}</div>
+        <div style="font-size:12px;color:var(--tm);">$${planTotal.toLocaleString('es-AR')}/mes</div>
         <button class="btn btn-s btn-danger" onclick="desinscribir(${i.id})">Baja</button>
       </div>`;
     }).join(''):`<div style="font-size:13px;color:var(--tm);">Sin alumnas inscriptas.</div>`}
@@ -1573,11 +1584,21 @@ function goToHorarioDetalle(horarioId){
 function rClases(){
   const dias=['lun','mar','mie','jue','vie'];
   const diasFull={lun:'Lunes',mar:'Martes',mie:'Miércoles',jue:'Jueves',vie:'Viernes'};
-  return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+  // Rango de la semana actual (lunes a viernes)
+  const hoy=new Date();
+  const dow=hoy.getDay()||7; // 1=lun..7=dom
+  const lunes=new Date(hoy);lunes.setDate(hoy.getDate()-(dow-1));
+  const viernes=new Date(lunes);viernes.setDate(lunes.getDate()+4);
+  const semStart=lunes.toISOString().split('T')[0];
+  const semEnd=viernes.toISOString().split('T')[0];
+  const semLabel=lunes.toLocaleDateString('es-AR',{day:'numeric',month:'short'})+' – '+viernes.toLocaleDateString('es-AR',{day:'numeric',month:'short'});
+
+  return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
     <div class="ptitle" style="margin:0;">Planificar clase</div>
     <button class="btn btn-p" onclick="openModalClase()">+ Nueva clase</button>
   </div>
-  <p style="font-size:13px;color:var(--tm);margin-bottom:1rem;">Tocá un horario para registrar los ejercicios de esa sesión. El historial completo está en <strong>Historial</strong>.</p>
+  <p style="font-size:13px;color:var(--tm);margin-bottom:1rem;">Tocá un horario para registrar la clase de esa sesión. Cada semana se crea una nueva entrada. El historial completo está en <strong>Historial</strong>.</p>
+  <div style="font-size:12px;font-weight:600;color:var(--v);margin-bottom:.75rem;">📅 Semana del ${semLabel}</div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;">
     ${dias.map(dia=>{
       const slots=DB.horarios.filter(h=>h.dia===dia).sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
@@ -1587,12 +1608,17 @@ function rClases(){
         <div style="display:flex;flex-direction:column;gap:6px;">
           ${slots.map(h=>{
             const n=DB.inscripciones.filter(i=>i.horario_id===h.id).length;
-            return`<button onclick="openClaseParaHorario(${h.id})" style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid var(--b);border-radius:var(--rs);background:var(--s);cursor:pointer;text-align:left;width:100%;">
+            const claseHoy=DB.clases.find(c=>c.horario_id===h.id&&c.fecha>=semStart&&c.fecha<=semEnd);
+            const registrada=!!claseHoy;
+            return`<button onclick="openClaseParaHorario(${h.id})" style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid ${registrada?'var(--mat)':'var(--b)'};border-radius:var(--rs);background:${registrada?'var(--matl)':'var(--s)'};cursor:pointer;text-align:left;width:100%;">
               <div>
                 <div style="font-size:13px;font-weight:500;">${h.hora_inicio}–${h.hora_fin}</div>
                 <div style="margin-top:2px;">${modBadge(h.modalidad)}</div>
               </div>
-              <div style="font-size:11px;color:var(--tm);text-align:right;">${n} alumna${n!==1?'s':''}</div>
+              <div style="text-align:right;">
+                <div style="font-size:10px;color:var(--tm);">${n} alumna${n!==1?'s':''}</div>
+                ${registrada?`<div style="font-size:10px;color:var(--mat);font-weight:600;">✓ lista</div>`:`<div style="font-size:10px;color:var(--th);">pendiente</div>`}
+              </div>
             </button>`;
           }).join('')}
         </div>
