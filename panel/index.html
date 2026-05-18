@@ -1948,7 +1948,9 @@ function openModalClase(claseId,horarioId){
     }
   } else {
     document.getElementById('mcl-title').textContent='Nueva clase';
-    document.getElementById('mcl-fecha').value=hoy;
+    // Fecha correcta según el día del horario (no siempre "hoy")
+    const hDia=DB.horarios.find(x=>x.id===horarioId)?.dia;
+    document.getElementById('mcl-fecha').value=hDia?fechaDelDiaEstaSemana(hDia):hoy;
     document.getElementById('mcl-notas').value='';
     _claseEjs=[];
     // Sugerir copiar de la clase anterior de este horario
