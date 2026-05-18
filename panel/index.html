@@ -236,7 +236,9 @@
       <div><label>Email</label><input id="mal-email" placeholder="maria@gmail.com"></div>
     </div>
     <label>Notas</label>
-    <textarea id="mal-notas" placeholder="Lesiones, preferencias, observaciones..."></textarea>
+    <textarea id="mal-notas" placeholder="Preferencias, observaciones generales..."></textarea>
+    <label style="color:var(--rd);font-weight:600;">🏥 Contraindicaciones / Lesiones</label>
+    <textarea id="mal-contra" placeholder="Ej: Rodilla derecha — sin flexión profunda · Hernia lumbar L4-L5" style="height:52px;border-color:var(--rd);"></textarea>
     <div class="frow" style="margin-top:4px;">
       <div>
         <label>Día de pago (1–31)</label>
@@ -376,6 +378,25 @@
       <button class="btn" onclick="closeModalTarifas()">Cancelar</button>
       <button class="btn btn-p" onclick="saveTarifasModal()">Guardar</button>
     </div>
+    <hr style="margin:1.2rem 0;border:none;border-top:1px solid var(--b);">
+    <div style="font-size:13px;font-weight:700;color:var(--tm);margin-bottom:.5rem;">🔄 Actualización masiva de precios</div>
+    <p style="font-size:12px;color:var(--tm);margin-bottom:.75rem;">Aplica un incremento porcentual a todas las inscripciones activas de una modalidad.</p>
+    <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+      <div style="flex:1;min-width:120px;">
+        <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px;">Modalidad</label>
+        <select id="pm-modalidad" style="width:100%;font-size:13px;padding:5px 8px;">
+          <option value="reformer">Reformer</option>
+          <option value="mat">Mat</option>
+          <option value="funcional">Funcional</option>
+        </select>
+      </div>
+      <div style="width:90px;">
+        <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px;">% aumento</label>
+        <input id="pm-pct" type="number" min="1" max="200" placeholder="Ej: 10" style="width:100%;font-size:13px;padding:5px 8px;text-align:right;">
+      </div>
+      <button class="btn btn-p" onclick="actualizarPreciosMasivo()" style="white-space:nowrap;">Aplicar</button>
+    </div>
+    <div id="pm-resultado" style="font-size:12px;color:var(--mat);margin-top:.5rem;display:none;"></div>
   </div>
 </div>
 
@@ -415,6 +436,19 @@
 </nav>
 
 <div id="msg"></div>
+
+<!-- RECIBO WA TOAST -->
+<div id="recibo-wa-toast" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:300;background:#fff;border:1px solid #d4edda;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.15);padding:14px 16px;width:min(92vw,380px);">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:#1a1a2e;">📋 <span id="recibo-wa-nombre">Recibo de pago</span></div>
+    <button onclick="cerrarReciboWA()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#aaa;padding:0;line-height:1;">×</button>
+  </div>
+  <div id="recibo-wa-msg" style="font-size:12px;color:var(--tm);line-height:1.5;margin-bottom:10px;"></div>
+  <div style="display:flex;gap:8px;">
+    <a id="recibo-wa-btn" href="#" target="_blank" style="display:none;flex:1;text-align:center;background:#25D366;color:#fff;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;text-decoration:none;">📲 Enviar por WhatsApp</a>
+    <button onclick="cerrarReciboWA()" style="background:var(--s2);border:none;border-radius:8px;padding:8px 12px;font-size:13px;cursor:pointer;color:var(--tm);">Cerrar</button>
+  </div>
+</div>
 
 <!-- MODO CLASE OVERLAY -->
 <div id="modo-clase-overlay" style="display:none;position:fixed;inset:0;background:#fff;z-index:200;overflow-y:auto;padding:2rem 1.5rem 4rem;">
@@ -1032,6 +1066,21 @@ function saveTarifasModal(){
   closeModalTarifas();
   showMsg('✓ Tarifas guardadas');
 }
+async function actualizarPreciosMasivo(){
+  const mod=document.getElementById('pm-modalidad').value;
+  const pct=parseFloat(document.getElementById('pm-pct').value);
+  if(!pct||pct<=0){showMsg('Ingresá un porcentaje válido');return;}
+  const factor=1+(pct/100);
+  const res=document.getElementById('pm-resultado');
+  res.style.display='none';
+  const{data,error}=await rpc('triskel_update_precios_modalidad',{p_modalidad:mod,p_factor:factor});
+  if(error){showMsg('Error al actualizar precios');return;}
+  const n=data||0;
+  res.textContent=`✓ ${n} inscripción${n!==1?'es':''} actualizada${n!==1?'s':''} (+${pct}%)`;
+  res.style.display='block';
+  document.getElementById('pm-pct').value='';
+  await loadAll();
+}
 // ────────────────────────────────────────────────────────
 function updateModPlan(mod){
   const totalInput=document.getElementById(`hmp-${mod}`);
@@ -1400,6 +1449,11 @@ function rFicha(){
     </div>
   </div>
 
+  ${a.contraindicaciones?`<div class="card" style="margin-bottom:1rem;border-left:4px solid var(--rd);background:#fff5f5;padding:.75rem 1rem;">
+    <div style="font-size:12px;font-weight:700;color:var(--rd);margin-bottom:4px;">🏥 Contraindicaciones / Lesiones</div>
+    <div style="font-size:13px;color:#c0392b;line-height:1.5;">${a.contraindicaciones}</div>
+  </div>`:''}
+
   <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:.75rem;">
     <div class="metric"><div class="mlabel">Total pagado</div><div class="mval g">$${totalPagado.toLocaleString('es-AR')}</div></div>
     <div class="metric"><div class="mlabel">Deuda pendiente</div><div class="mval" style="color:${deuda>0?'var(--rd)':'var(--mat)'};">$${deuda.toLocaleString('es-AR')}</div></div>
@@ -1571,7 +1625,44 @@ function rInicio(){
       }).join(''):`<div style="font-size:13px;color:var(--tm);">Sin clases registradas aún.</div>`}
     </div>
   </div>
+  ${rResumenSemana()}
   ${rGraficoIngresos()}`;
+}
+
+function rResumenSemana(){
+  const hoy = new Date();
+  const dow = hoy.getDay() || 7;
+  const lunes = new Date(hoy); lunes.setDate(hoy.getDate() - (dow - 1));
+  const viernes = new Date(lunes); viernes.setDate(lunes.getDate() + 4);
+  const semStart = lunes.toISOString().split('T')[0];
+  const semEnd = viernes.toISOString().split('T')[0];
+  const semLabel = lunes.toLocaleDateString('es-AR', {day:'numeric', month:'short'}) + ' – ' + viernes.toLocaleDateString('es-AR', {day:'numeric', month:'short'});
+
+  const clasesSem = DB.clases.filter(c => c.fecha >= semStart && c.fecha <= semEnd);
+  const totalSlots = DB.horarios.length;
+  const pendientesSem = DB.horarios.filter(h => {
+    return !DB.clases.some(c => c.horario_id === h.id && c.fecha >= semStart && c.fecha <= semEnd);
+  }).length;
+
+  const mesActual = hoy.toISOString().slice(0, 7);
+  const pagosMes = DB.pagos.filter(p => p.mes === mesActual && p.pagado);
+  const recaudadoMes = pagosMes.reduce((s, p) => s + (p.monto || 0), 0);
+  const pagaronMes = new Set(pagosMes.map(p => p.alumna_id)).size;
+
+  const nuevasSem = DB.alumnas.filter(a => a.created_at && a.created_at.slice(0,10) >= semStart && a.created_at.slice(0,10) <= semEnd).length;
+
+  return `<div class="card" style="margin-bottom:1rem;border-left:3px solid var(--v);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;">
+      <div class="ctitle" style="margin:0;">📊 Semana ${semLabel}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
+      <div style="font-size:13px;"><span style="font-weight:700;color:var(--v);">${clasesSem.length}</span> <span style="color:var(--tm);">clase${clasesSem.length!==1?'s':''} planificada${clasesSem.length!==1?'s':''}</span></div>
+      <div style="font-size:13px;"><span style="font-weight:700;color:${pendientesSem>0?'var(--fun)':'var(--mat)'};">${pendientesSem}</span> <span style="color:var(--tm);">pendiente${pendientesSem!==1?'s':''} de planificar</span></div>
+      <div style="font-size:13px;"><span style="font-weight:700;color:var(--mat);">$${recaudadoMes.toLocaleString('es-AR')}</span> <span style="color:var(--tm);">cobrado ${new Date().toLocaleDateString('es-AR',{month:'long'})}</span></div>
+      <div style="font-size:13px;"><span style="font-weight:700;color:var(--v);">${pagaronMes}</span> <span style="color:var(--tm);">alumna${pagaronMes!==1?'s':''} pagaron este mes</span></div>
+      ${nuevasSem > 0 ? `<div style="font-size:13px;grid-column:span 2;"><span style="font-weight:700;color:var(--mat);">+${nuevasSem}</span> <span style="color:var(--tm);">alumna${nuevasSem!==1?'s':''} nueva${nuevasSem!==1?'s':''} esta semana 🎉</span></div>` : ''}
+    </div>
+  </div>`;
 }
 
 // ─── ALUMNAS ────────────────────────────────────────────
@@ -1940,6 +2031,7 @@ function openModalAlumna(id){
   document.getElementById('mal-notas').value=a?.notas||'';
   document.getElementById('mal-diapago').value=a?.dia_pago||'';
   document.getElementById('mal-nacimiento').value=a?.fecha_nacimiento||'';
+  document.getElementById('mal-contra').value=a?.contraindicaciones||'';
   renderModalHorarios(id||null);
   document.getElementById('modal-alumna').style.display='flex';
 }
@@ -1955,6 +2047,7 @@ async function saveAlumna(){
     p_notas:document.getElementById('mal-notas').value.trim()||null,
     p_dia_pago:parseInt(document.getElementById('mal-diapago').value)||null,
     p_fecha_nacimiento:document.getElementById('mal-nacimiento').value||null,
+    p_contraindicaciones:document.getElementById('mal-contra').value.trim()||null,
   };
   if(_editAlumnaId)params.p_id=_editAlumnaId;
   else params.p_estado='activa';
@@ -2132,8 +2225,18 @@ function renderEjerciciosModal(){
       <input value="${e.nombre||''}" placeholder="Ejercicio" oninput="_claseEjs[${i}].nombre=this.value" style="margin:0;font-size:12px;">
       <input value="${e.vt||''}" placeholder="VT (variante, opcional)" oninput="_claseEjs[${i}].vt=this.value" style="margin:0;font-size:12px;">
     </div>
+    <div style="display:flex;flex-direction:column;gap:1px;margin-right:2px;">
+      <button onclick="moveEj(${i},-1)" ${i===0?'disabled':''} style="background:none;border:1px solid var(--b);border-radius:4px;width:20px;height:20px;cursor:pointer;font-size:10px;color:var(--tm);padding:0;line-height:1;">↑</button>
+      <button onclick="moveEj(${i},1)" ${i===_claseEjs.length-1?'disabled':''} style="background:none;border:1px solid var(--b);border-radius:4px;width:20px;height:20px;cursor:pointer;font-size:10px;color:var(--tm);padding:0;line-height:1;">↓</button>
+    </div>
     <button class="ej-del" onclick="removeEj(${i})">✕</button>
   </div>`).join('');
+}
+function moveEj(i, dir){
+  const j = i + dir;
+  if(j < 0 || j >= _claseEjs.length) return;
+  [_claseEjs[i], _claseEjs[j]] = [_claseEjs[j], _claseEjs[i]];
+  renderEjerciciosModal();
 }
 function addEjercicio(){
   _claseEjs.push({orden:_claseEjs.length+1,nombre:'',vt:''});
@@ -2257,12 +2360,38 @@ async function desmarcarPagosPlan(idsStr){
   await loadAll();
 }
 async function marcarPagosPlan(idsStr){
+  const ids=idsStr.split(',').map(Number);
+  // Capturar datos antes del reload
+  const pagos=ids.map(id=>DB.pagos.find(p=>p.id===id)).filter(Boolean);
   const hoy=new Date().toISOString().split('T')[0];
-  for(const id of idsStr.split(',').map(Number))
+  for(const id of ids)
     await rpc('triskel_mark_pago',{p_id:id,p_pagado:true,p_fecha_pago:hoy});
-  showMsg('✓ Pago marcado');
   await loadAll();
+  showMsg('✓ Pago marcado');
+  if(pagos.length){
+    const alumna=alumnaById(pagos[0].alumna_id);
+    const total=pagos.reduce((s,p)=>s+(p.monto||0),0);
+    const mes=pagos[0].mes||new Date().toISOString().slice(0,7);
+    const [y,m]=mes.split('-');
+    const mesLabel=new Date(y,m-1,1).toLocaleDateString('es-AR',{month:'long',year:'numeric'});
+    const nombre=alumna?.nombre||'';
+    const tel=alumna?.tel||'';
+    const msgTxt=`Hola ${nombre}! ✅ Registramos tu pago de $${total.toLocaleString('es-AR')} correspondiente a ${mesLabel} en Triskel Academy. ¡Gracias! 🌿`;
+    showReciboWA(nombre,tel,msgTxt);
+  }
 }
+function showReciboWA(nombre,tel,msgTxt){
+  const el=document.getElementById('recibo-wa-toast');
+  if(!el)return;
+  document.getElementById('recibo-wa-nombre').textContent=nombre?`Recibo para ${nombre}`:'Recibo de pago';
+  const waUrl=tel?`https://wa.me/${tel.replace(/\D/g,'')}?text=${encodeURIComponent(msgTxt)}`:'';
+  const btn=document.getElementById('recibo-wa-btn');
+  if(waUrl){btn.href=waUrl;btn.style.display='inline-block';}
+  else btn.style.display='none';
+  document.getElementById('recibo-wa-msg').textContent=msgTxt;
+  el.style.display='block';
+}
+function cerrarReciboWA(){document.getElementById('recibo-wa-toast').style.display='none';}
 
 // ─── BANCO DE EJERCICIOS ─────────────────────────────────
 function openModalBanco(){
@@ -2329,7 +2458,10 @@ function iniciarModoClase(claseId) {
   function rowNota(a,destacada){
     return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f5f5f5;">
       <div style="width:32px;height:32px;border-radius:50%;background:${destacada?'#ede9f7':'#f3f4f6'};color:${destacada?'#7C5CBF':'#555'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${alumnaInits(a.nombre,a.apellido)}</div>
-      <div style="flex:1;font-size:14px;font-weight:${destacada?'600':'400'};color:#1a1a2e;">${a.nombre} ${a.apellido||''}${destacada?'':' <span style="font-size:11px;color:#aaa;">(otra clase)</span>'}</div>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:${destacada?'600':'400'};color:#1a1a2e;">${a.nombre} ${a.apellido||''}${destacada?'':' <span style="font-size:11px;color:#aaa;">(otra clase)</span>'}</div>
+        ${a.contraindicaciones?`<div style="font-size:11px;color:#c0392b;font-weight:600;margin-top:2px;">🏥 ${a.contraindicaciones}</div>`:''}
+      </div>
       <button onclick="abrirNotaRapida(${a.id},this)" style="background:#f3f4f6;border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:#555;flex-shrink:0;">+ Nota</button>
     </div>
     <div id="nota-rapida-${a.id}" style="display:none;padding:8px 0 12px 42px;">
