@@ -36,7 +36,7 @@
       --matl:#0a2e20;--refl:#0f1e3a;--funl:#2a1a05;
       --rd:#f09595;--rl:#2a1010;
     }
-    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);transition:background .3s;}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);transition:background .3s;overflow-x:hidden;}
     input,select,textarea{width:100%;padding:8px 12px;border:1px solid var(--bm);border-radius:var(--rs);font-size:13px;font-family:'DM Sans',sans-serif;background:var(--s2);color:var(--t);margin-bottom:10px;transition:border-color .15s;}
     input:focus,select:focus,textarea:focus{outline:none;border-color:var(--v);}
     textarea{resize:vertical;height:60px;}
@@ -1784,16 +1784,17 @@ function rPagos(){
       const h2=i2?DB.horarios.find(x=>x.id===i2.horario_id):null;
       return h2?`${DIA_LABEL[h2.dia]} ${h2.hora_inicio}`:'';
     }).filter(Boolean).join('+'):(g.h?DIA_LABEL[g.h.dia]+' '+g.h.hora_inicio:'');
-    return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--b);">
-      <div class="avatar" style="width:30px;height:30px;font-size:11px;">${alumnaInits(a?.nombre,a?.apellido)}</div>
-      <div style="flex:1;">
+    const modLabel=h?MOD_LABEL[h.modalidad]:'';
+    const subLabel=esPlan?`${modLabel} · Plan (${diasLabel})`:(h?`${modLabel} · ${diasLabel}`:'');
+    return`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--b);flex-wrap:wrap;">
+      <div class="avatar" style="width:30px;height:30px;font-size:11px;flex-shrink:0;">${alumnaInits(a?.nombre,a?.apellido)}</div>
+      <div style="flex:1;min-width:100px;">
         <div style="font-size:13px;font-weight:500;">${a?.nombre||'?'} ${a?.apellido||''}</div>
-        <div style="font-size:11px;color:var(--tm);">${diasLabel}${h?' '+h.hora_inicio+' · '+MOD_LABEL[h.modalidad]:''}${esPlan?' · Plan':''}</div>
+        ${subLabel?`<div style="font-size:11px;color:var(--tm);">${subLabel}</div>`:''}
       </div>
-      <div style="font-size:13px;font-weight:600;">$${total.toLocaleString('es-AR')}</div>
+      <div style="font-size:13px;font-weight:600;flex-shrink:0;">$${total.toLocaleString('es-AR')}</div>
       ${todoPagado
-        ?`<span style="font-size:11px;background:var(--matl);color:var(--mat);padding:2px 8px;border-radius:99px;">✓ Pagó</span>
-          <button class="btn btn-s btn-danger" onclick="desmarcarPagosPlan('${ids.join(',')}')">Desmarcar</button>`
+        ?`<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;"><span style="font-size:11px;background:var(--matl);color:var(--mat);padding:2px 8px;border-radius:99px;">✓ Pagó</span><button class="btn btn-s btn-danger" onclick="desmarcarPagosPlan('${ids.join(',')}')">Desmarcar</button></div>`
         :`<button class="btn btn-s btn-p" onclick="marcarPagosPlan('${ids.join(',')}')">✓ Marcar pagado</button>`
       }
     </div>`;
@@ -1805,12 +1806,14 @@ function rPagos(){
   const alumnasPagaron=new Set(pagosDelMes.filter(p=>p.pagado).map(p=>p.alumna_id)).size;
   const alumnasPendientes=new Set(pagosDelMes.filter(p=>!p.pagado).map(p=>p.alumna_id)).size;
 
-  return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
-    <div class="ptitle" style="margin:0;">Pagos</div>
+  return`<div style="margin-bottom:1.25rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:.6rem;">
+      <div class="ptitle" style="margin:0;">Pagos</div>
+      <button class="btn btn-p" onclick="openModalPago()" style="white-space:nowrap;">+ Registrar pago</button>
+    </div>
     <div style="display:flex;gap:8px;align-items:center;">
-      <input type="month" id="pag-mes" value="${filtMes}" onchange="render()" style="margin:0;width:150px;">
+      <input type="month" id="pag-mes" value="${filtMes}" onchange="render()" style="margin:0;flex:1;">
       <button class="btn" onclick="openResumenMes()">📊 Resumen</button>
-      <button class="btn btn-p" onclick="openModalPago()">+ Registrar pago</button>
     </div>
   </div>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem;">
