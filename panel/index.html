@@ -280,7 +280,7 @@
       <div class="frow" style="margin-bottom:.6rem;">
         <div>
           <label style="font-size:11px;">Horario destino</label>
-          <select id="mcl-clone-horario" style="margin:0;font-size:13px;"></select>
+          <select id="mcl-clone-horario" onchange="actualizarFechaClone()" style="margin:0;font-size:13px;"></select>
         </div>
         <div>
           <label style="font-size:11px;">Fecha</label>
@@ -1977,6 +1977,22 @@ function copiarUltimaClase(){
   showMsg('✓ Ejercicios copiados — editá lo que necesites');
 }
 
+// Devuelve la fecha ISO del día `diaKey` (lun/mar/...) dentro de la semana actual
+function fechaDelDiaEstaSemana(diaKey){
+  const order={lun:0,mar:1,mie:2,jue:3,vie:4};
+  const hoy=new Date();
+  const dow=hoy.getDay()||7;
+  const lunes=new Date(hoy);lunes.setDate(hoy.getDate()-(dow-1));
+  const offset=order[diaKey]??0;
+  const target=new Date(lunes);target.setDate(lunes.getDate()+offset);
+  return target.toISOString().split('T')[0];
+}
+function actualizarFechaClone(){
+  const selC=document.getElementById('mcl-clone-horario');
+  const hId=parseInt(selC.value);
+  const h=DB.horarios.find(x=>x.id===hId);
+  if(h)document.getElementById('mcl-clone-fecha').value=fechaDelDiaEstaSemana(h.dia);
+}
 function abrirCloneSection(){
   const section=document.getElementById('mcl-clone-section');
   const selC=document.getElementById('mcl-clone-horario');
@@ -1986,9 +2002,8 @@ function abrirCloneSection(){
     .filter(h=>!modActual||h.modalidad===modActual)
     .sort((a,b)=>DIA_ORDER[a.dia]-DIA_ORDER[b.dia]||a.hora_inicio.localeCompare(b.hora_inicio))
     .map(h=>`<option value="${h.id}">${DIA_LABEL[h.dia]} ${h.hora_inicio}–${h.hora_fin}</option>`).join('');
-  document.getElementById('mcl-clone-fecha').value=new Date().toISOString().split('T')[0];
+  actualizarFechaClone(); // fecha correcta según el primer horario de la lista
   section.style.display='block';
-  // Scroll modal al tope para que la sección quede visible
   document.querySelector('#modal-clase .modal').scrollTo({top:0,behavior:'smooth'});
 }
 
