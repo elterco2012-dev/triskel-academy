@@ -11,7 +11,7 @@
 <link rel="icon" href="/panel/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
@@ -244,11 +244,20 @@ async function doLogin(){
   const email=document.getElementById('login-email').value.trim();
   const pass=document.getElementById('login-pass').value;
   const errEl=document.getElementById('auth-error');
+  const btn=document.querySelector('#auth-screen .btn-primary');
   errEl.style.display='none';
   if(!email||!pass){errEl.textContent='Completá email y contraseña.';errEl.style.display='block';return;}
-  const{error}=await sb.auth.signInWithPassword({email,password:pass});
-  if(error){errEl.textContent='Email o contraseña incorrectos.';errEl.style.display='block';return;}
-  await initApp();
+  try{
+    if(btn){btn.disabled=true;btn.textContent='Ingresando…';}
+    const{error}=await sb.auth.signInWithPassword({email,password:pass});
+    if(error){errEl.textContent='Email o contraseña incorrectos.';errEl.style.display='block';return;}
+    await initApp();
+  }catch(e){
+    errEl.textContent='Error de conexión. Revisá tu internet e intentá de nuevo.';
+    errEl.style.display='block';
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='Ingresar';}
+  }
 }
 
 async function doLogout(){
