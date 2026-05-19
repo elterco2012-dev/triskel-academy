@@ -403,11 +403,44 @@
 <!-- MODAL BANCO DE EJERCICIOS -->
 <div class="modal-bg" id="modal-banco" style="display:none" onclick="if(event.target===this)closeModalBanco()">
   <div class="modal" style="max-width:680px;">
-    <h3 id="mb-title">Cargar planificación</h3>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.25rem;">
+      <h3 id="mb-title" style="margin:0;">Planificaciones</h3>
+      <button class="btn btn-s btn-p" onclick="openEditBanco(null)">✚ Nueva tarjeta</button>
+    </div>
     <p id="mb-sub" style="font-size:12px;color:var(--tm);margin-bottom:.75rem;"></p>
     <div id="mb-list" class="banco-grid"></div>
     <div style="display:flex;justify-content:flex-end;margin-top:.75rem;">
-      <button class="btn" onclick="closeModalBanco()">Cancelar</button>
+      <button class="btn" onclick="closeModalBanco()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR TARJETA BANCO -->
+<div class="modal-bg" id="modal-banco-edit" style="display:none" onclick="if(event.target===this)closeEditBanco()">
+  <div class="modal" style="max-width:520px;">
+    <h3 id="mbe-title">Nueva tarjeta</h3>
+    <div style="display:flex;flex-direction:column;gap:.75rem;">
+      <div>
+        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Categoría</label>
+        <select id="mbe-cat" style="width:100%;padding:6px 8px;border-radius:var(--rs);border:1px solid var(--b);background:var(--s1);color:var(--t);">
+          <option value="mat">Mat</option>
+          <option value="reformer">Reformer</option>
+          <option value="funcional">Funcional</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Título de la tarjeta</label>
+        <input id="mbe-titulo" type="text" placeholder="Ej: Banda elástica I" style="width:100%;box-sizing:border-box;">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Ejercicios — uno por línea · formato: <em>nombre | variante</em></label>
+        <textarea id="mbe-ejs" placeholder="Cien | 100 bombeos&#10;Roll up&#10;Piernas al techo | 8 rep c/lado" style="width:100%;height:180px;box-sizing:border-box;font-size:12px;font-family:inherit;resize:vertical;padding:8px;border:1px solid var(--b);border-radius:var(--rs);background:var(--s1);color:var(--t);"></textarea>
+      </div>
+    </div>
+    <div id="mbe-err" style="font-size:12px;color:var(--rd);margin-top:.5rem;"></div>
+    <div style="display:flex;justify-content:flex-end;gap:.5rem;margin-top:.75rem;">
+      <button class="btn" onclick="closeEditBanco()">Cancelar</button>
+      <button class="btn btn-p" onclick="saveEditBanco()">Guardar</button>
     </div>
   </div>
 </div>
@@ -483,7 +516,7 @@ const DIA_ORDER={lun:0,mar:1,mie:2,jue:3,vie:4};
 const MOD_LABEL={mat:'Mat',reformer:'Reformer',funcional:'Funcional'};
 const MOD_CLASS={mat:'mat',reformer:'ref',funcional:'fun'};
 
-let DB={horarios:[],alumnas:[],inscripciones:[],clases:[],pagos:[],espera:[],observaciones:[],avisos:[]};
+let DB={horarios:[],alumnas:[],inscripciones:[],clases:[],pagos:[],espera:[],observaciones:[],avisos:[],config:{},banco:{}};
 let currentPage='inicio';
 let _claseEjs=[];
 let _editClaseId=null;
@@ -1237,7 +1270,37 @@ async function loadAll(){
   DB.observaciones=data?.observaciones||[];
   console.log('DB cargado — horarios:',DB.horarios.length,'alumnas:',DB.alumnas.length);
   await loadAvisos();
+  await Promise.all([loadConfig(), loadBanco()]);
   render();
+}
+
+async function loadConfig(){
+  try{
+    const{data}=await sb.rpc('triskel_get_configuracion');
+    if(data&&typeof data==='object'&&!data.ok) return; // error
+    if(data&&typeof data==='object') DB.config=data;
+    // Migrate tarifas from localStorage to Supabase on first run
+    const lsTf=localStorage.getItem(TARIFAS_KEY);
+    if(lsTf&&!DB.config.tarifas){
+      const parsed=JSON.parse(lsTf);
+      await sb.rpc('triskel_save_configuracion',{p_key:'tarifas',p_value:parsed});
+      DB.config.tarifas=parsed;
+    }
+    // Migrate msg templates from localStorage
+    const lsMsg=localStorage.getItem(MSG_KEY);
+    if(lsMsg&&!DB.config.msg_templates){
+      const parsed=JSON.parse(lsMsg);
+      await sb.rpc('triskel_save_configuracion',{p_key:'msg_templates',p_value:parsed});
+      DB.config.msg_templates=parsed;
+    }
+  }catch(e){console.warn('loadConfig:',e);}
+}
+
+async function loadBanco(){
+  try{
+    const{data}=await sb.rpc('triskel_get_banco');
+    if(data?.ok) DB.banco=data.data||{};
+  }catch(e){console.warn('loadBanco:',e);}
 }
 
 async function loadAvisos(){
@@ -1310,8 +1373,11 @@ const MSG_DEFAULTS={
   proxima:'Hola {nombre}! 🌿 Te avisamos que en los próximos días vence tu cuota mensual de Triskel Academy{monto}. ¡Gracias!',
   atrasada:'Hola {nombre}! 🌿 Tenés una cuota pendiente de Triskel Academy{monto}. Cuando puedas, regularizá tu pago. ¡Gracias!'
 };
-function getMsgTemplates(){try{return{...MSG_DEFAULTS,...JSON.parse(localStorage.getItem(MSG_KEY)||'{}')};}catch{return{...MSG_DEFAULTS};}}
-function saveMsgTemplates(t){localStorage.setItem(MSG_KEY,JSON.stringify(t));}
+function getMsgTemplates(){return{...MSG_DEFAULTS,...(DB.config?.msg_templates||{})};}
+async function saveMsgTemplates(t){
+  DB.config.msg_templates=t;
+  await sb.rpc('triskel_save_configuracion',{p_key:'msg_templates',p_value:t});
+}
 function waMsg(tel,nombre,monto,tipo){
   if(!tel)return null;
   const montoStr=monto?` por $${monto.toLocaleString('es-AR')}`:'';
@@ -1327,8 +1393,8 @@ function openModalMensajes(){
   document.getElementById('modal-mensajes').style.display='flex';
 }
 function closeModalMensajes(){document.getElementById('modal-mensajes').style.display='none';}
-function saveMsgModal(){
-  saveMsgTemplates({hoy:document.getElementById('msg-hoy').value.trim()||MSG_DEFAULTS.hoy,proxima:document.getElementById('msg-proxima').value.trim()||MSG_DEFAULTS.proxima,atrasada:document.getElementById('msg-atrasada').value.trim()||MSG_DEFAULTS.atrasada});
+async function saveMsgModal(){
+  await saveMsgTemplates({hoy:document.getElementById('msg-hoy').value.trim()||MSG_DEFAULTS.hoy,proxima:document.getElementById('msg-proxima').value.trim()||MSG_DEFAULTS.proxima,atrasada:document.getElementById('msg-atrasada').value.trim()||MSG_DEFAULTS.atrasada});
   showMsg('✓ Mensajes guardados');closeModalMensajes();
 }
 
@@ -1403,8 +1469,11 @@ function capText(n,cap){
 
 // ─── TARIFAS ────────────────────────────────────────────
 const TARIFAS_KEY='triskel_tarifas';
-function getTarifas(){try{return JSON.parse(localStorage.getItem(TARIFAS_KEY))||{};}catch{return{};}}
-function persistTarifas(t){localStorage.setItem(TARIFAS_KEY,JSON.stringify(t));}
+function getTarifas(){return DB.config?.tarifas||{};}
+async function persistTarifas(t){
+  DB.config.tarifas=t;
+  await sb.rpc('triskel_save_configuracion',{p_key:'tarifas',p_value:t});
+}
 function openModalTarifas(){
   const t=getTarifas();
   const mods=[{k:'reformer',l:'Reformer'},{k:'mat',l:'Mat'},{k:'funcional',l:'Funcional'}];
@@ -1417,7 +1486,7 @@ function openModalTarifas(){
   document.getElementById('modal-tarifas').style.display='flex';document.body.style.overflow='hidden';
 }
 function closeModalTarifas(){document.getElementById('modal-tarifas').style.display='none';document.body.style.overflow='';}
-function saveTarifasModal(){
+async function saveTarifasModal(){
   const mods=['reformer','mat','funcional'];
   const t={};
   mods.forEach(m=>{
@@ -1426,7 +1495,7 @@ function saveTarifasModal(){
     if(v1)t[m+'_1']=v1;
     if(v2)t[m+'_2']=v2;
   });
-  persistTarifas(t);
+  await persistTarifas(t);
   closeModalTarifas();
   showMsg('✓ Tarifas guardadas');
 }
@@ -1529,16 +1598,19 @@ function inscByAlumna(aid){return DB.inscripciones.filter(i=>i.alumna_id===aid);
 // ─── PAUSA / ESTADO ─────────────────────────────────────
 async function pausarAlumna(id){
   if(!confirm('¿Pausar a esta alumna? No recibirá recordatorios de pago.'))return;
-  await rpc('triskel_set_estado_alumna',{p_id:id,p_estado:'pausada'});
+  const{data,error}=await rpc('triskel_set_estado_alumna',{p_id:id,p_estado:'pausada'});
+  if(error||data?.ok===false){showMsg('❌ Error al pausar: '+(data?.msg||error?.message||'error'));return;}
   showMsg('Alumna pausada');await loadAll();
 }
 async function reactivarAlumna(id){
-  await rpc('triskel_set_estado_alumna',{p_id:id,p_estado:'activa'});
+  const{data,error}=await rpc('triskel_set_estado_alumna',{p_id:id,p_estado:'activa'});
+  if(error||data?.ok===false){showMsg('❌ Error al reactivar: '+(data?.msg||error?.message||'error'));return;}
   showMsg('✓ Alumna reactivada');await loadAll();
 }
 async function darDeBajaAlumna(id){
   if(!confirm('¿Dar de baja definitiva a esta alumna?'))return;
-  await rpc('triskel_set_estado_alumna',{p_id:id,p_estado:'baja'});
+  const{data,error}=await rpc('triskel_set_estado_alumna',{p_id:id,p_estado:'baja'});
+  if(error||data?.ok===false){showMsg('❌ Error al dar de baja: '+(data?.msg||error?.message||'error'));return;}
   showMsg('Alumna dada de baja');await loadAll();
 }
 
@@ -2590,7 +2662,8 @@ async function saveInscripcion(){
 }
 async function desinscribir(id){
   if(!confirm('¿Dar de baja esta inscripción?'))return;
-  await rpc('triskel_deactivate_inscripcion',{p_id:id});
+  const{data,error}=await rpc('triskel_deactivate_inscripcion',{p_id:id});
+  if(error||data?.ok===false){showMsg('❌ Error al dar de baja: '+(data?.msg||error?.message||'error'));return;}
   showMsg('✓ Inscripción dada de baja');
   await loadAll();
 }
@@ -2765,7 +2838,8 @@ async function saveClase(){
 }
 async function deleteClase(id){
   if(!confirm('¿Borrar esta clase?'))return;
-  await rpc('triskel_delete_clase',{p_id:id});
+  const{data,error}=await rpc('triskel_delete_clase',{p_id:id});
+  if(error||data?.ok===false){showMsg('❌ Error al borrar clase: '+(data?.msg||error?.message||'error'));return;}
   showMsg('✓ Clase borrada');
   await loadAll();
 }
@@ -3007,37 +3081,94 @@ async function resolverAviso(id,accion,alumnaId,mes){
 }
 
 // ─── BANCO DE EJERCICIOS ─────────────────────────────────
+let _bancoMod='mat';
 function openModalBanco(){
   const horarioId=parseInt(document.getElementById('mcl-horario').value);
   const h=DB.horarios.find(x=>x.id===horarioId);
-  const mod=h?.modalidad||'mat';
-  const planes=BANCO[mod]||[];
-  document.getElementById('mb-title').textContent='Cargar planificación · '+MOD_LABEL[mod];
+  _bancoMod=h?.modalidad||'mat';
+  renderBancoList();
+  document.getElementById('modal-banco').style.display='flex';
+}
+function renderBancoList(){
+  const planes=DB.banco[_bancoMod]||[];
+  document.getElementById('mb-title').textContent='Planificaciones · '+MOD_LABEL[_bancoMod];
   document.getElementById('mb-sub').textContent=
     _claseEjs.length?'Al cargar se reemplazarán los ejercicios actuales.':'Seleccioná una planificación para cargarla.';
   const list=document.getElementById('mb-list');
   if(!planes.length){
-    list.innerHTML=`<div style="font-size:13px;color:var(--tm);padding:.5rem 0;">Sin planificaciones guardadas para ${MOD_LABEL[mod]} todavía.</div>`;
+    list.innerHTML=`<div style="font-size:13px;color:var(--tm);padding:.5rem 0;">Sin planificaciones para ${MOD_LABEL[_bancoMod]}. Usá ✚ Nueva tarjeta para agregar.</div>`;
   } else {
-    list.innerHTML=planes.map((p,i)=>{
-      const preview=p.ejs.slice(0,3).map(e=>`<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">· ${e.nombre}</div>`).join('');
-      return`<div class="banco-card" onclick="loadPlan('${mod}',${i})">
-        <div class="banco-card-title">${p.titulo}</div>
-        <div class="banco-card-sub">${preview}${p.ejs.length>3?`<div style="color:var(--th);">+${p.ejs.length-3} más</div>`:''}</div>
-        <div class="banco-card-count">${p.ejs.length} ejercicios</div>
+    list.innerHTML=planes.map(p=>{
+      const preview=(p.ejs||[]).slice(0,3).map(e=>`<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">· ${e.nombre}</div>`).join('');
+      return`<div class="banco-card" style="position:relative;" onclick="loadPlan(${p.id})">
+        <div style="position:absolute;top:4px;right:4px;display:flex;gap:2px;" onclick="event.stopPropagation()">
+          <button onclick="openEditBanco(${p.id})" style="background:none;border:none;cursor:pointer;font-size:12px;padding:2px 4px;" title="Editar">✏️</button>
+          <button onclick="deleteBancoTarjeta(${p.id})" style="background:none;border:none;cursor:pointer;font-size:12px;padding:2px 4px;" title="Eliminar">🗑</button>
+        </div>
+        <div class="banco-card-title" style="padding-right:40px;">${p.titulo}</div>
+        <div class="banco-card-sub">${preview}${(p.ejs||[]).length>3?`<div style="color:var(--th);">+${(p.ejs||[]).length-3} más</div>`:''}</div>
+        <div class="banco-card-count">${(p.ejs||[]).length} ejercicios</div>
       </div>`;
     }).join('');
   }
-  document.getElementById('modal-banco').style.display='flex';
 }
 function closeModalBanco(){document.getElementById('modal-banco').style.display='none';}
-function loadPlan(mod,idx){
-  const plan=BANCO[mod]?.[idx];
+function loadPlan(id){
+  let plan=null;
+  for(const cards of Object.values(DB.banco)){
+    plan=(Array.isArray(cards)?cards:[]).find(p=>p.id===id);
+    if(plan)break;
+  }
   if(!plan)return;
   _claseEjs=plan.ejs.map((e,i)=>({orden:i+1,nombre:e.nombre,vt:e.vt||''}));
   renderEjerciciosModal();
   closeModalBanco();
   showMsg(`✓ Cargada: ${plan.titulo}`);
+}
+
+let _editBancoId=null;
+function openEditBanco(id){
+  _editBancoId=id||null;
+  document.getElementById('mbe-title').textContent=id?'Editar tarjeta':'Nueva tarjeta';
+  document.getElementById('mbe-cat').value=_bancoMod;
+  document.getElementById('mbe-err').textContent='';
+  if(id){
+    let found=null;
+    for(const cards of Object.values(DB.banco)){
+      found=(Array.isArray(cards)?cards:[]).find(p=>p.id===id);
+      if(found)break;
+    }
+    document.getElementById('mbe-titulo').value=found?.titulo||'';
+    document.getElementById('mbe-ejs').value=(found?.ejs||[]).map(e=>e.vt?`${e.nombre} | ${e.vt}`:e.nombre).join('\n');
+  } else {
+    document.getElementById('mbe-titulo').value='';
+    document.getElementById('mbe-ejs').value='';
+  }
+  document.getElementById('modal-banco-edit').style.display='flex';
+}
+function closeEditBanco(){document.getElementById('modal-banco-edit').style.display='none';}
+async function saveEditBanco(){
+  const titulo=document.getElementById('mbe-titulo').value.trim();
+  const cat=document.getElementById('mbe-cat').value;
+  const ejsRaw=document.getElementById('mbe-ejs').value.trim();
+  const err=document.getElementById('mbe-err');
+  if(!titulo){err.textContent='El título es requerido.';return;}
+  const ejs=ejsRaw?ejsRaw.split('\n').filter(l=>l.trim()).map(l=>{const pts=l.split(' | ');return{nombre:pts[0].trim(),vt:pts[1]?.trim()||''};}):[];
+  const{data,error}=await rpc('triskel_save_banco_tarjeta',{p_id:_editBancoId||0,p_categoria:cat,p_titulo:titulo,p_ejs:ejs,p_orden:0});
+  if(error||data?.ok===false){err.textContent='Error al guardar: '+(data?.msg||error?.message||'');return;}
+  closeEditBanco();
+  await loadBanco();
+  _bancoMod=cat;
+  renderBancoList();
+  showMsg('✓ Tarjeta guardada');
+}
+async function deleteBancoTarjeta(id){
+  if(!confirm('¿Eliminar esta tarjeta del banco?'))return;
+  const{data,error}=await rpc('triskel_delete_banco_tarjeta',{p_id:id});
+  if(error||data?.ok===false){showMsg('❌ Error al eliminar');return;}
+  await loadBanco();
+  renderBancoList();
+  showMsg('✓ Tarjeta eliminada');
 }
 
 // ─── MODO CLASE ──────────────────────────────────────────
@@ -3214,7 +3345,7 @@ initAuth();
     <label style="font-size:12px;font-weight:600;">Cuota atrasada / pendiente</label>
     <textarea id="msg-atrasada" style="height:72px;font-size:12px;"></textarea>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:.75rem;">
-      <button class="btn btn-s" onclick="saveMsgTemplates(MSG_DEFAULTS);openModalMensajes();">Restaurar default</button>
+      <button class="btn btn-s" onclick="saveMsgTemplates(MSG_DEFAULTS).then(()=>{openModalMensajes();showMsg('✓ Restaurado');})">Restaurar default</button>
       <button class="btn" onclick="closeModalMensajes()">Cancelar</button>
       <button class="btn btn-p" onclick="saveMsgModal()">Guardar</button>
     </div>

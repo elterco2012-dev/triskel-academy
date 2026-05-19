@@ -1,4 +1,4 @@
-const CACHE = 'triskel-v2';
+const CACHE = 'triskel-v3';
 const SHELL = ['/panel/', '/panel/index.html', '/panel/alumna.html', '/panel/logo-triskel.png'];
 
 self.addEventListener('install', e => {
@@ -47,6 +47,19 @@ self.addEventListener('fetch', e => {
   // Supabase API: network-only (datos siempre frescos)
   if (e.request.url.includes('supabase.co')) return;
 
+  const isHTML = e.request.url.endsWith('.html') || e.request.url.endsWith('/panel/') || e.request.url.endsWith('/panel');
+
+  if (isHTML) {
+    // Network-first para HTML: siempre trae la versión más nueva
+    e.respondWith(
+      fetch(e.request).then(res => {
+        if (res.ok) caches.open(CACHE).then(c => c.put(e.request, res.clone()));
+        return res;
+      }).catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
   e.respondWith(
     caches.match(e.request).then(cached => {
       const network = fetch(e.request).then(res => {
@@ -55,7 +68,6 @@ self.addEventListener('fetch', e => {
         }
         return res;
       });
-      // Cache-first para el shell, network-first para el resto
       return cached || network;
     })
   );
