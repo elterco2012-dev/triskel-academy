@@ -211,7 +211,7 @@
       <a href="#" onclick="goTo('clases')" id="n-clases">📝 Planificar</a>
       <a href="#" onclick="goTo('historial')" id="n-historial">📚 Historial</a>
       <div class="sep">Gestión</div>
-      <a href="#" onclick="goTo('pagos')" id="n-pagos">💰 Pagos</a>
+      <a href="#" onclick="goTo('pagos')" id="n-pagos">💰 Pagos<span id="avisos-badge-top" style="display:none;background:var(--rd);color:#fff;font-size:10px;font-weight:700;border-radius:99px;padding:1px 5px;margin-left:3px;vertical-align:middle;"></span></a>
       <a href="#" onclick="openModalTarifas()">⚙ Tarifas</a>
       <a href="#" onclick="openModalMensajes()">💬 Mensajes WA</a>
     </nav>
@@ -432,7 +432,7 @@
   <a href="#" onclick="goTo('inicio');return false;" id="bn-inicio"><span class="bi">🏠</span><span>Inicio</span></a>
   <a href="#" onclick="goTo('clases');return false;" id="bn-clases"><span class="bi">📝</span><span>Planificar</span></a>
   <a href="#" onclick="goTo('alumnas');return false;" id="bn-alumnas"><span class="bi">👤</span><span>Alumnas</span></a>
-  <a href="#" onclick="goTo('pagos');return false;" id="bn-pagos"><span class="bi">💰</span><span>Pagos</span></a>
+  <a href="#" onclick="goTo('pagos');return false;" id="bn-pagos"><span class="bi">💰</span><span>Pagos</span><span id="avisos-badge" style="display:none;background:var(--rd);color:#fff;font-size:10px;font-weight:700;border-radius:99px;padding:1px 5px;margin-left:3px;vertical-align:middle;"></span></a>
 </nav>
 
 <div id="msg"></div>
@@ -483,7 +483,7 @@ const DIA_ORDER={lun:0,mar:1,mie:2,jue:3,vie:4};
 const MOD_LABEL={mat:'Mat',reformer:'Reformer',funcional:'Funcional'};
 const MOD_CLASS={mat:'mat',reformer:'ref',funcional:'fun'};
 
-let DB={horarios:[],alumnas:[],inscripciones:[],clases:[],pagos:[],espera:[],observaciones:[]};
+let DB={horarios:[],alumnas:[],inscripciones:[],clases:[],pagos:[],espera:[],observaciones:[],avisos:[]};
 let currentPage='inicio';
 let _claseEjs=[];
 let _editClaseId=null;
@@ -1224,7 +1224,21 @@ async function loadAll(){
   DB.espera=data?.espera||[];
   DB.observaciones=data?.observaciones||[];
   console.log('DB cargado — horarios:',DB.horarios.length,'alumnas:',DB.alumnas.length);
+  await loadAvisos();
   render();
+}
+
+async function loadAvisos(){
+  try{
+    const{data}=await sb.rpc('triskel_get_avisos_pendientes');
+    DB.avisos=data||[];
+    // Update badge
+    const n=DB.avisos.length;
+    const badge=document.getElementById('avisos-badge');
+    const badgeTop=document.getElementById('avisos-badge-top');
+    if(badge){badge.textContent=n||'';badge.style.display=n?'inline-block':'none';}
+    if(badgeTop){badgeTop.textContent=n||'';badgeTop.style.display=n?'inline-block':'none';}
+  }catch(e){DB.avisos=[];}
 }
 
 // ─── ROUTING ────────────────────────────────────────────
@@ -2013,7 +2027,8 @@ function rInicio(){
   </div>
   ${rResumenSemana()}
   ${rProyeccionMes()}
-  ${rGraficoIngresos()}`;
+  ${rGraficoIngresos()}
+  ${rTeacherNotifBanner()}`;
 }
 
 function rResumenSemana(){
@@ -2376,7 +2391,32 @@ function rPagos(){
   const alumnasPagaron=new Set(pagosDelMes.filter(p=>p.pagado).map(p=>p.alumna_id)).size;
   const alumnasPendientes=new Set(pagosDelMes.filter(p=>!p.pagado).map(p=>p.alumna_id)).size;
 
-  return`<div style="margin-bottom:1.25rem;">
+  const avisosHtml=DB.avisos&&DB.avisos.length?`<div class="card" style="border-left:4px solid #f59e0b;margin-bottom:1rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;">
+      <div class="ctitle" style="margin:0;color:#d97706;">🔔 Avisos de pago pendientes (${DB.avisos.length})</div>
+    </div>
+    ${DB.avisos.map(av=>{
+      const a=alumnaById(av.alumna_id);
+      const[y,m]=(av.mes||'').split('-');
+      const ml=y&&m?new Date(y,m-1,1).toLocaleDateString('es-AR',{month:'long',year:'numeric'}):'';
+      const monto=av.monto_declarado?`$${Number(av.monto_declarado).toLocaleString('es-AR')}`:'';
+      return`<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid #fef3c7;flex-wrap:wrap;">
+        <div class="avatar" style="width:30px;height:30px;font-size:11px;flex-shrink:0;">${alumnaInits(av.nombre,av.apellido)}</div>
+        <div style="flex:1;min-width:100px;">
+          <div style="font-size:13px;font-weight:600;">${av.nombre||''} ${av.apellido||''}</div>
+          <div style="font-size:11px;color:var(--sub);">Avisó pago de ${ml} ${monto}</div>
+          ${av.nota?`<div style="font-size:11px;color:#666;font-style:italic;">"${av.nota}"</div>`:''}
+          <div style="font-size:10px;color:var(--sub);">${new Date(av.created_at).toLocaleString('es-AR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
+          <button class="btn btn-s btn-p" onclick="resolverAviso(${av.id},'aprobado',${av.alumna_id},'${av.mes}')">✓ Aprobar</button>
+          <button class="btn btn-s btn-danger" onclick="resolverAviso(${av.id},'rechazado',${av.alumna_id},'${av.mes}')">✕ Rechazar</button>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`:'';
+
+  return avisosHtml+`<div style="margin-bottom:1.25rem;">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:.6rem;">
       <div class="ptitle" style="margin:0;">Pagos</div>
       <button class="btn btn-p" onclick="openModalPago()" style="white-space:nowrap;">+ Registrar pago</button>
@@ -2779,6 +2819,64 @@ function showReciboWA(nombre,tel,msgTxt){
   el.style.display='block';
 }
 function cerrarReciboWA(){document.getElementById('recibo-wa-toast').style.display='none';}
+
+const VAPID_PUBLIC_TEACHER='';  // Set after generating VAPID keys
+
+function rTeacherNotifBanner(){
+  if(!('Notification' in window)||!('serviceWorker' in navigator))return'';
+  if(Notification.permission==='granted')return'';
+  return`<div style="background:linear-gradient(135deg,#6c5b7b,#a689c0);border-radius:12px;padding:.85rem 1rem;color:#fff;display:flex;align-items:center;gap:.75rem;margin-top:.5rem;">
+    <div style="font-size:24px;">🔔</div>
+    <div style="flex:1;">
+      <div style="font-size:13px;font-weight:700;">Activar notificaciones push</div>
+      <div style="font-size:11px;opacity:.9;">Recibí avisos cuando una alumna reporte un pago</div>
+    </div>
+    <button onclick="activarNotifTeacher()" style="background:rgba(255,255,255,.25);border:1.5px solid rgba(255,255,255,.6);color:#fff;padding:.35rem .75rem;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">Activar</button>
+  </div>`;
+}
+
+async function activarNotifTeacher(){
+  if(!VAPID_PUBLIC_TEACHER){showMsg('Configura VAPID_PUBLIC_TEACHER primero');return;}
+  if(!('serviceWorker' in navigator)){showMsg('Notificaciones no soportadas');return;}
+  try{
+    const perm=await Notification.requestPermission();
+    if(perm!=='granted'){showMsg('Permiso denegado');return;}
+    const reg=await navigator.serviceWorker.ready;
+    const sub=await reg.pushManager.subscribe({
+      userVisibleOnly:true,
+      applicationServerKey:urlB64ToUint8Array(VAPID_PUBLIC_TEACHER)
+    });
+    await sb.rpc('triskel_save_push_subscription',{p_subscription:sub.toJSON(),p_tipo:'teacher'});
+    showMsg('🔔 Notificaciones activadas');
+    render();
+  }catch(e){console.error(e);showMsg('Error al activar notificaciones');}
+}
+
+function urlB64ToUint8Array(b64){
+  const padding='='.repeat((4-b64.length%4)%4);
+  const base64=(b64+padding).replace(/-/g,'+').replace(/_/g,'/');
+  const raw=atob(base64);
+  return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
+}
+
+async function resolverAviso(id,accion,alumnaId,mes){
+  const{data,error}=await sb.rpc('triskel_resolver_aviso',{p_id:id,p_accion:accion});
+  if(error||!data?.ok){showMsg('Error al resolver aviso');return;}
+  if(accion==='aprobado'){
+    // Show WA receipt for approved payment
+    const a=alumnaById(alumnaId);
+    const[y,m]=(mes||'').split('-');
+    const mesLabel=y&&m?new Date(y,m-1,1).toLocaleDateString('es-AR',{month:'long',year:'numeric'}):'';
+    const aviso=DB.avisos.find(av=>av.id===id);
+    const monto=aviso?.monto_declarado;
+    const msgTxt=`Hola ${a?.nombre||''}! ✅ Tu pago de ${mesLabel}${monto?` ($${Number(monto).toLocaleString('es-AR')})`:''}  en Triskel Academy fue aprobado. ¡Gracias! 🌿`;
+    await loadAll();
+    showReciboWA(a?.nombre||'',a?.tel||'',msgTxt);
+  }else{
+    await loadAll();
+    showMsg('Aviso marcado como rechazado');
+  }
+}
 
 // ─── BANCO DE EJERCICIOS ─────────────────────────────────
 function openModalBanco(){

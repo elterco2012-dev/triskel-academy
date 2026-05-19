@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#6c5b7b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Triskel Academy · Mi Cuenta</title>
+<link rel="manifest" href="/panel/manifest.json">
+<link rel="icon" href="/panel/icon-192.png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --tm:#6c5b7b;--mat:#27ae60;--ref:#2980b9;--fun:#e67e22;
+  --rd:#e74c3c;--bg:#f4f0f8;--white:#fff;--txt:#1a1a2e;--sub:#666;
+  --card-shadow:0 2px 12px rgba(108,91,123,.10);
+  --radius:14px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--txt);min-height:100dvh;max-width:480px;margin:0 auto;}
+
+/* ── AUTH SCREEN ── */
+#auth-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;padding:2rem;background:linear-gradient(145deg,#f4f0f8,#e8dff0);}
+.auth-logo{font-size:48px;margin-bottom:.5rem;}
+.auth-title{font-size:22px;font-weight:700;color:var(--tm);margin-bottom:.25rem;text-align:center;}
+.auth-sub{font-size:13px;color:var(--sub);margin-bottom:2rem;text-align:center;}
+.auth-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--card-shadow);padding:1.5rem;width:100%;max-width:340px;}
+.auth-card label{font-size:12px;font-weight:600;color:var(--sub);display:block;margin-bottom:.25rem;margin-top:.75rem;}
+.auth-card input{width:100%;padding:.6rem .8rem;border:1.5px solid #ddd;border-radius:8px;font-size:15px;outline:none;transition:border .2s;}
+.auth-card input:focus{border-color:var(--tm);}
+.auth-card .btn-primary{width:100%;margin-top:1.2rem;padding:.75rem;background:var(--tm);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;}
+.auth-card .btn-primary:active{opacity:.85;}
+#auth-error{color:var(--rd);font-size:13px;margin-top:.75rem;text-align:center;display:none;}
+
+/* ── APP SHELL ── */
+#app{display:none;flex-direction:column;min-height:100dvh;}
+
+/* ── HEADER ── */
+.app-header{background:var(--white);padding:.75rem 1rem;display:flex;align-items:center;gap:.75rem;box-shadow:0 1px 8px rgba(108,91,123,.08);position:sticky;top:0;z-index:50;}
+.header-logo{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--tm),#a689c0);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.header-title{font-size:15px;font-weight:700;color:var(--tm);}
+.header-sub{font-size:11px;color:var(--sub);}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:.5rem;}
+.icon-btn{width:36px;height:36px;border:none;background:transparent;font-size:18px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.icon-btn:active{background:#f0ebf5;}
+
+/* ── CONTENT ── */
+.content{flex:1;padding:1rem;padding-bottom:80px;overflow-y:auto;}
+
+/* ── NAV ── */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--white);border-top:1px solid #e8e0f0;display:flex;z-index:50;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.5rem .25rem .4rem;border:none;background:transparent;cursor:pointer;font-size:10px;color:var(--sub);gap:2px;transition:color .15s;}
+.nav-item.active{color:var(--tm);}
+.nav-item .nav-icon{font-size:20px;}
+
+/* ── CARD ── */
+.card{background:var(--white);border-radius:var(--radius);box-shadow:var(--card-shadow);padding:1rem;margin-bottom:.75rem;}
+.card-title{font-size:13px;font-weight:700;color:var(--tm);margin-bottom:.75rem;display:flex;align-items:center;gap:.4rem;}
+
+/* ── PROFILE ── */
+.profile-photo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:1rem;}
+.profile-photo{width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid var(--tm);background:#e8dff0;display:flex;align-items:center;justify-content:center;font-size:36px;overflow:hidden;}
+.profile-photo img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.photo-btn{margin-top:.5rem;font-size:12px;color:var(--tm);background:none;border:1px solid var(--tm);border-radius:20px;padding:.2rem .75rem;cursor:pointer;}
+.profile-name{font-size:18px;font-weight:700;color:var(--txt);text-align:center;margin-top:.5rem;}
+.profile-email{font-size:12px;color:var(--sub);text-align:center;}
+.profile-row{display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid #f0ebf5;font-size:13px;}
+.profile-row:last-child{border-bottom:none;}
+.profile-label{color:var(--sub);font-size:12px;}
+.profile-val{font-weight:600;color:var(--txt);}
+
+/* ── BADGE CHIPS ── */
+.chip{display:inline-block;padding:.2rem .6rem;border-radius:20px;font-size:11px;font-weight:700;}
+.chip-mat{background:#e8f5e9;color:#27ae60;}
+.chip-ref{background:#e3f2fd;color:#2980b9;}
+.chip-fun{background:#fff3e0;color:#e67e22;}
+.chip-ok{background:#e8f5e9;color:#27ae60;}
+.chip-pend{background:#fff8e1;color:#f59e0b;}
+.chip-no{background:#fce4ec;color:#e74c3c;}
+
+/* ── SCHEDULE ITEM ── */
+.sched-item{display:flex;align-items:center;gap:.75rem;padding:.6rem 0;border-bottom:1px solid #f0ebf5;}
+.sched-item:last-child{border-bottom:none;}
+.sched-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.sched-info{flex:1;}
+.sched-mod{font-size:13px;font-weight:600;color:var(--txt);}
+.sched-dia{font-size:11px;color:var(--sub);margin-top:1px;}
+
+/* ── PAGO CARD ── */
+.pago-mes{font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;}
+.pago-estado{font-size:22px;font-weight:800;margin:.25rem 0;}
+.pago-estado.cobrado{color:var(--mat);}
+.pago-estado.pendiente{color:#f59e0b;}
+.pago-estado.aviso{color:#f59e0b;}
+.pago-estado.sin-pago{color:var(--sub);}
+.btn-page{padding:.65rem 1.2rem;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;}
+.btn-pague{background:var(--tm);color:#fff;width:100%;}
+.btn-pague:active{opacity:.85;}
+.btn-pague:disabled{background:#bbb;cursor:default;}
+
+/* ── HISTORIAL ── */
+.hist-row{display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #f0ebf5;font-size:13px;}
+.hist-row:last-child{border-bottom:none;}
+.hist-mes{font-weight:600;}
+.hist-monto{color:var(--mat);font-weight:700;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;padding:.6rem 1.2rem;border-radius:20px;font-size:13px;z-index:999;opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap;}
+#toast.show{opacity:1;}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:flex-end;justify-content:center;}
+.modal-sheet{background:var(--white);border-radius:20px 20px 0 0;padding:1.5rem;width:100%;max-width:480px;max-height:80dvh;overflow-y:auto;}
+.modal-handle{width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto .75rem;}
+.modal-title{font-size:16px;font-weight:700;color:var(--tm);margin-bottom:1rem;}
+.modal-label{font-size:12px;font-weight:600;color:var(--sub);margin-bottom:.25rem;display:block;margin-top:.75rem;}
+.modal-input{width:100%;padding:.6rem .8rem;border:1.5px solid #ddd;border-radius:8px;font-size:15px;outline:none;}
+.modal-input:focus{border-color:var(--tm);}
+.modal-row{display:flex;gap:.75rem;margin-top:1rem;}
+.btn-cancel{flex:1;padding:.65rem;border:1.5px solid #ddd;border-radius:10px;background:#fff;font-size:14px;cursor:pointer;font-weight:600;}
+.btn-confirm{flex:2;padding:.65rem;border:none;border-radius:10px;background:var(--tm);color:#fff;font-size:14px;font-weight:700;cursor:pointer;}
+.btn-confirm:active{opacity:.85;}
+
+/* ── NOTIF BANNER ── */
+.notif-banner{background:linear-gradient(135deg,#6c5b7b,#a689c0);border-radius:var(--radius);padding:1rem;color:#fff;margin-bottom:.75rem;display:flex;align-items:center;gap:.75rem;}
+.notif-banner .ico{font-size:28px;}
+.notif-banner .txt{flex:1;}
+.notif-banner .txt strong{display:block;font-size:14px;margin-bottom:.2rem;}
+.notif-banner .txt span{font-size:12px;opacity:.9;}
+.notif-banner .btn-notif{background:rgba(255,255,255,.25);border:1.5px solid rgba(255,255,255,.6);color:#fff;padding:.4rem .85rem;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.notif-banner .btn-notif:active{opacity:.75;}
+
+/* Loading */
+.loading{display:flex;align-items:center;justify-content:center;padding:3rem;color:var(--sub);font-size:14px;}
+.spinner{width:24px;height:24px;border:3px solid #e8dff0;border-top-color:var(--tm);border-radius:50%;animation:spin .7s linear infinite;margin-right:.5rem;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<!-- ── AUTH SCREEN ── -->
+<div id="auth-screen">
+  <div class="auth-logo">🌿</div>
+  <div class="auth-title">Triskel Academy</div>
+  <div class="auth-sub">Mi Panel de Alumna</div>
+  <div class="auth-card">
+    <label>Email</label>
+    <input type="email" id="login-email" placeholder="tu@email.com" autocomplete="email">
+    <label>Contraseña</label>
+    <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+    <button class="btn-primary" onclick="doLogin()">Ingresar</button>
+    <div id="auth-error"></div>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="app">
+  <!-- Header -->
+  <div class="app-header">
+    <div class="header-logo">🌿</div>
+    <div>
+      <div class="header-title" id="header-nombre">Mi cuenta</div>
+      <div class="header-sub">Triskel Academy</div>
+    </div>
+    <div class="header-right">
+      <button class="icon-btn" onclick="doLogout()" title="Salir">🚪</button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content" id="content">
+    <div class="loading"><div class="spinner"></div>Cargando...</div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="navTo('inicio')" id="nav-inicio">
+      <span class="nav-icon">🏠</span>Inicio
+    </button>
+    <button class="nav-item" onclick="navTo('horarios')" id="nav-horarios">
+      <span class="nav-icon">📅</span>Horarios
+    </button>
+    <button class="nav-item" onclick="navTo('pagos')" id="nav-pagos">
+      <span class="nav-icon" id="nav-pagos-icon">💳</span>Pagos
+    </button>
+    <button class="nav-item" onclick="navTo('perfil')" id="nav-perfil">
+      <span class="nav-icon">👤</span>Perfil
+    </button>
+  </nav>
+</div>
+
+<!-- ── MODAL AVISO PAGO ── -->
+<div id="modal-pago" style="display:none;" class="modal-overlay" onclick="if(event.target===this)cerrarModalPago()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">💳 Avisar pago</div>
+    <div style="font-size:13px;color:var(--sub);margin-bottom:.5rem;">Completá los datos de tu pago y Amira lo confirmará.</div>
+    <div id="modal-pago-mes-label" style="font-size:13px;font-weight:600;color:var(--tm);margin-bottom:.5rem;"></div>
+    <label class="modal-label">Monto abonado (opcional)</label>
+    <input class="modal-input" type="number" id="aviso-monto" placeholder="Ej: 15000" min="0">
+    <label class="modal-label">Nota (opcional)</label>
+    <input class="modal-input" type="text" id="aviso-nota" placeholder="Ej: Transferí al CBU, operación 123456" maxlength="200">
+    <div class="modal-row">
+      <button class="btn-cancel" onclick="cerrarModalPago()">Cancelar</button>
+      <button class="btn-confirm" onclick="confirmarAviso()">Avisar pago ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST ── -->
+<div id="toast"></div>
+
+<script>
+const SB_URL='https://dplzkrdgnynyyunmrawr.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwbHprcmRnbnlueXl1bm1yYXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwMjg2OTMsImV4cCI6MjA5NDYwNDY5M30.B-J4yJf1lnyR0isMeaCIKHeCCRd7mJe1Do-_6yxbVow';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+
+const VAPID_PUBLIC='';  // Set after generating: npx web-push generate-vapid-keys
+
+const MOD_COLORS={mat:'#27ae60',reformer:'#2980b9',funcional:'#e67e22'};
+const MOD_CHIP={mat:'chip-mat',reformer:'chip-ref',funcional:'chip-fun'};
+const DIA_LABEL={lun:'Lunes',mar:'Martes',mie:'Miércoles',jue:'Jueves',vie:'Viernes'};
+const DIA_ORDER={lun:0,mar:1,mie:2,jue:3,vie:4};
+
+let STATE={};  // ficha data: alumna, inscripciones, pagos, avisos
+let curPage='inicio';
+let avisoPagoMes='';
+
+// ── AUTH ────────────────────────────────────────────────────────────────────
+
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  const errEl=document.getElementById('auth-error');
+  errEl.style.display='none';
+  if(!email||!pass){errEl.textContent='Completá email y contraseña.';errEl.style.display='block';return;}
+  const{error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){errEl.textContent='Email o contraseña incorrectos.';errEl.style.display='block';return;}
+  await initApp();
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+  document.getElementById('app').style.display='none';
+  document.getElementById('auth-screen').style.display='flex';
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+
+async function initApp(){
+  const{data:{session}}=await sb.auth.getSession();
+  if(!session){document.getElementById('auth-screen').style.display='flex';return;}
+
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.getElementById('app').style.flexDirection='column';
+
+  await loadFicha();
+  navTo('inicio');
+}
+
+async function loadFicha(){
+  const{data,error}=await sb.rpc('triskel_get_mi_ficha');
+  if(error||!data?.ok){
+    setContent('<div class="card" style="text-align:center;padding:2rem;"><div style="font-size:32px;margin-bottom:.5rem;">🔗</div><div style="font-size:14px;color:var(--sub);">Tu cuenta no está vinculada aún.<br>Pedile a Amira que la active.</div></div>');
+    return;
+  }
+  STATE=data;
+  const nombre=STATE.alumna?.nombre||'';
+  document.getElementById('header-nombre').textContent=nombre;
+  updatePagoBadge();
+}
+
+function updatePagoBadge(){
+  const mesActual=new Date().toISOString().slice(0,7);
+  const pagos=STATE.pagos||[];
+  const avisos=STATE.avisos||[];
+  const cobrado=pagos.find(p=>p.mes===mesActual&&p.pagado);
+  const aviso=avisos.find(av=>av.mes===mesActual&&av.estado==='pendiente');
+  const icon=document.getElementById('nav-pagos-icon');
+  if(!cobrado&&aviso){icon.textContent='🔔';}
+  else if(!cobrado){icon.textContent='⚠️';}
+  else{icon.textContent='💳';}
+}
+
+// ── NAV ──────────────────────────────────────────────────────────────────────
+
+function navTo(page){
+  curPage=page;
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('nav-'+page).classList.add('active');
+  switch(page){
+    case 'inicio':   renderInicio();break;
+    case 'horarios': renderHorarios();break;
+    case 'pagos':    renderPagos();break;
+    case 'perfil':   renderPerfil();break;
+  }
+}
+
+function setContent(html){document.getElementById('content').innerHTML=html;}
+
+// ── INICIO ───────────────────────────────────────────────────────────────────
+
+function renderInicio(){
+  if(!STATE.alumna){setContent('<div class="loading"><div class="spinner"></div>Cargando...</div>');return;}
+  const a=STATE.alumna;
+  const mesActual=new Date().toISOString().slice(0,7);
+  const pagos=STATE.pagos||[];
+  const avisos=STATE.avisos||[];
+  const cobrado=pagos.find(p=>p.mes===mesActual&&p.pagado);
+  const aviso=avisos.find(av=>av.mes===mesActual&&av.estado==='pendiente');
+  const inscs=(STATE.inscripciones||[]);
+
+  const mesLabel=mesStr=>{ const[y,m]=mesStr.split('-');return new Date(y,m-1,1).toLocaleDateString('es-AR',{month:'long',year:'numeric'}); };
+
+  // Pago status card
+  let pagoCard='';
+  if(cobrado){
+    pagoCard=`<div class="card" style="border-left:4px solid var(--mat);">
+      <div style="display:flex;align-items:center;gap:.5rem;">
+        <div style="font-size:28px;">✅</div>
+        <div>
+          <div style="font-size:12px;color:var(--sub);">Cuota ${mesLabel(mesActual)}</div>
+          <div style="font-size:16px;font-weight:700;color:var(--mat);">¡Pagada!</div>
+          ${cobrado.monto?`<div style="font-size:12px;color:var(--sub);">$${Number(cobrado.monto).toLocaleString('es-AR')}</div>`:''}
+        </div>
+      </div>
+    </div>`;
+  }else if(aviso){
+    pagoCard=`<div class="card" style="border-left:4px solid #f59e0b;">
+      <div style="display:flex;align-items:center;gap:.5rem;">
+        <div style="font-size:28px;">⏳</div>
+        <div>
+          <div style="font-size:12px;color:var(--sub);">Cuota ${mesLabel(mesActual)}</div>
+          <div style="font-size:15px;font-weight:700;color:#f59e0b;">Pendiente de aprobación</div>
+          <div style="font-size:12px;color:var(--sub);">Avisaste que pagaste · Amira está revisando</div>
+        </div>
+      </div>
+    </div>`;
+  }else{
+    pagoCard=`<div class="card" style="border-left:4px solid var(--rd);">
+      <div style="font-size:12px;color:var(--sub);margin-bottom:.4rem;">Cuota ${mesLabel(mesActual)}</div>
+      <div style="font-size:15px;font-weight:700;color:var(--rd);margin-bottom:.75rem;">⚠️ Sin pago registrado</div>
+      <button class="btn-page btn-pague" onclick="abrirModalPago('${mesActual}')">💳 Avisar que pagué</button>
+    </div>`;
+  }
+
+  // Next class
+  let proximaCard='';
+  if(inscs.length){
+    const today=new Date().getDay();  // 0=Sun, 1=Mon...
+    const dayMap={1:'lun',2:'mar',3:'mie',4:'jue',5:'vie'};
+    const todayKey=dayMap[today]||null;
+    const hoy=inscs.filter(i=>i.dia===todayKey);
+    if(hoy.length){
+      proximaCard=`<div class="card">
+        <div class="card-title">📍 Clase de hoy</div>
+        ${hoy.map(i=>`
+          <div class="sched-item">
+            <div class="sched-dot" style="background:${MOD_COLORS[i.modalidad]||'#666'};"></div>
+            <div class="sched-info">
+              <div class="sched-mod">${i.modalidad.charAt(0).toUpperCase()+i.modalidad.slice(1)} ${i.plan_nombre?'· '+i.plan_nombre:''}</div>
+              <div class="sched-dia">${i.horario||''}</div>
+            </div>
+          </div>`).join('')}
+      </div>`;
+    }
+  }
+
+  // Notification banner
+  const notifCard=rNotifBanner();
+
+  setContent(notifCard+pagoCard+proximaCard+`
+    <div class="card">
+      <div class="card-title">📋 Mi inscripción</div>
+      ${inscs.length?inscs.map(i=>`
+        <div class="sched-item">
+          <div class="sched-dot" style="background:${MOD_COLORS[i.modalidad]||'#666'};"></div>
+          <div class="sched-info">
+            <div class="sched-mod">${i.modalidad.charAt(0).toUpperCase()+i.modalidad.slice(1)}${i.plan_nombre?' · '+i.plan_nombre:''}</div>
+            <div class="sched-dia">${DIA_LABEL[i.dia]||i.dia||''} ${i.horario?'· '+i.horario:''}</div>
+          </div>
+        </div>`).join('')
+      :'<div style="font-size:13px;color:var(--sub);">Sin inscripciones activas.</div>'}
+    </div>
+  `);
+}
+
+// ── HORARIOS ──────────────────────────────────────────────────────────────────
+
+function renderHorarios(){
+  if(!STATE.alumna){setContent('<div class="loading"><div class="spinner"></div></div>');return;}
+  const inscs=(STATE.inscripciones||[]);
+  if(!inscs.length){
+    setContent(`<div class="card" style="text-align:center;padding:2rem;">
+      <div style="font-size:32px;margin-bottom:.5rem;">📅</div>
+      <div style="font-size:14px;color:var(--sub);">No tenés inscripciones activas.<br>Hablá con Amira para inscribirte.</div>
+    </div>`);
+    return;
+  }
+  // Group by day
+  const grouped={};
+  inscs.forEach(i=>{
+    if(!grouped[i.dia])grouped[i.dia]=[];
+    grouped[i.dia].push(i);
+  });
+  const days=['lun','mar','mie','jue','vie'].filter(d=>grouped[d]);
+
+  let html='';
+  days.forEach(d=>{
+    const items=grouped[d];
+    html+=`<div class="card">
+      <div class="card-title">📅 ${DIA_LABEL[d]||d}</div>
+      ${items.map(i=>`
+        <div class="sched-item">
+          <div class="sched-dot" style="background:${MOD_COLORS[i.modalidad]||'#666'};width:12px;height:12px;"></div>
+          <div class="sched-info">
+            <div class="sched-mod">${i.modalidad.charAt(0).toUpperCase()+i.modalidad.slice(1)}
+              ${i.plan_nombre?`<span class="chip ${MOD_CHIP[i.modalidad]||''}" style="margin-left:.4rem;">${i.plan_nombre}</span>`:''}
+            </div>
+            ${i.horario?`<div class="sched-dia">🕐 ${i.horario}</div>`:''}
+          </div>
+        </div>`).join('')}
+    </div>`;
+  });
+  setContent(html);
+}
+
+// ── PAGOS ─────────────────────────────────────────────────────────────────────
+
+function renderPagos(){
+  if(!STATE.alumna){setContent('<div class="loading"><div class="spinner"></div></div>');return;}
+  const pagos=STATE.pagos||[];
+  const avisos=STATE.avisos||[];
+  const mesActual=new Date().toISOString().slice(0,7);
+
+  const mesLabel=mesStr=>{ const[y,m]=mesStr.split('-');return new Date(y,m-1,1).toLocaleDateString('es-AR',{month:'long',year:'numeric'}); };
+
+  // Current month status
+  const cobrado=pagos.find(p=>p.mes===mesActual&&p.pagado);
+  const aviso=avisos.find(av=>av.mes===mesActual&&av.estado==='pendiente');
+
+  let statusCard='';
+  if(cobrado){
+    statusCard=`<div class="card" style="border-left:4px solid var(--mat);">
+      <div class="pago-mes">Cuota ${mesLabel(mesActual)}</div>
+      <div class="pago-estado cobrado">✅ Pagada</div>
+      ${cobrado.monto?`<div style="font-size:13px;color:var(--sub);">$${Number(cobrado.monto).toLocaleString('es-AR')}</div>`:''}
+      ${cobrado.fecha_pago?`<div style="font-size:12px;color:var(--sub);">Registrado el ${new Date(cobrado.fecha_pago).toLocaleDateString('es-AR')}</div>`:''}
+    </div>`;
+  }else if(aviso){
+    statusCard=`<div class="card" style="border-left:4px solid #f59e0b;">
+      <div class="pago-mes">Cuota ${mesLabel(mesActual)}</div>
+      <div class="pago-estado aviso">⏳ Pendiente de aprobación</div>
+      <div style="font-size:13px;color:var(--sub);margin-bottom:.75rem;">Avisaste que pagaste. Amira está revisando.</div>
+      ${aviso.monto_declarado?`<div style="font-size:13px;color:var(--sub);">Monto declarado: $${Number(aviso.monto_declarado).toLocaleString('es-AR')}</div>`:''}
+      ${aviso.nota?`<div style="font-size:12px;color:var(--sub);margin-top:.25rem;">"${aviso.nota}"</div>`:''}
+    </div>`;
+  }else{
+    statusCard=`<div class="card" style="border-left:4px solid var(--rd);">
+      <div class="pago-mes">Cuota ${mesLabel(mesActual)}</div>
+      <div class="pago-estado sin-pago">⚠️ Sin pago registrado</div>
+      <div style="font-size:13px;color:var(--sub);margin-bottom:.75rem;">Si ya abonaste, avisanos acá.</div>
+      <button class="btn-page btn-pague" onclick="abrirModalPago('${mesActual}')">💳 Avisar que pagué</button>
+    </div>`;
+  }
+
+  // History
+  const mesesPrev=pagos.filter(p=>p.mes<mesActual).sort((a,b)=>b.mes.localeCompare(a.mes));
+  let histHtml='';
+  if(mesesPrev.length){
+    histHtml=`<div class="card">
+      <div class="card-title">📋 Historial</div>
+      ${mesesPrev.map(p=>`
+        <div class="hist-row">
+          <div>
+            <div class="hist-mes">${mesLabel(p.mes)}</div>
+            ${p.fecha_pago?`<div style="font-size:11px;color:var(--sub);">Pagado ${new Date(p.fecha_pago).toLocaleDateString('es-AR')}</div>`:''}
+          </div>
+          <div style="text-align:right;">
+            ${p.monto?`<div class="hist-monto">$${Number(p.monto).toLocaleString('es-AR')}</div>`:''}
+            <div><span class="chip ${p.pagado?'chip-ok':'chip-no'}">${p.pagado?'✓ Pagado':'Pendiente'}</span></div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }
+
+  setContent(statusCard+histHtml);
+}
+
+// ── PERFIL ────────────────────────────────────────────────────────────────────
+
+function renderPerfil(){
+  if(!STATE.alumna){setContent('<div class="loading"><div class="spinner"></div></div>');return;}
+  const a=STATE.alumna;
+  const nacStr=a.fecha_nacimiento?new Date(a.fecha_nacimiento).toLocaleDateString('es-AR'):'—';
+  const fotoHtml=a.foto_url
+    ?`<div class="profile-photo"><img src="${a.foto_url}" alt="foto"></div>`
+    :`<div class="profile-photo" style="display:flex;align-items:center;justify-content:center;font-size:40px;">👤</div>`;
+
+  setContent(`
+    <div class="card">
+      <div class="profile-photo-wrap">
+        ${fotoHtml}
+        <button class="photo-btn" onclick="subirFoto()">📷 Cambiar foto</button>
+        <div class="profile-name">${a.nombre||''} ${a.apellido||''}</div>
+        <div class="profile-email">${a.email||''}</div>
+      </div>
+      <div class="profile-row">
+        <span class="profile-label">Teléfono</span>
+        <span class="profile-val">${a.tel||'—'}</span>
+      </div>
+      <div class="profile-row">
+        <span class="profile-label">Fecha de nacimiento</span>
+        <span class="profile-val">${nacStr}</span>
+      </div>
+      <div class="profile-row">
+        <span class="profile-label">Día de vencimiento</span>
+        <span class="profile-val">${a.dia_pago?'Día '+a.dia_pago+' de cada mes':'—'}</span>
+      </div>
+      ${a.contraindicaciones?`
+      <div style="margin-top:.75rem;padding:.6rem .75rem;background:#fff5f5;border-radius:8px;border-left:3px solid var(--rd);">
+        <div style="font-size:11px;font-weight:700;color:var(--rd);margin-bottom:.2rem;">🏥 Contraindicaciones / Lesiones</div>
+        <div style="font-size:13px;color:#c0392b;">${a.contraindicaciones}</div>
+      </div>`:''}
+    </div>
+
+    ${rNotifBanner()}
+
+    <div style="padding:.5rem 0;text-align:center;">
+      <button onclick="doLogout()" style="background:none;border:1px solid #ddd;color:var(--sub);padding:.5rem 1.5rem;border-radius:8px;font-size:13px;cursor:pointer;">Cerrar sesión</button>
+    </div>
+  `);
+}
+
+// ── NOTIFICATION BANNER ───────────────────────────────────────────────────────
+
+function rNotifBanner(){
+  if(!('Notification' in window)||!('serviceWorker' in navigator))return'';
+  if(Notification.permission==='granted')return'';
+  return`<div class="notif-banner">
+    <div class="ico">🔔</div>
+    <div class="txt">
+      <strong>Activá las notificaciones</strong>
+      <span>Recibí recordatorios de pago y confirmaciones</span>
+    </div>
+    <button class="btn-notif" onclick="activarNotif()">Activar</button>
+  </div>`;
+}
+
+async function activarNotif(){
+  if(!VAPID_PUBLIC){showToast('Notificaciones no configuradas aún');return;}
+  if(!('serviceWorker' in navigator)){showToast('Tu navegador no soporta notificaciones');return;}
+  try{
+    const perm=await Notification.requestPermission();
+    if(perm!=='granted'){showToast('Permiso denegado');return;}
+    const reg=await navigator.serviceWorker.ready;
+    const sub=await reg.pushManager.subscribe({
+      userVisibleOnly:true,
+      applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC)
+    });
+    await sb.rpc('triskel_save_push_subscription',{p_subscription:sub.toJSON(),p_tipo:'alumna'});
+    showToast('🔔 Notificaciones activadas');
+    navTo(curPage);  // re-render to hide banner
+  }catch(e){
+    console.error(e);
+    showToast('No se pudieron activar las notificaciones');
+  }
+}
+
+function urlBase64ToUint8Array(base64String){
+  const padding='='.repeat((4-base64String.length%4)%4);
+  const base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/');
+  const raw=atob(base64);
+  return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
+}
+
+// ── MODAL AVISO PAGO ──────────────────────────────────────────────────────────
+
+function abrirModalPago(mes){
+  avisoPagoMes=mes;
+  const[y,m]=mes.split('-');
+  const label=new Date(y,m-1,1).toLocaleDateString('es-AR',{month:'long',year:'numeric'});
+  document.getElementById('modal-pago-mes-label').textContent='📅 '+label.charAt(0).toUpperCase()+label.slice(1);
+  document.getElementById('aviso-monto').value='';
+  document.getElementById('aviso-nota').value='';
+  document.getElementById('modal-pago').style.display='flex';
+}
+
+function cerrarModalPago(){
+  document.getElementById('modal-pago').style.display='none';
+}
+
+async function confirmarAviso(){
+  if(!avisoPagoMes)return;
+  const monto=parseFloat(document.getElementById('aviso-monto').value)||null;
+  const nota=document.getElementById('aviso-nota').value.trim()||null;
+  const btn=document.querySelector('#modal-pago .btn-confirm');
+  btn.disabled=true;btn.textContent='Enviando...';
+
+  const{data,error}=await sb.rpc('triskel_crear_aviso_pago',{
+    p_mes:avisoPagoMes,
+    p_monto_declarado:monto,
+    p_nota:nota
+  });
+
+  if(error||!data?.ok){
+    showToast('❌ Error al enviar aviso');
+    btn.disabled=false;btn.textContent='Avisar pago ✓';
+    return;
+  }
+
+  // Notify teacher via Edge Function
+  try{
+    const a=STATE.alumna;
+    await fetch(`${SB_URL}/functions/v1/send-push`,{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+SB_KEY
+      },
+      body:JSON.stringify({
+        tipo:'aviso_pago',
+        target_tipo:'teacher',
+        nombre:a?.nombre||'Una alumna',
+        mes:avisoPagoMes,
+        monto:monto,
+        nota:nota
+      })
+    });
+  }catch(e){console.warn('Push to teacher failed:',e);}
+
+  cerrarModalPago();
+  await loadFicha();
+  navTo('pagos');
+  showToast('✅ Aviso enviado. Amira lo revisará pronto.');
+}
+
+// ── FOTO UPLOAD ───────────────────────────────────────────────────────────────
+
+function subirFoto(){
+  const input=document.createElement('input');
+  input.type='file';input.accept='image/*';input.capture='user';
+  input.onchange=async()=>{
+    const file=input.files[0];
+    if(!file)return;
+    if(file.size>5*1024*1024){showToast('La imagen es muy grande (máx 5MB)');return;}
+    showToast('Subiendo foto...');
+    const{data:{session}}=await sb.auth.getSession();
+    const uid=session?.user?.id;
+    if(!uid){showToast('Error de sesión');return;}
+    const ext=file.name.split('.').pop();
+    const path=`${uid}/avatar.${ext}`;
+    const{error}=await sb.storage.from('fotos-alumnas').upload(path,file,{upsert:true});
+    if(error){showToast('Error al subir foto');return;}
+    const{data:{publicUrl}}=sb.storage.from('fotos-alumnas').getPublicUrl(path);
+    const{data:r}=await sb.rpc('triskel_save_mi_foto',{p_foto_url:publicUrl});
+    if(r?.ok){
+      STATE.alumna.foto_url=publicUrl;
+      showToast('✅ Foto actualizada');
+      renderPerfil();
+    }else{showToast('Error al guardar foto');}
+  };
+  input.click();
+}
+
+// ── TOAST ────────────────────────────────────────────────────────────────────
+
+let toastTimer=null;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ── SERVICE WORKER ────────────────────────────────────────────────────────────
+
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/panel/sw.js').catch(()=>{});
+}
+
+// ── BOOT ─────────────────────────────────────────────────────────────────────
+
+(async()=>{
+  const{data:{session}}=await sb.auth.getSession();
+  if(session){await initApp();}
+  else{document.getElementById('auth-screen').style.display='flex';}
+})();
+</script>
+</body>
+</html>
