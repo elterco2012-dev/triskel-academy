@@ -654,24 +654,36 @@ function subirFoto(){
   input.onchange=async()=>{
     const file=input.files[0];
     if(!file)return;
-    if(file.size>5*1024*1024){showToast('La imagen es muy grande (máx 5MB)');return;}
-    showToast('Subiendo foto...');
-    const{data:{session}}=await sb.auth.getSession();
-    const uid=session?.user?.id;
-    if(!uid){showToast('Error de sesión');return;}
-    const ext=file.name.split('.').pop();
-    const path=`${uid}/avatar.${ext}`;
-    const{error}=await sb.storage.from('fotos-alumnas').upload(path,file,{upsert:true});
-    if(error){showToast('Error al subir foto');return;}
-    const{data:{publicUrl}}=sb.storage.from('fotos-alumnas').getPublicUrl(path);
-    const{data:r}=await sb.rpc('triskel_save_mi_foto',{p_foto_url:publicUrl});
+    if(file.size>3*1024*1024){showToast('La imagen es muy grande (máx 3MB)');return;}
+    showToast('Guardando foto...');
+    // Redimensionar y convertir a base64
+    const base64=await resizeAndEncode(file,600);
+    const{data:r}=await sb.rpc('triskel_save_mi_foto',{p_foto_url:base64});
     if(r?.ok){
-      STATE.alumna.foto_url=publicUrl;
+      STATE.alumna.foto=base64;
       showToast('✅ Foto actualizada');
       renderPerfil();
     }else{showToast('Error al guardar foto');}
   };
   input.click();
+}
+
+function resizeAndEncode(file,maxSize){
+  return new Promise(resolve=>{
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      URL.revokeObjectURL(url);
+      let w=img.width,h=img.height;
+      if(w>h&&w>maxSize){h=Math.round(h*maxSize/w);w=maxSize;}
+      else if(h>maxSize){w=Math.round(w*maxSize/h);h=maxSize;}
+      const canvas=document.createElement('canvas');
+      canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      resolve(canvas.toDataURL('image/jpeg',0.82));
+    };
+    img.src=url;
+  });
 }
 
 // ── TOAST ────────────────────────────────────────────────────────────────────
