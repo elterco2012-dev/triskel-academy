@@ -197,8 +197,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="modal-title">💳 Avisar pago</div>
     <div style="font-size:13px;color:var(--sub);margin-bottom:.5rem;">Completá los datos de tu pago y Amira lo confirmará.</div>
     <div id="modal-pago-mes-label" style="font-size:13px;font-weight:600;color:var(--tm);margin-bottom:.5rem;"></div>
-    <label class="modal-label">Monto abonado (opcional)</label>
-    <input class="modal-input" type="number" id="aviso-monto" placeholder="Ej: 15000" min="0">
+    <label class="modal-label">Monto abonado <span style="font-weight:400;color:#aaa;">(podés modificarlo si pagás menos)</span></label>
+    <input class="modal-input" type="number" id="aviso-monto" placeholder="0" min="0">
     <label class="modal-label">Nota (opcional)</label>
     <input class="modal-input" type="text" id="aviso-nota" placeholder="Ej: Transferí al CBU, operación 123456" maxlength="200">
     <div class="modal-row">
@@ -592,7 +592,9 @@ function abrirModalPago(mes){
   const[y,m]=mes.split('-');
   const label=new Date(y,m-1,1).toLocaleDateString('es-AR',{month:'long',year:'numeric'});
   document.getElementById('modal-pago-mes-label').textContent='📅 '+label.charAt(0).toUpperCase()+label.slice(1);
-  document.getElementById('aviso-monto').value='';
+  // Pre-cargar monto de la inscripción
+  const montoInsc=(STATE.inscripciones||[]).reduce((s,i)=>s+(i.precio||0),0);
+  document.getElementById('aviso-monto').value=montoInsc||'';
   document.getElementById('aviso-nota').value='';
   document.getElementById('modal-pago').style.display='flex';
 }
