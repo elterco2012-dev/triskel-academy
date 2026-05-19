@@ -3,31 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#6c5b7b">
+<meta name="theme-color" content="#7C5CBF">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Triskel Academy · Mi Cuenta</title>
 <link rel="manifest" href="/panel/manifest.json">
 <link rel="icon" href="/panel/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
-  --tm:#6c5b7b;--mat:#27ae60;--ref:#2980b9;--fun:#e67e22;
-  --rd:#e74c3c;--bg:#f4f0f8;--white:#fff;--txt:#1a1a2e;--sub:#666;
+  --tm:#7C5CBF;--mat:#27ae60;--ref:#2980b9;--fun:#e67e22;
+  --rd:#e74c3c;--bg:#f4f0f8;--white:#fff;--txt:#1a1a2e;--sub:#6b7280;
+  --border:#e8e0f0;--border-light:#f0ebf5;
   --card-shadow:0 2px 12px rgba(108,91,123,.10);
-  --radius:14px;
+  --radius:12px;--radius-sm:8px;
 }
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--txt);min-height:100dvh;max-width:480px;margin:0 auto;}
+[data-theme=dark]{
+  --bg:#111110;--white:#1e1c1b;--txt:#f0ede8;--sub:#9ca3af;
+  --border:rgba(255,255,255,.10);--border-light:rgba(255,255,255,.06);
+  --card-shadow:0 2px 10px rgba(0,0,0,.45);
+  --tm:#9b7ed4;--mat:#4ade80;--rd:#f87171;
+}
+body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--txt);min-height:100dvh;max-width:480px;margin:0 auto;}
+input,select,textarea,button{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
 
 /* ── AUTH SCREEN ── */
-#auth-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;padding:2rem;background:linear-gradient(145deg,#f4f0f8,#e8dff0);}
+#auth-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;padding:2rem;background:var(--bg);}
 .auth-logo{font-size:48px;margin-bottom:.5rem;}
 .auth-title{font-size:22px;font-weight:700;color:var(--tm);margin-bottom:.25rem;text-align:center;}
 .auth-sub{font-size:13px;color:var(--sub);margin-bottom:2rem;text-align:center;}
 .auth-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--card-shadow);padding:1.5rem;width:100%;max-width:340px;}
 .auth-card label{font-size:12px;font-weight:600;color:var(--sub);display:block;margin-bottom:.25rem;margin-top:.75rem;}
-.auth-card input{width:100%;padding:.6rem .8rem;border:1.5px solid #ddd;border-radius:8px;font-size:15px;outline:none;transition:border .2s;}
+.auth-card input{width:100%;padding:.6rem .8rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:15px;outline:none;transition:border .2s;background:var(--white);color:var(--txt);}
 .auth-card input:focus{border-color:var(--tm);}
 .auth-card .btn-primary{width:100%;margin-top:1.2rem;padding:.75rem;background:var(--tm);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;}
 .auth-card .btn-primary:active{opacity:.85;}
@@ -37,8 +47,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 #app{display:none;flex-direction:column;min-height:100dvh;}
 
 /* ── HEADER ── */
-.app-header{background:var(--white);padding:.75rem 1rem;display:flex;align-items:center;gap:.75rem;box-shadow:0 1px 8px rgba(108,91,123,.08);position:sticky;top:0;z-index:50;}
-.header-logo{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--tm),#a689c0);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.app-header{background:var(--white);padding:.75rem 1rem;display:flex;align-items:center;gap:.75rem;box-shadow:0 1px 0 var(--border);position:sticky;top:0;z-index:50;}
+.header-logo{width:36px;height:36px;border-radius:50%;background:var(--tm);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
 .header-title{font-size:15px;font-weight:700;color:var(--tm);}
 .header-sub{font-size:11px;color:var(--sub);}
 .header-right{margin-left:auto;display:flex;align-items:center;gap:.5rem;}
@@ -49,7 +59,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .content{flex:1;padding:1rem;padding-bottom:80px;overflow-y:auto;}
 
 /* ── NAV ── */
-.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--white);border-top:1px solid #e8e0f0;display:flex;z-index:50;}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--white);border-top:1px solid var(--border);display:flex;z-index:50;}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.5rem .25rem .4rem;border:none;background:transparent;cursor:pointer;font-size:10px;color:var(--sub);gap:2px;transition:color .15s;}
 .nav-item.active{color:var(--tm);}
 .nav-item .nav-icon{font-size:20px;}
@@ -65,7 +75,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .photo-btn{margin-top:.5rem;font-size:12px;color:var(--tm);background:none;border:1px solid var(--tm);border-radius:20px;padding:.2rem .75rem;cursor:pointer;}
 .profile-name{font-size:18px;font-weight:700;color:var(--txt);text-align:center;margin-top:.5rem;}
 .profile-email{font-size:12px;color:var(--sub);text-align:center;}
-.profile-row{display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid #f0ebf5;font-size:13px;}
+.profile-row{display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid var(--border-light);font-size:13px;}
 .profile-row:last-child{border-bottom:none;}
 .profile-label{color:var(--sub);font-size:12px;}
 .profile-val{font-weight:600;color:var(--txt);}
@@ -80,7 +90,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .chip-no{background:#fce4ec;color:#e74c3c;}
 
 /* ── SCHEDULE ITEM ── */
-.sched-item{display:flex;align-items:center;gap:.75rem;padding:.6rem 0;border-bottom:1px solid #f0ebf5;}
+.sched-item{display:flex;align-items:center;gap:.75rem;padding:.6rem 0;border-bottom:1px solid var(--border-light);}
 .sched-item:last-child{border-bottom:none;}
 .sched-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
 .sched-info{flex:1;}
@@ -100,7 +110,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .btn-pague:disabled{background:#bbb;cursor:default;}
 
 /* ── HISTORIAL ── */
-.hist-row{display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #f0ebf5;font-size:13px;}
+.hist-row{display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--border-light);font-size:13px;}
 .hist-row:last-child{border-bottom:none;}
 .hist-mes{font-weight:600;}
 .hist-monto{color:var(--mat);font-weight:700;}
@@ -112,18 +122,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* ── MODAL ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:flex-end;justify-content:center;}
 .modal-sheet{background:var(--white);border-radius:20px 20px 0 0;padding:1.5rem;width:100%;max-width:480px;max-height:80dvh;overflow-y:auto;}
-.modal-handle{width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto .75rem;}
+.modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto .75rem;}
 .modal-title{font-size:16px;font-weight:700;color:var(--tm);margin-bottom:1rem;}
 .modal-label{font-size:12px;font-weight:600;color:var(--sub);margin-bottom:.25rem;display:block;margin-top:.75rem;}
-.modal-input{width:100%;padding:.6rem .8rem;border:1.5px solid #ddd;border-radius:8px;font-size:15px;outline:none;}
+.modal-input{width:100%;padding:.6rem .8rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:15px;outline:none;background:var(--white);color:var(--txt);}
 .modal-input:focus{border-color:var(--tm);}
 .modal-row{display:flex;gap:.75rem;margin-top:1rem;}
-.btn-cancel{flex:1;padding:.65rem;border:1.5px solid #ddd;border-radius:10px;background:#fff;font-size:14px;cursor:pointer;font-weight:600;}
+.btn-cancel{flex:1;padding:.65rem;border:1.5px solid var(--border);border-radius:10px;background:var(--white);color:var(--txt);font-size:14px;cursor:pointer;font-weight:600;}
 .btn-confirm{flex:2;padding:.65rem;border:none;border-radius:10px;background:var(--tm);color:#fff;font-size:14px;font-weight:700;cursor:pointer;}
 .btn-confirm:active{opacity:.85;}
 
 /* ── NOTIF BANNER ── */
-.notif-banner{background:linear-gradient(135deg,#6c5b7b,#a689c0);border-radius:var(--radius);padding:1rem;color:#fff;margin-bottom:.75rem;display:flex;align-items:center;gap:.75rem;}
+.notif-banner{background:var(--tm);border-radius:var(--radius);padding:1rem;color:#fff;margin-bottom:.75rem;display:flex;align-items:center;gap:.75rem;}
 .notif-banner .ico{font-size:28px;}
 .notif-banner .txt{flex:1;}
 .notif-banner .txt strong{display:block;font-size:14px;margin-bottom:.2rem;}
@@ -133,7 +143,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 /* Loading */
 .loading{display:flex;align-items:center;justify-content:center;padding:3rem;color:var(--sub);font-size:14px;}
-.spinner{width:24px;height:24px;border:3px solid #e8dff0;border-top-color:var(--tm);border-radius:50%;animation:spin .7s linear infinite;margin-right:.5rem;}
+.spinner{width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--tm);border-radius:50%;animation:spin .7s linear infinite;margin-right:.5rem;}
 @keyframes spin{to{transform:rotate(360deg);}}
 </style>
 </head>
@@ -164,6 +174,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="header-sub">Triskel Academy</div>
     </div>
     <div class="header-right">
+      <button class="icon-btn" id="dark-btn-alumna" onclick="toggleDarkAlumna()" title="Modo oscuro">🌙</button>
       <button class="icon-btn" onclick="doLogout()" title="Salir">🚪</button>
     </div>
   </div>
@@ -350,10 +361,10 @@ function renderInicio(){
       </div>
     </div>`;
   }else{
-    pagoCard=`<div class="card" style="border-left:4px solid var(--rd);">
-      <div style="font-size:12px;color:var(--sub);margin-bottom:.4rem;">Cuota ${mesLabel(mesActual)}</div>
-      <div style="font-size:15px;font-weight:700;color:var(--rd);margin-bottom:.75rem;">⚠️ Sin pago registrado</div>
-      <button class="btn-page btn-pague" onclick="abrirModalPago('${mesActual}')">💳 Avisar que pagué</button>
+    pagoCard=`<div class="card" style="background:var(--tm);border:none;color:#fff;text-align:center;padding:1.5rem 1rem;">
+      <div style="font-size:12px;opacity:.8;margin-bottom:.35rem;">Cuota ${mesLabel(mesActual)}</div>
+      <div style="font-size:20px;font-weight:800;margin:.25rem 0 1.1rem;">Pendiente de pago</div>
+      <button onclick="abrirModalPago('${mesActual}')" style="background:#fff;color:var(--tm);border:none;border-radius:10px;padding:.85rem 1.5rem;font-size:16px;font-weight:700;cursor:pointer;width:100%;letter-spacing:.01em;">💳 Avisar que pagué</button>
     </div>`;
   }
 
@@ -379,8 +390,8 @@ function renderInicio(){
     }
   }
 
-  // Notification banner
-  const notifCard=rNotifBanner();
+  // Notification banner — se oculta cuando hay pago pendiente para no competir con el CTA
+  const notifCard=rNotifBanner(/*suppressDefault=*/!cobrado&&!aviso);
 
   setContent(notifCard+pagoCard+proximaCard+`
     <div class="card">
@@ -558,7 +569,7 @@ function renderPerfil(){
 // ── NOTIFICATION BANNER ───────────────────────────────────────────────────────
 const NOTIF_SNOOZE_KEY='triskel_notif_snooze';
 
-function rNotifBanner(){
+function rNotifBanner(suppressDefault=false){
   if(!('Notification' in window)||!('serviceWorker' in navigator))return'';
   const perm=Notification.permission;
 
@@ -582,7 +593,8 @@ function rNotifBanner(){
     </div>`;
   }
 
-  // Check 5-day snooze
+  // Check 5-day snooze or explicit suppression (e.g. when payment CTA is primary)
+  if(suppressDefault)return'';
   const snoozed=localStorage.getItem(NOTIF_SNOOZE_KEY);
   if(snoozed&&Date.now()-Number(snoozed)<5*24*3600*1000)return'';
 
@@ -746,6 +758,21 @@ function showToast(msg){
   toastTimer=setTimeout(()=>t.classList.remove('show'),3000);
 }
 
+// ── DARK MODE ─────────────────────────────────────────────────────────────────
+let _darkAlumna = localStorage.getItem('tk-dark') === '1';
+if(_darkAlumna) document.documentElement.setAttribute('data-theme','dark');
+function toggleDarkAlumna(){
+  _darkAlumna=!_darkAlumna;
+  document.documentElement.setAttribute('data-theme',_darkAlumna?'dark':'light');
+  localStorage.setItem('tk-dark',_darkAlumna?'1':'0');
+  const btn=document.getElementById('dark-btn-alumna');
+  if(btn) btn.textContent=_darkAlumna?'☀️':'🌙';
+}
+function _initDarkBtn(){
+  const btn=document.getElementById('dark-btn-alumna');
+  if(btn) btn.textContent=_darkAlumna?'☀️':'🌙';
+}
+
 // ── SERVICE WORKER ────────────────────────────────────────────────────────────
 
 if('serviceWorker' in navigator){
@@ -754,6 +781,7 @@ if('serviceWorker' in navigator){
 
 // ── BOOT ─────────────────────────────────────────────────────────────────────
 
+_initDarkBtn();
 (async()=>{
   const{data:{session}}=await sb.auth.getSession();
   if(session){await initApp();}
