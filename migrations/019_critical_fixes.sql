@@ -163,8 +163,7 @@ RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
   UPDATE triskel_pagos
   SET pagado     = p_pagado,
-      fecha_pago = CASE WHEN p_pagado THEN COALESCE(p_fecha_pago, current_date) ELSE NULL END,
-      updated_at = now()
+      fecha_pago = CASE WHEN p_pagado THEN COALESCE(p_fecha_pago, current_date) ELSE NULL END
   WHERE id = ANY(p_ids);
   RETURN jsonb_build_object('ok',true,'updated',array_length(p_ids,1));
 END;
@@ -190,7 +189,7 @@ BEGIN
          p_pagado, CASE WHEN p_pagado THEN v_fecha ELSE NULL END
   ON CONFLICT (alumna_id, inscripcion_id, mes)
   DO UPDATE SET monto=EXCLUDED.monto, pagado=EXCLUDED.pagado,
-                fecha_pago=EXCLUDED.fecha_pago, updated_at=now();
+                fecha_pago=EXCLUDED.fecha_pago;
   RETURN jsonb_build_object('ok',true);
 END;
 $$;
