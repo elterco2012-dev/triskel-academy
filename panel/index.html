@@ -1158,9 +1158,18 @@ if(dark)document.documentElement.setAttribute('data-theme','dark');
 async function login(){
   const e=document.getElementById('email').value.trim();
   const p=document.getElementById('pwd').value;
-  document.getElementById('lerr').style.display='none';
+  const lerr=document.getElementById('lerr');
+  lerr.style.display='none';
   const{data,error}=await sb.auth.signInWithPassword({email:e,password:p});
-  if(error||!data.session){document.getElementById('lerr').style.display='block';return;}
+  if(error||!data.session){lerr.style.display='block';return;}
+  // Block alumnas from accessing the teacher panel
+  const{data:alumnaId}=await sb.rpc('triskel_get_mi_alumna_id');
+  if(alumnaId){
+    await sb.auth.signOut();
+    lerr.textContent='Este panel es solo para la profesora. Tu panel está en /panel/alumna.html';
+    lerr.style.display='block';
+    return;
+  }
   showPanel();
 }
 
@@ -1172,8 +1181,11 @@ async function logout(){
 
 async function initAuth(){
   const{data:{session}}=await sb.auth.getSession();
-  if(session) showPanel();
-  else document.getElementById('LS').style.display='flex';
+  if(!session){document.getElementById('LS').style.display='flex';return;}
+  // Also block alumnas who already have an active session
+  const{data:alumnaId}=await sb.rpc('triskel_get_mi_alumna_id');
+  if(alumnaId){await sb.auth.signOut();document.getElementById('LS').style.display='flex';return;}
+  showPanel();
 }
 
 function showPanel(){
