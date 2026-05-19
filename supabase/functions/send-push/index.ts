@@ -54,15 +54,23 @@ Deno.serve(async (req) => {
     if (!authHeader) return json({ ok: false, msg: 'not authenticated' }, 401);
 
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authErr } = await sb.auth.getUser(token);
-    if (authErr || !user) return json({ ok: false, msg: 'invalid token' }, 401);
 
-    // Check if caller is an alumna
-    const { data: alumnaRecord } = await sb
-      .from('triskel_alumnas')
-      .select('id, nombre, apellido')
-      .eq('auth_user_id', user.id)
-      .maybeSingle();
+    // Allow service_role calls from internal cron (pg_net)
+    const isServiceRole = token === SUPABASE_SERVICE_KEY;
+
+    let alumnaRecord = null;
+    if (!isServiceRole) {
+      const { data: { user }, error: authErr } = await sb.auth.getUser(token);
+      if (authErr || !user) return json({ ok: false, msg: 'invalid token' }, 401);
+
+      // Check if caller is an alumna
+      const { data } = await sb
+        .from('triskel_alumnas')
+        .select('id, nombre, apellido')
+        .eq('auth_user_id', user.id)
+        .maybeSingle();
+      alumnaRecord = data;
+    }
 
     const payload: PushPayload = await req.json();
     const { tipo, target_user_id, target_tipo } = payload;
@@ -121,7 +129,7 @@ Deno.serve(async (req) => {
     return json({ ok: true, sent, failed });
   } catch (e) {
     console.error(e);
-    return json({ ok: false, msg: String(e) }, 500);
+    return json({ ok: false, msg: 'internal error' }, 500);
   }
 });
 

@@ -1455,6 +1455,7 @@ function showMsg(txt,dur=3000){
   el.textContent=txt;el.style.display='block';
   setTimeout(()=>{el.style.display='none';},dur);
 }
+function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 function capColor(n,cap){
   if(!cap)return'var(--tm)';
   const p=n/cap;
@@ -1931,14 +1932,14 @@ function rFicha(){
           ${a.email?`<span>✉️ ${a.email}</span>`:''}
           ${a.fecha_nacimiento?`<span>🎂 ${formatFechaNac(a.fecha_nacimiento)} · ${calcEdad(a.fecha_nacimiento)} años</span>`:''}
         </div>
-        ${a.notas?`<div style="margin-top:8px;font-size:12px;color:var(--tm);font-style:italic;">${a.notas}</div>`:''}
+        ${a.notas?`<div style="margin-top:8px;font-size:12px;color:var(--tm);font-style:italic;">${esc(a.notas)}</div>`:''}
       </div>
     </div>
   </div>
 
   ${a.contraindicaciones?`<div class="card" style="margin-bottom:1rem;border-left:4px solid var(--rd);background:#fff5f5;padding:.75rem 1rem;">
     <div style="font-size:12px;font-weight:700;color:var(--rd);margin-bottom:4px;">🏥 Contraindicaciones / Lesiones</div>
-    <div style="font-size:13px;color:#c0392b;line-height:1.5;">${a.contraindicaciones}</div>
+    <div style="font-size:13px;color:#c0392b;line-height:1.5;">${esc(a.contraindicaciones)}</div>
   </div>`:''}
 
   <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:.75rem;">
@@ -2024,7 +2025,7 @@ function rFicha(){
                 <button class="btn btn-s btn-p" onclick="marcarPagosPlan('${ids.join(',')}')">✓ Marcar pagado</button>`
             }
           </div>
-          ${notaFicha?`<div style="font-size:11px;color:var(--tm);font-style:italic;margin-top:2px;">"${notaFicha}"</div>`:''}
+          ${notaFicha?`<div style="font-size:11px;color:var(--tm);font-style:italic;margin-top:2px;">"${esc(notaFicha)}"</div>`:''}
         </div>`;
       }).join('');
     })():`<div style="font-size:13px;color:var(--tm);">Sin pagos registrados.</div>`}
@@ -2039,7 +2040,7 @@ function rFicha(){
     </div>
     ${obsAlumna.length?obsAlumna.map(o=>`<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--b);align-items:flex-start;">
       <div style="font-size:11px;color:var(--tm);white-space:nowrap;padding-top:2px;">${o.fecha}</div>
-      <div style="flex:1;font-size:13px;">${o.texto}</div>
+      <div style="flex:1;font-size:13px;">${esc(o.texto)}</div>
       <button class="btn btn-s btn-danger" onclick="deleteObs(${o.id})">✕</button>
     </div>`).join(''):`<div style="font-size:12px;color:var(--th);">Sin observaciones aún.</div>`}
   </div>
@@ -2476,7 +2477,7 @@ function rPagos(){
           :`<button class="btn btn-s btn-p" onclick="marcarPagosPlan('${ids.join(',')}')">✓ Marcar pagado</button>`
         }
       </div>
-      ${notaPago?`<div style="font-size:11px;color:var(--tm);font-style:italic;padding-left:38px;margin-top:2px;">"${notaPago}"</div>`:''}
+      ${notaPago?`<div style="font-size:11px;color:var(--tm);font-style:italic;padding-left:38px;margin-top:2px;">"${esc(notaPago)}"</div>`:''}
     </div>`;
   }
 
@@ -2500,7 +2501,7 @@ function rPagos(){
         <div style="flex:1;min-width:100px;">
           <div style="font-size:13px;font-weight:600;">${av.nombre||''} ${av.apellido||''}</div>
           <div style="font-size:11px;color:var(--sub);">Avisó pago de ${ml} ${monto}</div>
-          ${av.nota?`<div style="font-size:11px;color:#666;font-style:italic;">"${av.nota}"</div>`:''}
+          ${av.nota?`<div style="font-size:11px;color:#666;font-style:italic;">"${esc(av.nota)}"</div>`:''}
           <div style="font-size:10px;color:var(--sub);">${new Date(av.created_at).toLocaleString('es-AR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
@@ -2588,12 +2589,13 @@ async function saveAlumna(){
   }
   // Auto-crear acceso en panel alumna solo cuando es nueva
   let passGenerada=null;
-  if(esNueva&&email&&nacimiento){
-    passGenerada=nacimientoToPass(nacimiento);
+  if(esNueva&&email){
+    passGenerada=generarPassAleatoria();
     try{
+      const{data:{session:sess}}=await sb.auth.getSession();
       await fetch(`${SB_URL}/functions/v1/setup-alumna-auth`,{
         method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+(sess?.access_token||SB_KEY)},
         body:JSON.stringify({alumna_id:alumnaId,email,password:passGenerada})
       });
     }catch(e){console.warn('No se pudo crear acceso alumna:',e);}
@@ -2608,11 +2610,9 @@ async function saveAlumna(){
 }
 
 // Convierte YYYY-MM-DD a ddmmaa  (ej: 1990-03-15 → 150390)
-function nacimientoToPass(fecha){
-  if(!fecha)return null;
-  const[y,m,d]=fecha.split('-');
-  if(!y||!m||!d)return null;
-  return `${d}${m}${y.slice(-2)}`;
+function generarPassAleatoria(){
+  const chars='abcdefghjkmnpqrstuvwxyz23456789';
+  return Array.from(crypto.getRandomValues(new Uint8Array(8))).map(b=>chars[b%chars.length]).join('');
 }
 
 function showMsgAcceso(nombre,email,pass,tel){
@@ -3056,9 +3056,10 @@ async function resolverAviso(id,accion,alumnaId,mes){
   // Notify alumna via push
   if(a?.auth_user_id){
     try{
+      const{data:{session:sess2}}=await sb.auth.getSession();
       await fetch(`${SB_URL}/functions/v1/send-push`,{
         method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+(sess2?.access_token||SB_KEY)},
         body:JSON.stringify({
           tipo: accion==='aprobado'?'pago_aprobado':'pago_rechazado',
           target_user_id: a.auth_user_id,
@@ -3204,7 +3205,7 @@ function iniciarModoClase(claseId) {
       <div style="width:32px;height:32px;border-radius:50%;background:${destacada?'#ede9f7':'#f3f4f6'};color:${destacada?'#7C5CBF':'#555'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${alumnaInits(a.nombre,a.apellido)}</div>
       <div style="flex:1;">
         <div style="font-size:14px;font-weight:${destacada?'600':'400'};color:#1a1a2e;">${a.nombre} ${a.apellido||''}${destacada?'':' <span style="font-size:11px;color:#aaa;">(otra clase)</span>'}</div>
-        ${a.contraindicaciones?`<div style="font-size:11px;color:#c0392b;font-weight:600;margin-top:2px;">🏥 ${a.contraindicaciones}</div>`:''}
+        ${a.contraindicaciones?`<div style="font-size:11px;color:#c0392b;font-weight:600;margin-top:2px;">🏥 ${esc(a.contraindicaciones)}</div>`:''}
       </div>
       <button onclick="abrirNotaRapida(${a.id},this)" style="background:#f3f4f6;border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:#555;flex-shrink:0;">+ Nota</button>
     </div>

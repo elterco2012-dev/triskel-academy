@@ -672,11 +672,12 @@ async function confirmarAviso(){
   // Notify teacher via Edge Function
   try{
     const a=STATE.alumna;
+    const{data:{session:sess}}=await sb.auth.getSession();
     await fetch(`${SB_URL}/functions/v1/send-push`,{
       method:'POST',
       headers:{
         'Content-Type':'application/json',
-        'Authorization':'Bearer '+SB_KEY
+        'Authorization':'Bearer '+(sess?.access_token||SB_KEY)
       },
       body:JSON.stringify({
         tipo:'aviso_pago',
