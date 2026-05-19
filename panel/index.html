@@ -2931,8 +2931,8 @@ async function desmarcarPago(id){
 }
 async function desmarcarPagosPlan(idsStr){
   const ids=idsStr.split(',').map(Number);
-  const{error}=await rpc('triskel_marcar_pagos_ids',{p_ids:ids,p_pagado:false,p_fecha_pago:null});
-  if(error){showMsg('Error al desmarcar');return;}
+  const{data,error}=await rpc('triskel_marcar_pagos_ids',{p_ids:ids,p_pagado:false});
+  if(error||data?.ok===false){showMsg('Error al desmarcar: '+(data?.msg||error?.message||error?.details||''));return;}
   showMsg('Pago desmarcado');
   await loadAll();
 }
