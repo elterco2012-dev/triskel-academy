@@ -257,19 +257,27 @@ async function initApp(){
   document.getElementById('app').style.flexDirection='column';
 
   await loadFicha();
-  navTo('inicio');
 }
 
 async function loadFicha(){
   const{data,error}=await sb.rpc('triskel_get_mi_ficha');
   if(error||!data?.ok){
-    setContent('<div class="card" style="text-align:center;padding:2rem;"><div style="font-size:32px;margin-bottom:.5rem;">🔗</div><div style="font-size:14px;color:var(--sub);">Tu cuenta no está vinculada aún.<br>Pedile a Amira que la active.</div></div>');
+    // RPC missing (migration not run yet) or account not linked
+    const msg=error?.message||'';
+    const noRpc=msg.includes('function')||msg.includes('exist');
+    setContent(`<div class="card" style="text-align:center;padding:2rem;">
+      <div style="font-size:32px;margin-bottom:.5rem;">${noRpc?'⚙️':'🔗'}</div>
+      <div style="font-size:14px;color:var(--sub);">${noRpc
+        ?'El panel está siendo configurado.<br>Intentá de nuevo en unos minutos.'
+        :'Tu cuenta no está vinculada aún.<br>Pedile a Amira que la active.'}</div>
+      <button onclick="loadFicha()" style="margin-top:1rem;padding:.5rem 1.2rem;background:var(--tm);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;">↺ Reintentar</button>
+    </div>`);
     return;
   }
   STATE=data;
-  const nombre=STATE.alumna?.nombre||'';
-  document.getElementById('header-nombre').textContent=nombre;
+  document.getElementById('header-nombre').textContent=STATE.alumna?.nombre||'';
   updatePagoBadge();
+  navTo('inicio');
 }
 
 function updatePagoBadge(){
