@@ -2490,9 +2490,9 @@ async function saveAlumna(){
     const precio=parseFloat(document.getElementById(`hp-${hId}`)?.value)||0;
     await rpc('triskel_insert_inscripcion',{p_alumna_id:alumnaId,p_horario_id:hId,p_precio:precio});
   }
-  // Auto-crear acceso en panel alumna si tiene email y nacimiento
+  // Auto-crear acceso en panel alumna solo cuando es nueva
   let passGenerada=null;
-  if(email&&nacimiento){
+  if(esNueva&&email&&nacimiento){
     passGenerada=nacimientoToPass(nacimiento);
     try{
       await fetch(`${SB_URL}/functions/v1/setup-alumna-auth`,{
