@@ -2918,13 +2918,30 @@ function urlB64ToUint8Array(b64){
 async function resolverAviso(id,accion,alumnaId,mes){
   const{data,error}=await sb.rpc('triskel_resolver_aviso',{p_id:id,p_accion:accion});
   if(error||!data?.ok){showMsg('Error al resolver aviso');return;}
+  const a=alumnaById(alumnaId);
+  const[y,m]=(mes||'').split('-');
+  const mesLabel=y&&m?new Date(y,m-1,1).toLocaleDateString('es-AR',{month:'long',year:'numeric'}):'';
+  const aviso=DB.avisos.find(av=>av.id===id);
+  const monto=aviso?.monto_declarado;
+
+  // Notify alumna via push
+  if(a?.auth_user_id){
+    try{
+      await fetch(`${SB_URL}/functions/v1/send-push`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},
+        body:JSON.stringify({
+          tipo: accion==='aprobado'?'pago_aprobado':'pago_rechazado',
+          target_user_id: a.auth_user_id,
+          nombre: a.nombre,
+          mes: mes,
+          monto: monto
+        })
+      });
+    }catch(e){console.warn('Push to alumna failed:',e);}
+  }
+
   if(accion==='aprobado'){
-    // Show WA receipt for approved payment
-    const a=alumnaById(alumnaId);
-    const[y,m]=(mes||'').split('-');
-    const mesLabel=y&&m?new Date(y,m-1,1).toLocaleDateString('es-AR',{month:'long',year:'numeric'}):'';
-    const aviso=DB.avisos.find(av=>av.id===id);
-    const monto=aviso?.monto_declarado;
     const msgTxt=`Hola ${a?.nombre||''}! ✅ Tu pago de ${mesLabel}${monto?` ($${Number(monto).toLocaleString('es-AR')})`:''}  en Triskel Academy fue aprobado. ¡Gracias! 🌿`;
     await loadAll();
     showReciboWA(a?.nombre||'',a?.tel||'',msgTxt);
