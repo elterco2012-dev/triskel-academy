@@ -189,9 +189,6 @@ input,select,textarea,button{font-family:'DM Sans',-apple-system,BlinkMacSystemF
     <button class="nav-item active" onclick="navTo('inicio')" id="nav-inicio">
       <span class="nav-icon">🏠</span>Inicio
     </button>
-    <button class="nav-item" onclick="navTo('horarios')" id="nav-horarios">
-      <span class="nav-icon">📅</span>Horarios
-    </button>
     <button class="nav-item" onclick="navTo('pagos')" id="nav-pagos">
       <span class="nav-icon" id="nav-pagos-icon">💳</span>Pagos
     </button>
@@ -237,6 +234,8 @@ const DIA_ORDER={lun:0,mar:1,mie:2,jue:3,vie:4};
 let STATE={};  // ficha data: alumna, inscripciones, pagos, avisos
 let curPage='inicio';
 let avisoPagoMes='';
+let _showAllPagos=false;
+function toggleAllPagos(){_showAllPagos=!_showAllPagos;renderPagos();}
 
 // ── AUTH ────────────────────────────────────────────────────────────────────
 
@@ -315,12 +314,13 @@ function updatePagoBadge(){
 // ── NAV ──────────────────────────────────────────────────────────────────────
 
 function navTo(page){
+  if(page==='horarios') page='inicio'; // Horarios integrado en Inicio
   curPage=page;
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
-  document.getElementById('nav-'+page).classList.add('active');
+  const navEl=document.getElementById('nav-'+page);
+  if(navEl) navEl.classList.add('active');
   switch(page){
     case 'inicio':   renderInicio();break;
-    case 'horarios': renderHorarios();break;
     case 'pagos':    renderPagos();break;
     case 'perfil':   renderPerfil();break;
   }
@@ -419,10 +419,33 @@ function renderInicio(){
     }
   }
 
+  // Mis clases (compact, agrupado por plan)
+  let misClasesCard='';
+  if(inscs.length){
+    const plans={};
+    inscs.forEach(i=>{
+      const key=`${i.modalidad}|${i.horario||''}`;
+      if(!plans[key])plans[key]={modalidad:i.modalidad,horario:i.horario||'',dias:[]};
+      plans[key].dias.push(i.dia);
+    });
+    const modOrder={reformer:0,mat:1,funcional:2};
+    const sorted=Object.values(plans).sort((a,b)=>(modOrder[a.modalidad]||0)-(modOrder[b.modalidad]||0));
+    misClasesCard=`<div class="card">
+      <div class="card-title">🏋️ Mis clases</div>
+      ${sorted.map(p=>`<div class="sched-item">
+        <div class="sched-dot" style="background:${MOD_COLORS[p.modalidad]||'#666'};width:10px;height:10px;flex-shrink:0;border-radius:50%;"></div>
+        <div class="sched-info">
+          <div class="sched-mod">${p.modalidad.charAt(0).toUpperCase()+p.modalidad.slice(1)}</div>
+          <div class="sched-dia">${p.dias.sort((a,b)=>DIA_ORDER[a]-DIA_ORDER[b]).map(d=>DIA_LABEL[d]).join(' y ')} · ${p.horario}</div>
+        </div>
+      </div>`).join('')}
+    </div>`;
+  }
+
   // Notification banner: solo mostrar si NO está activa (CTA para activar / bloqueada)
   const notifCard=rNotifBanner({suppressDefault:!cobrado&&!aviso, showActive:false});
 
-  setContent(notifCard+pagoCard+proximaCard);
+  setContent(notifCard+pagoCard+proximaCard+misClasesCard);
 }
 
 // ── HORARIOS ──────────────────────────────────────────────────────────────────
@@ -486,7 +509,7 @@ function renderPagos(){
   const allMeses=new Set([mesActual,...pagos.map(p=>p.mes)]);
   const mesesOrdenados=[...allMeses].sort((a,b)=>b.localeCompare(a));
 
-  const filas=mesesOrdenados.map(mes=>{
+  function filaHTML(mes){
     const pagosMes=pagos.filter(p=>p.mes===mes);
     const avisoMes=avisos.find(av=>av.mes===mes);
     const pagado=pagosMes.some(p=>p.pagado);
@@ -495,13 +518,11 @@ function renderPagos(){
     const nota=pagosMes.find(p=>p.nota)?.nota||avisoMes?.nota||null;
     const fechaPago=pagosMes.find(p=>p.fecha_pago)?.fecha_pago||null;
     const esMesActual=mes===mesActual;
-
     let borde,estado;
     if(pagado){borde='var(--mat)';estado='✅ Pagada';}
     else if(enRevision){borde='#f59e0b';estado='⏳ En revisión';}
     else if(esMesActual){borde='var(--rd)';estado='⚠️ Pendiente';}
     else{borde='var(--b)';estado='— Sin registro';}
-
     return`<div class="hist-row" style="border-left:3px solid ${borde};padding-left:.75rem;flex-direction:column;align-items:flex-start;gap:2px;">
       <div style="display:flex;width:100%;align-items:center;">
         <div style="flex:1;">
@@ -515,9 +536,17 @@ function renderPagos(){
       </div>
       ${nota?`<div style="font-size:11px;color:var(--sub);font-style:italic;">"${nota}"</div>`:''}
     </div>`;
-  }).join('');
+  }
 
-  setContent(ctaHtml+`<div class="card"><div class="card-title">💰 Mis pagos</div>${filas}</div>`);
+  const MAX_PAGOS=6;
+  const visibles=_showAllPagos?mesesOrdenados:mesesOrdenados.slice(0,MAX_PAGOS);
+  const extra=mesesOrdenados.length-MAX_PAGOS;
+  const filas=visibles.map(filaHTML).join('');
+  const verMasBtn=(!_showAllPagos&&extra>0)
+    ?`<button onclick="toggleAllPagos()" style="width:100%;padding:.6rem;margin-top:.25rem;background:none;border:1px solid var(--b);border-radius:var(--radius-sm);font-size:12px;color:var(--sub);cursor:pointer;">Ver ${extra} pago${extra!==1?'s':''} anterior${extra!==1?'es':''} ↓</button>`
+    :(_showAllPagos&&extra>0?`<button onclick="toggleAllPagos()" style="width:100%;padding:.6rem;margin-top:.25rem;background:none;border:1px solid var(--b);border-radius:var(--radius-sm);font-size:12px;color:var(--sub);cursor:pointer;">▲ Ver menos</button>`:'');
+
+  setContent(ctaHtml+`<div class="card"><div class="card-title">💰 Mis pagos</div>${filas}${verMasBtn}</div>`);
 }
 
 // ── PERFIL ────────────────────────────────────────────────────────────────────
