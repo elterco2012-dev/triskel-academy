@@ -503,7 +503,7 @@ function renderPerfil(){
   if(!STATE.alumna){setContent('<div class="loading"><div class="spinner"></div></div>');return;}
   const a=STATE.alumna;
   const nacStr=a.fecha_nacimiento?new Date(a.fecha_nacimiento+'T12:00:00').toLocaleDateString('es-AR'):'—';
-  const fotoSrc=a.foto||a.foto_url||null;
+  const fotoSrc=a.foto_url||a.foto||null;
   const fotoHtml=fotoSrc
     ?`<div class="profile-photo"><img src="${fotoSrc}" alt="foto"></div>`
     :`<div class="profile-photo" style="display:flex;align-items:center;justify-content:center;font-size:40px;">👤</div>`;
@@ -660,7 +660,7 @@ function subirFoto(){
     const base64=await resizeAndEncode(file,600);
     const{data:r}=await sb.rpc('triskel_save_mi_foto',{p_foto_url:base64});
     if(r?.ok){
-      STATE.alumna.foto=base64;
+      STATE.alumna.foto_url=base64;
       showToast('✅ Foto actualizada');
       renderPerfil();
     }else{showToast('Error al guardar foto');}
