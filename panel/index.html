@@ -94,7 +94,7 @@
 
     /* Modal */
     .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;display:flex;align-items:center;justify-content:center;padding:1rem;}
-    .modal{background:var(--s);border-radius:var(--r);padding:1.5rem;width:100%;max-width:540px;max-height:88vh;overflow-y:auto;}
+    .modal{background:var(--s);border-radius:var(--r);padding:1.5rem;width:100%;max-width:540px;max-height:88vh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
     .modal h3{font-family:'DM Serif Display',serif;font-size:1.2rem;margin-bottom:1rem;}
     .frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
     label{font-size:12px;font-weight:500;color:var(--tm);display:block;margin-bottom:4px;}
@@ -251,7 +251,7 @@
     </div>
     <div style="margin-top:.75rem;">
       <label>Horarios — seleccioná los días que asiste</label>
-      <div id="mal-horarios-lista" style="margin-top:6px;max-height:260px;overflow-y:auto;"></div>
+      <div id="mal-horarios-lista" style="margin-top:6px;max-height:40vh;overflow-y:auto;-webkit-overflow-scrolling:touch;"></div>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:.75rem;">
       <button class="btn" onclick="closeModalAlumna()">Cancelar</button>
@@ -1402,9 +1402,9 @@ function openModalTarifas(){
       <td style="padding:6px 8px;text-align:right;"><input id="tf-${m.k}-1" type="number" min="0" value="${t[m.k+'_1']||''}" placeholder="0" style="width:90px;text-align:right;font-size:12px;padding:3px 6px;"></td>
       <td style="padding:6px 8px;text-align:right;"><input id="tf-${m.k}-2" type="number" min="0" value="${t[m.k+'_2']||''}" placeholder="0" style="width:90px;text-align:right;font-size:12px;padding:3px 6px;"></td>
     </tr>`).join('');
-  document.getElementById('modal-tarifas').style.display='flex';
+  document.getElementById('modal-tarifas').style.display='flex';document.body.style.overflow='hidden';
 }
-function closeModalTarifas(){document.getElementById('modal-tarifas').style.display='none';}
+function closeModalTarifas(){document.getElementById('modal-tarifas').style.display='none';document.body.style.overflow='';}
 function saveTarifasModal(){
   const mods=['reformer','mat','funcional'];
   const t={};
@@ -1475,10 +1475,13 @@ function renderModalHorarios(alumnaId){
   sorted.forEach(g=>{
     if(g.modalidad!==lastMod){
       const modEnrolled=DB.horarios.filter(h=>h.modalidad===g.modalidad&&existingIds.has(h.id)).length;
-      const modTotal=modEnrolled>0?(tf[`${g.modalidad}_${modEnrolled}`]||0):'';
-      html+=`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;padding:8px 0 3px;">
+      // Use tarifa if configured, otherwise fall back to sum of existing inscription prices
+      const tarifaTotal=modEnrolled>0?(tf[`${g.modalidad}_${modEnrolled}`]||0):0;
+      const inscTotal=modEnrolled>0?Object.entries(existingPrices).filter(([hid])=>{const h=DB.horarios.find(x=>x.id==hid);return h?.modalidad===g.modalidad;}).reduce((s,[,p])=>s+(p||0),0):0;
+      const modTotal=tarifaTotal||inscTotal||'';
+      html+=`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;padding:8px 0 3px;flex-wrap:wrap;">
         <span>${MOD_LABEL[g.modalidad]}</span>
-        <input id="hmp-${g.modalidad}" type="number" placeholder="$ plan total" min="0" value="${modTotal}" oninput="updateModPlan('${g.modalidad}')" style="width:120px;margin:0;font-size:11px;padding:3px 6px;font-weight:normal;text-transform:none;letter-spacing:0;border:1px solid var(--b);border-radius:4px;" onclick="event.stopPropagation()">
+        <input id="hmp-${g.modalidad}" type="number" placeholder="$ plan total" min="0" value="${modTotal}" oninput="updateModPlan('${g.modalidad}')" style="width:110px;margin:0;font-size:11px;padding:3px 6px;font-weight:normal;text-transform:none;letter-spacing:0;border:1px solid var(--b);border-radius:4px;" onclick="event.stopPropagation()">
       </div>`;
       lastMod=g.modalidad;
     }
@@ -1500,7 +1503,7 @@ function renderModalHorarios(alumnaId){
           <span style="font-size:10px;color:${cc};">${ct}</span>
           ${isEnrolled?`<span style="font-size:10px;color:var(--v);font-weight:600;">✓ ya inscripta</span>`:''}
         </label>
-        ${showPrice?`<input id="hp-${h.id}" data-dayinput-mod="${g.modalidad}" type="number" placeholder="$/mes" min="0" value="${existingPrices[h.id]||(()=>{const t=getTarifas();return t[g.modalidad+'_1']||'';})()}" style="width:72px;margin:0;font-size:11px;padding:4px 6px;" onclick="event.stopPropagation()">`:``}
+        ${showPrice?`<input id="hp-${h.id}" data-dayinput-mod="${g.modalidad}" type="number" placeholder="$/mes" min="0" value="${existingPrices[h.id]||(()=>{const t=getTarifas();return t[g.modalidad+'_1']||'';})()}" style="width:80px;min-width:0;flex-shrink:0;margin:0;font-size:11px;padding:4px 6px;" onclick="event.stopPropagation()">`:``}
       </div>`;
     });
     html+=`</div>`;
@@ -2469,8 +2472,9 @@ function openModalAlumna(id){
   document.getElementById('mal-contra').value=a?.contraindicaciones||'';
   renderModalHorarios(id||null);
   document.getElementById('modal-alumna').style.display='flex';
+  document.body.style.overflow='hidden';
 }
-function closeModalAlumna(){document.getElementById('modal-alumna').style.display='none';}
+function closeModalAlumna(){document.getElementById('modal-alumna').style.display='none';document.body.style.overflow='';}
 async function saveAlumna(){
   const nombre=document.getElementById('mal-nombre').value.trim();
   if(!nombre){document.getElementById('mal-err').textContent='El nombre es obligatorio.';return;}
@@ -2639,9 +2643,9 @@ function openModalClase(claseId,horarioId){
     }
   }
   renderEjerciciosModal();
-  document.getElementById('modal-clase').style.display='flex';
+  document.getElementById('modal-clase').style.display='flex';document.body.style.overflow='hidden';
 }
-function closeModalClase(){document.getElementById('modal-clase').style.display='none';}
+function closeModalClase(){document.getElementById('modal-clase').style.display='none';document.body.style.overflow='';}
 
 function copiarUltimaClase(){
   const sugDiv=document.getElementById('mcl-sugerencia');
@@ -2762,9 +2766,9 @@ function openModalPago(){
   document.getElementById('mp-mes').value=new Date().toISOString().slice(0,7);
   document.getElementById('mp-monto').value='';
   renderPagoHorarios();
-  document.getElementById('modal-pago').style.display='flex';
+  document.getElementById('modal-pago').style.display='flex';document.body.style.overflow='hidden';
 }
-function closeModalPago(){document.getElementById('modal-pago').style.display='none';}
+function closeModalPago(){document.getElementById('modal-pago').style.display='none';document.body.style.overflow='';}
 function renderPagoHorarios(){
   const aid=parseInt(document.getElementById('mp-alumna')?.value);
   if(!aid)return;
