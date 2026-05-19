@@ -495,8 +495,9 @@ function renderPerfil(){
   if(!STATE.alumna){setContent('<div class="loading"><div class="spinner"></div></div>');return;}
   const a=STATE.alumna;
   const nacStr=a.fecha_nacimiento?new Date(a.fecha_nacimiento).toLocaleDateString('es-AR'):'—';
-  const fotoHtml=a.foto_url
-    ?`<div class="profile-photo"><img src="${a.foto_url}" alt="foto"></div>`
+  const fotoSrc=a.foto||a.foto_url||null;
+  const fotoHtml=fotoSrc
+    ?`<div class="profile-photo"><img src="${fotoSrc}" alt="foto"></div>`
     :`<div class="profile-photo" style="display:flex;align-items:center;justify-content:center;font-size:40px;">👤</div>`;
 
   setContent(`
