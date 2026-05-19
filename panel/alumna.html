@@ -502,7 +502,7 @@ function renderPagos(){
 function renderPerfil(){
   if(!STATE.alumna){setContent('<div class="loading"><div class="spinner"></div></div>');return;}
   const a=STATE.alumna;
-  const nacStr=a.fecha_nacimiento?new Date(a.fecha_nacimiento).toLocaleDateString('es-AR'):'—';
+  const nacStr=a.fecha_nacimiento?new Date(a.fecha_nacimiento+'T12:00:00').toLocaleDateString('es-AR'):'—';
   const fotoSrc=a.foto||a.foto_url||null;
   const fotoHtml=fotoSrc
     ?`<div class="profile-photo"><img src="${fotoSrc}" alt="foto"></div>`
