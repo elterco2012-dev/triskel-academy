@@ -390,6 +390,14 @@ function renderInicio(){
       <div style="font-size:12px;opacity:.8;margin-bottom:.35rem;">Cuota ${mesLabel(mesActual)}</div>
       <div style="font-size:20px;font-weight:800;margin:.25rem 0 1.1rem;">Pendiente de pago</div>
       <button onclick="abrirModalPago('${mesActual}')" style="background:#fff;color:var(--tm);border:none;border-radius:10px;padding:.85rem 1.5rem;font-size:16px;font-weight:700;cursor:pointer;width:100%;letter-spacing:.01em;">💳 Avisar que pagué</button>
+      <div style="margin-top:1rem;padding:.7rem .9rem;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:.5rem;">
+        <div style="text-align:left;">
+          <div style="font-size:10px;opacity:.75;letter-spacing:.04em;text-transform:uppercase;margin-bottom:.15rem;">Alias para transferir</div>
+          <div style="font-size:15px;font-weight:700;letter-spacing:.02em;">Triskelcasares1</div>
+          <div style="font-size:11px;opacity:.75;">Lorena Montiel</div>
+        </div>
+        <button onclick="copiarAlias()" id="btn-copiar-alias" style="background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.4);border-radius:8px;color:#fff;font-size:12px;font-weight:600;padding:.45rem .8rem;cursor:pointer;white-space:nowrap;flex-shrink:0;">📋 Copiar</button>
+      </div>
     </div>`;
   }
 
@@ -707,6 +715,13 @@ function abrirModalPago(mes){
   document.getElementById('aviso-nota').value='';
   seleccionarMedio('transferencia'); // default
   document.getElementById('modal-pago').style.display='flex';
+}
+
+function copiarAlias(){
+  navigator.clipboard.writeText('Triskelcasares1').then(()=>{
+    const btn=document.getElementById('btn-copiar-alias');
+    if(btn){btn.textContent='✓ Copiado';setTimeout(()=>{btn.textContent='📋 Copiar';},2000);}
+  }).catch(()=>showToast('No se pudo copiar'));
 }
 
 let _medioPago='transferencia';
