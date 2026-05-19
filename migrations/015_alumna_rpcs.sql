@@ -71,7 +71,7 @@ RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE v_uid uuid := auth.uid();
 BEGIN
   IF v_uid IS NULL THEN RETURN jsonb_build_object('ok',false,'msg','not authenticated'); END IF;
-  UPDATE triskel_alumnas SET foto_url=p_foto_url WHERE auth_user_id=v_uid;
+  UPDATE triskel_alumnas SET foto=p_foto_url WHERE auth_user_id=v_uid;
   IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'msg','alumna no encontrada'); END IF;
   RETURN jsonb_build_object('ok',true);
 END;

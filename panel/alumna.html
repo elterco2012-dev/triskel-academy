@@ -216,7 +216,7 @@ const SB_URL='https://dplzkrdgnynyyunmrawr.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwbHprcmRnbnlueXl1bm1yYXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwMjg2OTMsImV4cCI6MjA5NDYwNDY5M30.B-J4yJf1lnyR0isMeaCIKHeCCRd7mJe1Do-_6yxbVow';
 const sb=supabase.createClient(SB_URL,SB_KEY);
 
-const VAPID_PUBLIC='';  // Set after generating: npx web-push generate-vapid-keys
+const VAPID_PUBLIC='BEXtjaNEQhKEN8rEGQAp0NhcpFsAfl7vWrTCJTMUdOrNf6iOvmkdFIUEOcchkkNoJoixRdqLheqrIkjwQEAIw28';
 
 const MOD_COLORS={mat:'#27ae60',reformer:'#2980b9',funcional:'#e67e22'};
 const MOD_CHIP={mat:'chip-mat',reformer:'chip-ref',funcional:'chip-fun'};
@@ -495,8 +495,9 @@ function renderPerfil(){
   if(!STATE.alumna){setContent('<div class="loading"><div class="spinner"></div></div>');return;}
   const a=STATE.alumna;
   const nacStr=a.fecha_nacimiento?new Date(a.fecha_nacimiento).toLocaleDateString('es-AR'):'—';
-  const fotoHtml=a.foto_url
-    ?`<div class="profile-photo"><img src="${a.foto_url}" alt="foto"></div>`
+  const fotoSrc=a.foto||a.foto_url||null;
+  const fotoHtml=fotoSrc
+    ?`<div class="profile-photo"><img src="${fotoSrc}" alt="foto"></div>`
     :`<div class="profile-photo" style="display:flex;align-items:center;justify-content:center;font-size:40px;">👤</div>`;
 
   setContent(`

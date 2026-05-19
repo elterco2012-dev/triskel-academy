@@ -2466,14 +2466,17 @@ function closeModalAlumna(){document.getElementById('modal-alumna').style.displa
 async function saveAlumna(){
   const nombre=document.getElementById('mal-nombre').value.trim();
   if(!nombre){document.getElementById('mal-err').textContent='El nombre es obligatorio.';return;}
+  const email=document.getElementById('mal-email').value.trim()||null;
+  const nacimiento=document.getElementById('mal-nacimiento').value||null;
+  const esNueva=!_editAlumnaId;
   const params={
     p_nombre:nombre,
     p_apellido:document.getElementById('mal-apellido').value.trim()||null,
     p_tel:document.getElementById('mal-tel').value.trim()||null,
-    p_email:document.getElementById('mal-email').value.trim()||null,
+    p_email:email,
     p_notas:document.getElementById('mal-notas').value.trim()||null,
     p_dia_pago:parseInt(document.getElementById('mal-diapago').value)||null,
-    p_fecha_nacimiento:document.getElementById('mal-nacimiento').value||null,
+    p_fecha_nacimiento:nacimiento,
     p_contraindicaciones:document.getElementById('mal-contra').value.trim()||null,
   };
   if(_editAlumnaId)params.p_id=_editAlumnaId;
@@ -2487,9 +2490,54 @@ async function saveAlumna(){
     const precio=parseFloat(document.getElementById(`hp-${hId}`)?.value)||0;
     await rpc('triskel_insert_inscripcion',{p_alumna_id:alumnaId,p_horario_id:hId,p_precio:precio});
   }
-  showMsg(_editAlumnaId?'✓ Alumna actualizada':'✓ Alumna creada');
+  // Auto-crear acceso en panel alumna si tiene email y nacimiento
+  let passGenerada=null;
+  if(email&&nacimiento){
+    passGenerada=nacimientoToPass(nacimiento);
+    try{
+      await fetch(`${SB_URL}/functions/v1/setup-alumna-auth`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},
+        body:JSON.stringify({alumna_id:alumnaId,email,password:passGenerada})
+      });
+    }catch(e){console.warn('No se pudo crear acceso alumna:',e);}
+  }
   closeModalAlumna();
   await loadAll();
+  if(passGenerada){
+    showMsgAcceso(nombre,email,passGenerada,alumnaById(alumnaId)?.tel||'');
+  }else{
+    showMsg(esNueva?'✓ Alumna creada':'✓ Alumna actualizada');
+  }
+}
+
+// Convierte YYYY-MM-DD a ddmmaa  (ej: 1990-03-15 → 150390)
+function nacimientoToPass(fecha){
+  if(!fecha)return null;
+  const[y,m,d]=fecha.split('-');
+  if(!y||!m||!d)return null;
+  return `${d}${m}${y.slice(-2)}`;
+}
+
+function showMsgAcceso(nombre,email,pass,tel){
+  const old=document.getElementById('msg-acceso-toast');
+  if(old)old.remove();
+  const panelUrl=`${location.origin}/panel/alumna.html`;
+  const msg=`Hola ${nombre}! 🌿 Ya tenés acceso a tu panel de Triskel Academy.\n📧 Email: ${email}\n🔑 Contraseña: ${pass}\n🔗 ${panelUrl}`;
+  const div=document.createElement('div');
+  div.id='msg-acceso-toast';
+  div.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:300;background:#fff;border:1px solid #c3dafe;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.15);padding:14px 16px;width:min(92vw,360px);';
+  div.innerHTML=`<div style="font-size:13px;font-weight:700;color:#1a1a2e;margin-bottom:6px;">🔑 Acceso creado para ${nombre}</div>
+    <div style="background:#f4f0f8;border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:10px;line-height:1.8;">
+      <div>📧 <b>${email}</b></div>
+      <div>🔑 <b>${pass}</b></div>
+      <div style="font-size:11px;color:#888;margin-top:2px;">Panel: ${panelUrl}</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <a href="https://wa.me/${tel.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}" target="_blank" style="flex:1;background:#25D366;color:#fff;text-align:center;padding:7px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700;">📲 Enviar por WA</a>
+      <button onclick="document.getElementById('msg-acceso-toast').remove()" style="flex:1;background:#f0ebf5;border:none;border-radius:8px;padding:7px;font-size:13px;cursor:pointer;">Cerrar</button>
+    </div>`;
+  document.body.appendChild(div);
 }
 
 // ─── MODAL INSCRIPCION ──────────────────────────────────
@@ -2820,7 +2868,7 @@ function showReciboWA(nombre,tel,msgTxt){
 }
 function cerrarReciboWA(){document.getElementById('recibo-wa-toast').style.display='none';}
 
-const VAPID_PUBLIC_TEACHER='';  // Set after generating VAPID keys
+const VAPID_PUBLIC_TEACHER='BEXtjaNEQhKEN8rEGQAp0NhcpFsAfl7vWrTCJTMUdOrNf6iOvmkdFIUEOcchkkNoJoixRdqLheqrIkjwQEAIw28';
 
 function rTeacherNotifBanner(){
   if(!('Notification' in window)||!('serviceWorker' in navigator))return'';
