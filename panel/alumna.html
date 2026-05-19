@@ -377,45 +377,52 @@ function renderInicio(){
     </div>`;
   }
 
-  // Next class
+  // Next class: today first, then next upcoming weekday with class
   let proximaCard='';
   if(inscs.length){
-    const today=new Date().getDay();  // 0=Sun, 1=Mon...
-    const dayMap={1:'lun',2:'mar',3:'mie',4:'jue',5:'vie'};
-    const todayKey=dayMap[today]||null;
-    const hoy=inscs.filter(i=>i.dia===todayKey);
+    const jsDay=new Date().getDay(); // 0=Sun
+    const weekKeys=['dom','lun','mar','mie','jue','vie','sab'];
+    const weekdayKeys=['lun','mar','mie','jue','vie'];
+    const hoy=inscs.filter(i=>i.dia===weekKeys[jsDay]);
     if(hoy.length){
       proximaCard=`<div class="card">
         <div class="card-title">📍 Clase de hoy</div>
-        ${hoy.map(i=>`
-          <div class="sched-item">
-            <div class="sched-dot" style="background:${MOD_COLORS[i.modalidad]||'#666'};"></div>
-            <div class="sched-info">
-              <div class="sched-mod">${i.modalidad.charAt(0).toUpperCase()+i.modalidad.slice(1)} ${i.plan_nombre?'· '+i.plan_nombre:''}</div>
-              <div class="sched-dia">${i.horario||''}</div>
-            </div>
-          </div>`).join('')}
-      </div>`;
-    }
-  }
-
-  // Notification banner — se oculta cuando hay pago pendiente para no competir con el CTA
-  const notifCard=rNotifBanner(/*suppressDefault=*/!cobrado&&!aviso);
-
-  setContent(notifCard+pagoCard+proximaCard+`
-    <div class="card">
-      <div class="card-title">📋 Mi inscripción</div>
-      ${inscs.length?inscs.map(i=>`
-        <div class="sched-item">
+        ${hoy.map(i=>`<div class="sched-item">
           <div class="sched-dot" style="background:${MOD_COLORS[i.modalidad]||'#666'};"></div>
           <div class="sched-info">
             <div class="sched-mod">${i.modalidad.charAt(0).toUpperCase()+i.modalidad.slice(1)}${i.plan_nombre?' · '+i.plan_nombre:''}</div>
-            <div class="sched-dia">${DIA_LABEL[i.dia]||i.dia||''} ${i.horario?'· '+i.horario:''}</div>
+            <div class="sched-dia">${i.horario||''}</div>
           </div>
-        </div>`).join('')
-      :'<div style="font-size:13px;color:var(--sub);">Sin inscripciones activas.</div>'}
-    </div>
-  `);
+        </div>`).join('')}
+      </div>`;
+    }else{
+      // find next class day within the next 7 days
+      for(let off=1;off<=7;off++){
+        const nextKey=weekKeys[(jsDay+off)%7];
+        if(!weekdayKeys.includes(nextKey))continue;
+        const clases=inscs.filter(i=>i.dia===nextKey);
+        if(clases.length){
+          const label=off===1?'Mañana':DIA_LABEL[nextKey];
+          proximaCard=`<div class="card">
+            <div class="card-title">📅 Próxima clase — ${label}</div>
+            ${clases.map(i=>`<div class="sched-item">
+              <div class="sched-dot" style="background:${MOD_COLORS[i.modalidad]||'#666'};"></div>
+              <div class="sched-info">
+                <div class="sched-mod">${i.modalidad.charAt(0).toUpperCase()+i.modalidad.slice(1)}${i.plan_nombre?' · '+i.plan_nombre:''}</div>
+                <div class="sched-dia">${i.horario||''}</div>
+              </div>
+            </div>`).join('')}
+          </div>`;
+          break;
+        }
+      }
+    }
+  }
+
+  // Notification banner: solo mostrar si NO está activa (CTA para activar / bloqueada)
+  const notifCard=rNotifBanner({suppressDefault:!cobrado&&!aviso, showActive:false});
+
+  setContent(notifCard+pagoCard+proximaCard);
 }
 
 // ── HORARIOS ──────────────────────────────────────────────────────────────────
@@ -430,29 +437,28 @@ function renderHorarios(){
     </div>`);
     return;
   }
-  // Group by day
-  const grouped={};
+  // Group by plan: same modalidad + horario = same plan with multiple days
+  const plans={};
   inscs.forEach(i=>{
-    if(!grouped[i.dia])grouped[i.dia]=[];
-    grouped[i.dia].push(i);
+    const key=`${i.modalidad}|${i.horario||''}`;
+    if(!plans[key])plans[key]={modalidad:i.modalidad,horario:i.horario||'',dias:[],plan_nombre:i.plan_nombre||null};
+    plans[key].dias.push(i.dia);
   });
-  const days=['lun','mar','mie','jue','vie'].filter(d=>grouped[d]);
+  const modOrder={reformer:0,mat:1,funcional:2};
+  const sorted=Object.values(plans).sort((a,b)=>(modOrder[a.modalidad]||0)-(modOrder[b.modalidad]||0));
 
   let html='';
-  days.forEach(d=>{
-    const items=grouped[d];
+  sorted.forEach(p=>{
+    const diasLabel=p.dias.sort((a,b)=>DIA_ORDER[a]-DIA_ORDER[b]).map(d=>DIA_LABEL[d]||d).join(' y ');
     html+=`<div class="card">
-      <div class="card-title">📅 ${DIA_LABEL[d]||d}</div>
-      ${items.map(i=>`
-        <div class="sched-item">
-          <div class="sched-dot" style="background:${MOD_COLORS[i.modalidad]||'#666'};width:12px;height:12px;"></div>
-          <div class="sched-info">
-            <div class="sched-mod">${i.modalidad.charAt(0).toUpperCase()+i.modalidad.slice(1)}
-              ${i.plan_nombre?`<span class="chip ${MOD_CHIP[i.modalidad]||''}" style="margin-left:.4rem;">${i.plan_nombre}</span>`:''}
-            </div>
-            ${i.horario?`<div class="sched-dia">🕐 ${i.horario}</div>`:''}
-          </div>
-        </div>`).join('')}
+      <div style="display:flex;align-items:center;gap:.9rem;">
+        <div class="sched-dot" style="background:${MOD_COLORS[p.modalidad]||'#666'};width:14px;height:14px;flex-shrink:0;border-radius:50%;"></div>
+        <div>
+          <div class="sched-mod">${p.modalidad.charAt(0).toUpperCase()+p.modalidad.slice(1)}${p.plan_nombre?' · '+p.plan_nombre:''}</div>
+          ${p.horario?`<div class="sched-dia">🕐 ${p.horario}</div>`:''}
+          <div class="sched-dia" style="font-weight:600;margin-top:.15rem;">📅 ${diasLabel}</div>
+        </div>
+      </div>
     </div>`;
   });
   setContent(html);
@@ -468,65 +474,50 @@ function renderPagos(){
 
   const mesLabel=mesStr=>{ const[y,m]=mesStr.split('-');return new Date(y,m-1,1).toLocaleDateString('es-AR',{month:'long',year:'numeric'}); };
 
-  // Current month status
-  const cobrado=pagos.find(p=>p.mes===mesActual&&p.pagado);
-  const aviso=avisos.find(av=>av.mes===mesActual&&av.estado==='pendiente');
-  const avisoMesActual=avisos.find(av=>av.mes===mesActual);
+  const cobradoActual=pagos.some(p=>p.mes===mesActual&&p.pagado);
+  const avisoActual=avisos.some(av=>av.mes===mesActual&&av.estado==='pendiente');
 
-  let statusCard='';
-  if(cobrado){
-    const notaCobrado=cobrado.nota||(avisoMesActual?.nota)||null;
-    statusCard=`<div class="card" style="border-left:4px solid var(--mat);">
-      <div class="pago-mes">Cuota ${mesLabel(mesActual)}</div>
-      <div class="pago-estado cobrado">✅ Pagada</div>
-      ${cobrado.monto?`<div style="font-size:13px;color:var(--sub);">$${Number(cobrado.monto).toLocaleString('es-AR')}</div>`:''}
-      ${cobrado.fecha_pago?`<div style="font-size:12px;color:var(--sub);">Registrado el ${new Date(cobrado.fecha_pago).toLocaleDateString('es-AR')}</div>`:''}
-      ${notaCobrado?`<div style="font-size:12px;color:var(--sub);margin-top:.25rem;font-style:italic;">"${notaCobrado}"</div>`:''}
-    </div>`;
-  }else if(aviso){
-    statusCard=`<div class="card" style="border-left:4px solid #f59e0b;">
-      <div class="pago-mes">Cuota ${mesLabel(mesActual)}</div>
-      <div class="pago-estado aviso">⏳ Pendiente de aprobación</div>
-      <div style="font-size:13px;color:var(--sub);margin-bottom:.75rem;">Avisaste que pagaste. Amira está revisando.</div>
-      ${aviso.monto_declarado?`<div style="font-size:13px;color:var(--sub);">Monto declarado: $${Number(aviso.monto_declarado).toLocaleString('es-AR')}</div>`:''}
-      ${aviso.nota?`<div style="font-size:12px;color:var(--sub);margin-top:.25rem;">"${aviso.nota}"</div>`:''}
-    </div>`;
-  }else{
-    statusCard=`<div class="card" style="border-left:4px solid var(--rd);">
-      <div class="pago-mes">Cuota ${mesLabel(mesActual)}</div>
-      <div class="pago-estado sin-pago">⚠️ Sin pago registrado</div>
-      <div style="font-size:13px;color:var(--sub);margin-bottom:.75rem;">Si ya abonaste, avisanos acá.</div>
-      <button class="btn-page btn-pague" onclick="abrirModalPago('${mesActual}')">💳 Avisar que pagué</button>
-    </div>`;
-  }
+  // CTA solo si el mes actual no está pagado ni en revisión
+  const ctaHtml=(!cobradoActual&&!avisoActual)
+    ?`<button class="btn-page btn-pague" onclick="abrirModalPago('${mesActual}')" style="width:100%;margin-bottom:1rem;">💳 Avisar que pagué — ${mesLabel(mesActual)}</button>`
+    :'';
 
-  // History
-  const mesesPrev=pagos.filter(p=>p.mes<mesActual).sort((a,b)=>b.mes.localeCompare(a.mes));
-  let histHtml='';
-  if(mesesPrev.length){
-    histHtml=`<div class="card">
-      <div class="card-title">📋 Historial</div>
-      ${mesesPrev.map(p=>{
-        const avisoHist=avisos.find(av=>av.mes===p.mes);
-        const notaHist=p.nota||(avisoHist?.nota)||null;
-        return`<div class="hist-row" style="flex-direction:column;align-items:flex-start;gap:2px;">
-          <div style="display:flex;width:100%;align-items:center;">
-            <div style="flex:1;">
-              <div class="hist-mes">${mesLabel(p.mes)}</div>
-              ${p.fecha_pago?`<div style="font-size:11px;color:var(--sub);">Pagado ${new Date(p.fecha_pago).toLocaleDateString('es-AR')}</div>`:''}
-            </div>
-            <div style="text-align:right;">
-              ${p.monto?`<div class="hist-monto">$${Number(p.monto).toLocaleString('es-AR')}</div>`:''}
-              <div><span class="chip ${p.pagado?'chip-ok':'chip-no'}">${p.pagado?'✓ Pagado':'Pendiente'}</span></div>
-            </div>
-          </div>
-          ${notaHist?`<div style="font-size:11px;color:var(--sub);font-style:italic;padding-left:2px;">"${notaHist}"</div>`:''}
-        </div>`;
-      }).join('')}
-    </div>`;
-  }
+  // Lista unificada: todos los meses del historial + mes actual si no está
+  const allMeses=new Set([mesActual,...pagos.map(p=>p.mes)]);
+  const mesesOrdenados=[...allMeses].sort((a,b)=>b.localeCompare(a));
 
-  setContent(statusCard+histHtml);
+  const filas=mesesOrdenados.map(mes=>{
+    const pagosMes=pagos.filter(p=>p.mes===mes);
+    const avisoMes=avisos.find(av=>av.mes===mes);
+    const pagado=pagosMes.some(p=>p.pagado);
+    const enRevision=avisos.some(av=>av.mes===mes&&av.estado==='pendiente');
+    const total=pagosMes.filter(p=>p.pagado).reduce((s,p)=>s+(p.monto||0),0);
+    const nota=pagosMes.find(p=>p.nota)?.nota||avisoMes?.nota||null;
+    const fechaPago=pagosMes.find(p=>p.fecha_pago)?.fecha_pago||null;
+    const esMesActual=mes===mesActual;
+
+    let borde,estado;
+    if(pagado){borde='var(--mat)';estado='✅ Pagada';}
+    else if(enRevision){borde='#f59e0b';estado='⏳ En revisión';}
+    else if(esMesActual){borde='var(--rd)';estado='⚠️ Pendiente';}
+    else{borde='var(--b)';estado='— Sin registro';}
+
+    return`<div class="hist-row" style="border-left:3px solid ${borde};padding-left:.75rem;flex-direction:column;align-items:flex-start;gap:2px;">
+      <div style="display:flex;width:100%;align-items:center;">
+        <div style="flex:1;">
+          <div class="hist-mes">${mesLabel(mes)}${esMesActual?` <span style="font-size:10px;color:var(--tm);font-weight:400;">(este mes)</span>`:''}</div>
+          ${fechaPago?`<div style="font-size:11px;color:var(--sub);">Registrado ${new Date(fechaPago).toLocaleDateString('es-AR')}</div>`:''}
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          ${total?`<div class="hist-monto">$${total.toLocaleString('es-AR')}</div>`:''}
+          <div style="font-size:12px;color:var(--sub);">${estado}</div>
+        </div>
+      </div>
+      ${nota?`<div style="font-size:11px;color:var(--sub);font-style:italic;">"${nota}"</div>`:''}
+    </div>`;
+  }).join('');
+
+  setContent(ctaHtml+`<div class="card"><div class="card-title">💰 Mis pagos</div>${filas}</div>`);
 }
 
 // ── PERFIL ────────────────────────────────────────────────────────────────────
@@ -567,7 +558,7 @@ function renderPerfil(){
       </div>`:''}
     </div>
 
-    ${rNotifBanner()}
+    ${rNotifBanner({showActive:true})}
 
     <div style="padding:.5rem 0;text-align:center;">
       <button onclick="doLogout()" style="background:none;border:1px solid #ddd;color:var(--sub);padding:.5rem 1.5rem;border-radius:8px;font-size:13px;cursor:pointer;">Cerrar sesión</button>
@@ -578,11 +569,16 @@ function renderPerfil(){
 // ── NOTIFICATION BANNER ───────────────────────────────────────────────────────
 const NOTIF_SNOOZE_KEY='triskel_notif_snooze';
 
-function rNotifBanner(suppressDefault=false){
+function rNotifBanner(opts={}){
+  // opts puede ser boolean (legacy suppressDefault) u objeto {suppressDefault, showActive}
+  if(typeof opts==='boolean') opts={suppressDefault:opts};
+  const {suppressDefault=false, showActive=false}=opts;
   if(!('Notification' in window)||!('serviceWorker' in navigator))return'';
   const perm=Notification.permission;
 
   if(perm==='granted'){
+    // Solo mostrar el badge verde cuando se pide explícitamente (Perfil)
+    if(!showActive) return'';
     return`<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:var(--radius);padding:.75rem 1rem;display:flex;align-items:center;gap:.6rem;margin-bottom:.75rem;">
       <span style="font-size:20px;">✅</span>
       <div style="flex:1;">
