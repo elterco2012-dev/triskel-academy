@@ -3,9 +3,9 @@ import webpush from 'npm:web-push@3.6.7';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const VAPID_PUBLIC = Deno.env.get('VAPID_PUBLIC_KEY')!;
-const VAPID_PRIVATE = Deno.env.get('VAPID_PRIVATE_KEY')!;
-const VAPID_EMAIL = Deno.env.get('VAPID_EMAIL') || 'mailto:admin@triskelacademy.com';
+const VAPID_PUBLIC = 'BEXtjaNEQhKEN8rEGQAp0NhcpFsAfl7vWrTCJTMUdOrNf6iOvmkdFIUEOcchkkNoJoixRdqLheqrIkjwQEAIw28';
+const VAPID_PRIVATE = '6Wwvy3amxhMFbzcuzDPY-9J0xDFDmyxODnVyHnYmkIo';
+const VAPID_EMAIL = 'mailto:aaron_armoa@hotmail.com';
 
 webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC, VAPID_PRIVATE);
 
