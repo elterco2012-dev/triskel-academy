@@ -2824,15 +2824,18 @@ async function savePago(){
   const hoy=new Date().toISOString().split('T')[0];
   const[tipo,idsStr]=selVal.split(':');
   if(tipo==='plan'){
-    // Plan multi-día: guardar un pago por inscripción, dividiendo el monto
+    // Plan multi-día: RPC atómica — un solo viaje, sin riesgo de estado inconsistente
     const ids=idsStr.split(',').map(Number);
-    const perInsc=Math.round(monto/ids.length);
-    for(const iid of ids){
-      const insc=DB.inscripciones.find(x=>x.id===iid);
-      if(!insc)continue;
-      const{error}=await rpc('triskel_insert_pago',{p_alumna_id:alumna_id,p_inscripcion_id:iid,p_mes:mes,p_monto:perInsc,p_pagado:true,p_fecha_pago:hoy});
-      if(error){document.getElementById('mp-err').textContent='Error al guardar.';return;}
-    }
+    const alumna_inscIds=ids.filter(iid=>DB.inscripciones.find(x=>x.id===iid));
+    const{data,error}=await rpc('triskel_insertar_pagos_plan',{
+      p_alumna_id:alumna_id,
+      p_insc_ids:alumna_inscIds,
+      p_mes:mes,
+      p_monto_total:monto,
+      p_pagado:true,
+      p_fecha_pago:hoy
+    });
+    if(error||!data?.ok){document.getElementById('mp-err').textContent='Error al guardar.';return;}
   }else{
     const inscripcion_id=parseInt(idsStr);
     const{error}=await rpc('triskel_insert_pago',{p_alumna_id:alumna_id,p_inscripcion_id:inscripcion_id,p_mes:mes,p_monto:monto,p_pagado:true,p_fecha_pago:hoy});
@@ -2853,18 +2856,18 @@ async function desmarcarPago(id){
   await loadAll();
 }
 async function desmarcarPagosPlan(idsStr){
-  for(const id of idsStr.split(',').map(Number))
-    await rpc('triskel_mark_pago',{p_id:id,p_pagado:false,p_fecha_pago:null});
+  const ids=idsStr.split(',').map(Number);
+  const{error}=await rpc('triskel_marcar_pagos_ids',{p_ids:ids,p_pagado:false,p_fecha_pago:null});
+  if(error){showMsg('Error al desmarcar');return;}
   showMsg('Pago desmarcado');
   await loadAll();
 }
 async function marcarPagosPlan(idsStr){
   const ids=idsStr.split(',').map(Number);
-  // Capturar datos antes del reload
   const pagos=ids.map(id=>DB.pagos.find(p=>p.id===id)).filter(Boolean);
   const hoy=new Date().toISOString().split('T')[0];
-  for(const id of ids)
-    await rpc('triskel_mark_pago',{p_id:id,p_pagado:true,p_fecha_pago:hoy});
+  const{error}=await rpc('triskel_marcar_pagos_ids',{p_ids:ids,p_pagado:true,p_fecha_pago:hoy});
+  if(error){showMsg('Error al marcar pago');return;}
   await loadAll();
   showMsg('✓ Pago marcado');
   if(pagos.length){
