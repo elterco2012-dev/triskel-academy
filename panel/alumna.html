@@ -207,11 +207,27 @@ input,select,textarea,button{font-family:'DM Sans',-apple-system,BlinkMacSystemF
     <div id="modal-pago-mes-label" style="font-size:13px;font-weight:600;color:var(--tm);margin-bottom:.5rem;"></div>
     <label class="modal-label">Monto abonado <span style="font-weight:400;color:#aaa;">(podés modificarlo si pagás menos)</span></label>
     <input class="modal-input" type="number" id="aviso-monto" placeholder="0" min="0">
+    <label class="modal-label">Medio de pago</label>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <button id="medio-transferencia" onclick="seleccionarMedio('transferencia')" type="button"
+        style="flex:1;padding:.6rem;border-radius:var(--radius-sm);border:1.5px solid var(--border);font-size:14px;font-weight:600;background:var(--white);color:var(--sub);cursor:pointer;transition:all .15s;">
+        🏦 Transferencia
+      </button>
+      <button id="medio-efectivo" onclick="seleccionarMedio('efectivo')" type="button"
+        style="flex:1;padding:.6rem;border-radius:var(--radius-sm);border:1.5px solid var(--border);font-size:14px;font-weight:600;background:var(--white);color:var(--sub);cursor:pointer;transition:all .15s;">
+        💵 Efectivo
+      </button>
+    </div>
     <label class="modal-label">Nota (opcional)</label>
-    <input class="modal-input" type="text" id="aviso-nota" placeholder="Ej: Transferí al CBU, operación 123456" maxlength="200">
+    <input class="modal-input" type="text" id="aviso-nota" placeholder="Ej: operación 123456" maxlength="200">
     <div class="modal-row">
       <button class="btn-cancel" onclick="cerrarModalPago()">Cancelar</button>
       <button class="btn-confirm" onclick="confirmarAviso()">Avisar pago ✓</button>
+    </div>
+    <div style="margin-top:1rem;padding:.75rem;background:var(--bg);border-radius:var(--radius-sm);text-align:center;">
+      <div style="font-size:11px;color:var(--sub);margin-bottom:.3rem;">Datos para transferir</div>
+      <div style="font-size:14px;font-weight:700;color:var(--tm);letter-spacing:.02em;">Triskelcasares1</div>
+      <div style="font-size:12px;color:var(--sub);margin-top:.15rem;">Titular: Lorena Montiel</div>
     </div>
   </div>
 </div>
@@ -689,7 +705,18 @@ function abrirModalPago(mes){
   const montoInsc=(STATE.inscripciones||[]).reduce((s,i)=>s+(i.precio||0),0);
   document.getElementById('aviso-monto').value=montoInsc||'';
   document.getElementById('aviso-nota').value='';
+  seleccionarMedio('transferencia'); // default
   document.getElementById('modal-pago').style.display='flex';
+}
+
+let _medioPago='transferencia';
+function seleccionarMedio(m){
+  _medioPago=m;
+  const tmpl=`flex:1;padding:.6rem;border-radius:var(--radius-sm);border:1.5px solid;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;`;
+  const activo=`${tmpl}border-color:var(--tm);background:var(--tm);color:#fff;`;
+  const inact=`${tmpl}border-color:var(--border);background:var(--white);color:var(--sub);`;
+  document.getElementById('medio-transferencia').style.cssText=m==='transferencia'?activo:inact;
+  document.getElementById('medio-efectivo').style.cssText=m==='efectivo'?activo:inact;
 }
 
 function cerrarModalPago(){
@@ -699,7 +726,9 @@ function cerrarModalPago(){
 async function confirmarAviso(){
   if(!avisoPagoMes)return;
   const monto=parseFloat(document.getElementById('aviso-monto').value)||null;
-  const nota=document.getElementById('aviso-nota').value.trim()||null;
+  const notaRaw=document.getElementById('aviso-nota').value.trim();
+  const medioLabel=_medioPago==='transferencia'?'Transferencia':'Efectivo';
+  const nota=notaRaw?`${medioLabel} — ${notaRaw}`:medioLabel;
   const btn=document.querySelector('#modal-pago .btn-confirm');
   btn.disabled=true;btn.textContent='Enviando...';
 
