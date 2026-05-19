@@ -323,8 +323,10 @@ function renderInicio(){
   const mesLabel=mesStr=>{ const[y,m]=mesStr.split('-');return new Date(y,m-1,1).toLocaleDateString('es-AR',{month:'long',year:'numeric'}); };
 
   // Pago status card
+  const avisoMesIni=avisos.find(av=>av.mes===mesActual);
   let pagoCard='';
   if(cobrado){
+    const notaIni=cobrado.nota||(avisoMesIni?.nota)||null;
     pagoCard=`<div class="card" style="border-left:4px solid var(--mat);">
       <div style="display:flex;align-items:center;gap:.5rem;">
         <div style="font-size:28px;">✅</div>
@@ -332,6 +334,7 @@ function renderInicio(){
           <div style="font-size:12px;color:var(--sub);">Cuota ${mesLabel(mesActual)}</div>
           <div style="font-size:16px;font-weight:700;color:var(--mat);">¡Pagada!</div>
           ${cobrado.monto?`<div style="font-size:12px;color:var(--sub);">$${Number(cobrado.monto).toLocaleString('es-AR')}</div>`:''}
+          ${notaIni?`<div style="font-size:11px;color:var(--sub);font-style:italic;margin-top:.1rem;">"${notaIni}"</div>`:''}
         </div>
       </div>
     </div>`;
@@ -448,14 +451,17 @@ function renderPagos(){
   // Current month status
   const cobrado=pagos.find(p=>p.mes===mesActual&&p.pagado);
   const aviso=avisos.find(av=>av.mes===mesActual&&av.estado==='pendiente');
+  const avisoMesActual=avisos.find(av=>av.mes===mesActual);
 
   let statusCard='';
   if(cobrado){
+    const notaCobrado=cobrado.nota||(avisoMesActual?.nota)||null;
     statusCard=`<div class="card" style="border-left:4px solid var(--mat);">
       <div class="pago-mes">Cuota ${mesLabel(mesActual)}</div>
       <div class="pago-estado cobrado">✅ Pagada</div>
       ${cobrado.monto?`<div style="font-size:13px;color:var(--sub);">$${Number(cobrado.monto).toLocaleString('es-AR')}</div>`:''}
       ${cobrado.fecha_pago?`<div style="font-size:12px;color:var(--sub);">Registrado el ${new Date(cobrado.fecha_pago).toLocaleDateString('es-AR')}</div>`:''}
+      ${notaCobrado?`<div style="font-size:12px;color:var(--sub);margin-top:.25rem;font-style:italic;">"${notaCobrado}"</div>`:''}
     </div>`;
   }else if(aviso){
     statusCard=`<div class="card" style="border-left:4px solid #f59e0b;">
@@ -480,17 +486,23 @@ function renderPagos(){
   if(mesesPrev.length){
     histHtml=`<div class="card">
       <div class="card-title">📋 Historial</div>
-      ${mesesPrev.map(p=>`
-        <div class="hist-row">
-          <div>
-            <div class="hist-mes">${mesLabel(p.mes)}</div>
-            ${p.fecha_pago?`<div style="font-size:11px;color:var(--sub);">Pagado ${new Date(p.fecha_pago).toLocaleDateString('es-AR')}</div>`:''}
+      ${mesesPrev.map(p=>{
+        const avisoHist=avisos.find(av=>av.mes===p.mes);
+        const notaHist=p.nota||(avisoHist?.nota)||null;
+        return`<div class="hist-row" style="flex-direction:column;align-items:flex-start;gap:2px;">
+          <div style="display:flex;width:100%;align-items:center;">
+            <div style="flex:1;">
+              <div class="hist-mes">${mesLabel(p.mes)}</div>
+              ${p.fecha_pago?`<div style="font-size:11px;color:var(--sub);">Pagado ${new Date(p.fecha_pago).toLocaleDateString('es-AR')}</div>`:''}
+            </div>
+            <div style="text-align:right;">
+              ${p.monto?`<div class="hist-monto">$${Number(p.monto).toLocaleString('es-AR')}</div>`:''}
+              <div><span class="chip ${p.pagado?'chip-ok':'chip-no'}">${p.pagado?'✓ Pagado':'Pendiente'}</span></div>
+            </div>
           </div>
-          <div style="text-align:right;">
-            ${p.monto?`<div class="hist-monto">$${Number(p.monto).toLocaleString('es-AR')}</div>`:''}
-            <div><span class="chip ${p.pagado?'chip-ok':'chip-no'}">${p.pagado?'✓ Pagado':'Pendiente'}</span></div>
-          </div>
-        </div>`).join('')}
+          ${notaHist?`<div style="font-size:11px;color:var(--sub);font-style:italic;padding-left:2px;">"${notaHist}"</div>`:''}
+        </div>`;
+      }).join('')}
     </div>`;
   }
 

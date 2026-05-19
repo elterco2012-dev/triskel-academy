@@ -1921,19 +1921,23 @@ function rFicha(){
           const h2=insc?DB.horarios.find(x=>x.id===insc.horario_id):null;
           return h2?`${DIA_LABEL[h2.dia]} ${h2.hora_inicio}`:'';
         }).filter(Boolean).join('+'):'';
-        return`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--b);">
-          <div style="flex:1;">
-            <div style="font-size:13px;font-weight:500;">${mesLabel(g.mes)}</div>
-            ${g.h?`<div style="font-size:11px;color:var(--tm);">${esPlan?diasLabel+' ':DIA_LABEL[g.h.dia]+' '+g.h.hora_inicio+' '}· ${MOD_LABEL[g.h.modalidad]}${esPlan?' · Plan':''}
-            </div>`:''}
+        const notaFicha=g.items.map(p=>p.nota).filter(Boolean)[0]||null;
+        return`<div style="padding:7px 0;border-bottom:1px solid var(--b);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:500;">${mesLabel(g.mes)}</div>
+              ${g.h?`<div style="font-size:11px;color:var(--tm);">${esPlan?diasLabel+' ':DIA_LABEL[g.h.dia]+' '+g.h.hora_inicio+' '}· ${MOD_LABEL[g.h.modalidad]}${esPlan?' · Plan':''}
+              </div>`:''}
+            </div>
+            <div style="font-size:13px;font-weight:600;">$${total.toLocaleString('es-AR')}</div>
+            ${todoPagado
+              ?`<span style="font-size:11px;background:var(--matl);color:var(--mat);padding:2px 8px;border-radius:99px;">✓ ${fechaPago||'Pagó'}</span>
+                <button class="btn btn-s btn-danger" onclick="desmarcarPagosPlan('${ids.join(',')}')" title="Desmarcar">✕</button>`
+              :`<span style="font-size:11px;background:var(--rl);color:var(--rd);padding:2px 8px;border-radius:99px;">Pendiente</span>
+                <button class="btn btn-s btn-p" onclick="marcarPagosPlan('${ids.join(',')}')">✓ Marcar pagado</button>`
+            }
           </div>
-          <div style="font-size:13px;font-weight:600;">$${total.toLocaleString('es-AR')}</div>
-          ${todoPagado
-            ?`<span style="font-size:11px;background:var(--matl);color:var(--mat);padding:2px 8px;border-radius:99px;">✓ ${fechaPago||'Pagó'}</span>
-              <button class="btn btn-s btn-danger" onclick="desmarcarPagosPlan('${ids.join(',')}')" title="Desmarcar">✕</button>`
-            :`<span style="font-size:11px;background:var(--rl);color:var(--rd);padding:2px 8px;border-radius:99px;">Pendiente</span>
-              <button class="btn btn-s btn-p" onclick="marcarPagosPlan('${ids.join(',')}')">✓ Marcar pagado</button>`
-          }
+          ${notaFicha?`<div style="font-size:11px;color:var(--tm);font-style:italic;margin-top:2px;">"${notaFicha}"</div>`:''}
         </div>`;
       }).join('');
     })():`<div style="font-size:13px;color:var(--tm);">Sin pagos registrados.</div>`}
@@ -2371,17 +2375,21 @@ function rPagos(){
     }).filter(Boolean).join('+'):(g.h?DIA_LABEL[g.h.dia]+' '+g.h.hora_inicio:'');
     const modLabel=h?MOD_LABEL[h.modalidad]:'';
     const subLabel=esPlan?`${modLabel} · Plan (${diasLabel})`:(h?`${modLabel} · ${diasLabel}`:'');
-    return`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--b);flex-wrap:wrap;">
-      <div class="avatar" style="width:30px;height:30px;font-size:11px;flex-shrink:0;">${alumnaInits(a?.nombre,a?.apellido)}</div>
-      <div style="flex:1;min-width:100px;">
-        <div style="font-size:13px;font-weight:500;">${a?.nombre||'?'} ${a?.apellido||''}</div>
-        ${subLabel?`<div style="font-size:11px;color:var(--tm);">${subLabel}</div>`:''}
+    const notaPago=g.items.map(p=>p.nota).filter(Boolean)[0]||null;
+    return`<div style="padding:8px 0;border-bottom:1px solid var(--b);">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div class="avatar" style="width:30px;height:30px;font-size:11px;flex-shrink:0;">${alumnaInits(a?.nombre,a?.apellido)}</div>
+        <div style="flex:1;min-width:100px;">
+          <div style="font-size:13px;font-weight:500;">${a?.nombre||'?'} ${a?.apellido||''}</div>
+          ${subLabel?`<div style="font-size:11px;color:var(--tm);">${subLabel}</div>`:''}
+        </div>
+        <div style="font-size:13px;font-weight:600;flex-shrink:0;">$${total.toLocaleString('es-AR')}</div>
+        ${todoPagado
+          ?`<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;"><span style="font-size:11px;background:var(--matl);color:var(--mat);padding:2px 8px;border-radius:99px;">✓ Pagó</span><button class="btn btn-s btn-danger" onclick="desmarcarPagosPlan('${ids.join(',')}')">Desmarcar</button></div>`
+          :`<button class="btn btn-s btn-p" onclick="marcarPagosPlan('${ids.join(',')}')">✓ Marcar pagado</button>`
+        }
       </div>
-      <div style="font-size:13px;font-weight:600;flex-shrink:0;">$${total.toLocaleString('es-AR')}</div>
-      ${todoPagado
-        ?`<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;"><span style="font-size:11px;background:var(--matl);color:var(--mat);padding:2px 8px;border-radius:99px;">✓ Pagó</span><button class="btn btn-s btn-danger" onclick="desmarcarPagosPlan('${ids.join(',')}')">Desmarcar</button></div>`
-        :`<button class="btn btn-s btn-p" onclick="marcarPagosPlan('${ids.join(',')}')">✓ Marcar pagado</button>`
-      }
+      ${notaPago?`<div style="font-size:11px;color:var(--tm);font-style:italic;padding-left:38px;margin-top:2px;">"${notaPago}"</div>`:''}
     </div>`;
   }
 
