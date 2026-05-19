@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
     return json({ ok: true, user_id: userId });
   } catch (e) {
     console.error(e);
-    return json({ ok: false, msg: String(e) }, 500);
+    return json({ ok: false, msg: 'internal error' }, 500);
   }
 });
 
