@@ -1158,9 +1158,18 @@ if(dark)document.documentElement.setAttribute('data-theme','dark');
 async function login(){
   const e=document.getElementById('email').value.trim();
   const p=document.getElementById('pwd').value;
-  document.getElementById('lerr').style.display='none';
+  const lerr=document.getElementById('lerr');
+  lerr.style.display='none';
   const{data,error}=await sb.auth.signInWithPassword({email:e,password:p});
-  if(error||!data.session){document.getElementById('lerr').style.display='block';return;}
+  if(error||!data.session){lerr.style.display='block';return;}
+  // Block alumnas from accessing the teacher panel
+  const{data:alumnaId}=await sb.rpc('triskel_get_mi_alumna_id');
+  if(alumnaId){
+    await sb.auth.signOut();
+    lerr.textContent='Este panel es solo para la profesora. Tu panel está en /panel/alumna.html';
+    lerr.style.display='block';
+    return;
+  }
   showPanel();
 }
 
@@ -1172,8 +1181,11 @@ async function logout(){
 
 async function initAuth(){
   const{data:{session}}=await sb.auth.getSession();
-  if(session) showPanel();
-  else document.getElementById('LS').style.display='flex';
+  if(!session){document.getElementById('LS').style.display='flex';return;}
+  // Also block alumnas who already have an active session
+  const{data:alumnaId}=await sb.rpc('triskel_get_mi_alumna_id');
+  if(alumnaId){await sb.auth.signOut();document.getElementById('LS').style.display='flex';return;}
+  showPanel();
 }
 
 function showPanel(){
@@ -2812,15 +2824,18 @@ async function savePago(){
   const hoy=new Date().toISOString().split('T')[0];
   const[tipo,idsStr]=selVal.split(':');
   if(tipo==='plan'){
-    // Plan multi-día: guardar un pago por inscripción, dividiendo el monto
+    // Plan multi-día: RPC atómica — un solo viaje, sin riesgo de estado inconsistente
     const ids=idsStr.split(',').map(Number);
-    const perInsc=Math.round(monto/ids.length);
-    for(const iid of ids){
-      const insc=DB.inscripciones.find(x=>x.id===iid);
-      if(!insc)continue;
-      const{error}=await rpc('triskel_insert_pago',{p_alumna_id:alumna_id,p_inscripcion_id:iid,p_mes:mes,p_monto:perInsc,p_pagado:true,p_fecha_pago:hoy});
-      if(error){document.getElementById('mp-err').textContent='Error al guardar.';return;}
-    }
+    const alumna_inscIds=ids.filter(iid=>DB.inscripciones.find(x=>x.id===iid));
+    const{data,error}=await rpc('triskel_insertar_pagos_plan',{
+      p_alumna_id:alumna_id,
+      p_insc_ids:alumna_inscIds,
+      p_mes:mes,
+      p_monto_total:monto,
+      p_pagado:true,
+      p_fecha_pago:hoy
+    });
+    if(error||!data?.ok){document.getElementById('mp-err').textContent='Error al guardar.';return;}
   }else{
     const inscripcion_id=parseInt(idsStr);
     const{error}=await rpc('triskel_insert_pago',{p_alumna_id:alumna_id,p_inscripcion_id:inscripcion_id,p_mes:mes,p_monto:monto,p_pagado:true,p_fecha_pago:hoy});
@@ -2841,18 +2856,18 @@ async function desmarcarPago(id){
   await loadAll();
 }
 async function desmarcarPagosPlan(idsStr){
-  for(const id of idsStr.split(',').map(Number))
-    await rpc('triskel_mark_pago',{p_id:id,p_pagado:false,p_fecha_pago:null});
+  const ids=idsStr.split(',').map(Number);
+  const{error}=await rpc('triskel_marcar_pagos_ids',{p_ids:ids,p_pagado:false,p_fecha_pago:null});
+  if(error){showMsg('Error al desmarcar');return;}
   showMsg('Pago desmarcado');
   await loadAll();
 }
 async function marcarPagosPlan(idsStr){
   const ids=idsStr.split(',').map(Number);
-  // Capturar datos antes del reload
   const pagos=ids.map(id=>DB.pagos.find(p=>p.id===id)).filter(Boolean);
   const hoy=new Date().toISOString().split('T')[0];
-  for(const id of ids)
-    await rpc('triskel_mark_pago',{p_id:id,p_pagado:true,p_fecha_pago:hoy});
+  const{error}=await rpc('triskel_marcar_pagos_ids',{p_ids:ids,p_pagado:true,p_fecha_pago:hoy});
+  if(error){showMsg('Error al marcar pago');return;}
   await loadAll();
   showMsg('✓ Pago marcado');
   if(pagos.length){
@@ -2882,17 +2897,52 @@ function cerrarReciboWA(){document.getElementById('recibo-wa-toast').style.displ
 
 const VAPID_PUBLIC_TEACHER='BEXtjaNEQhKEN8rEGQAp0NhcpFsAfl7vWrTCJTMUdOrNf6iOvmkdFIUEOcchkkNoJoixRdqLheqrIkjwQEAIw28';
 
+const TEACHER_NOTIF_SNOOZE_KEY='triskel_teacher_notif_snooze';
+
 function rTeacherNotifBanner(){
   if(!('Notification' in window)||!('serviceWorker' in navigator))return'';
-  if(Notification.permission==='granted')return'';
+  const perm=Notification.permission;
+
+  if(perm==='granted'){
+    return`<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:.75rem 1rem;display:flex;align-items:center;gap:.6rem;margin-top:.5rem;">
+      <span style="font-size:20px;">✅</span>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:700;color:#15803d;">Notificaciones activas</div>
+        <div style="font-size:11px;color:#166534;">Vas a recibir avisos cuando una alumna reporte un pago</div>
+      </div>
+    </div>`;
+  }
+
+  if(perm==='denied'){
+    return`<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:.75rem 1rem;display:flex;align-items:center;gap:.6rem;margin-top:.5rem;">
+      <span style="font-size:20px;">🔕</span>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:700;color:#9a3412;">Notificaciones bloqueadas</div>
+        <div style="font-size:11px;color:#7c2d12;">Habilitá los permisos en Configuración del navegador para recibirlas</div>
+      </div>
+    </div>`;
+  }
+
+  // Check 5-day snooze
+  const snoozed=localStorage.getItem(TEACHER_NOTIF_SNOOZE_KEY);
+  if(snoozed&&Date.now()-Number(snoozed)<5*24*3600*1000)return'';
+
   return`<div style="background:linear-gradient(135deg,#6c5b7b,#a689c0);border-radius:12px;padding:.85rem 1rem;color:#fff;display:flex;align-items:center;gap:.75rem;margin-top:.5rem;">
     <div style="font-size:24px;">🔔</div>
     <div style="flex:1;">
       <div style="font-size:13px;font-weight:700;">Activar notificaciones push</div>
       <div style="font-size:11px;opacity:.9;">Recibí avisos cuando una alumna reporte un pago</div>
     </div>
-    <button onclick="activarNotifTeacher()" style="background:rgba(255,255,255,.25);border:1.5px solid rgba(255,255,255,.6);color:#fff;padding:.35rem .75rem;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">Activar</button>
+    <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
+      <button onclick="activarNotifTeacher()" style="background:rgba(255,255,255,.25);border:1.5px solid rgba(255,255,255,.6);color:#fff;padding:.35rem .75rem;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">Activar</button>
+      <button onclick="snoozeNotifTeacher()" style="background:transparent;border:1px solid rgba(255,255,255,.35);color:rgba(255,255,255,.8);padding:.15rem .5rem;border-radius:6px;font-size:10px;cursor:pointer;white-space:nowrap;">Ahora no</button>
+    </div>
   </div>`;
+}
+
+function snoozeNotifTeacher(){
+  localStorage.setItem(TEACHER_NOTIF_SNOOZE_KEY,Date.now().toString());
+  render();
 }
 
 async function activarNotifTeacher(){
@@ -2900,13 +2950,14 @@ async function activarNotifTeacher(){
   if(!('serviceWorker' in navigator)){showMsg('Notificaciones no soportadas');return;}
   try{
     const perm=await Notification.requestPermission();
-    if(perm!=='granted'){showMsg('Permiso denegado');return;}
+    if(perm!=='granted'){showMsg('Permiso denegado. Habilitá las notificaciones en la configuración del navegador.');render();return;}
     const reg=await navigator.serviceWorker.ready;
     const sub=await reg.pushManager.subscribe({
       userVisibleOnly:true,
       applicationServerKey:urlB64ToUint8Array(VAPID_PUBLIC_TEACHER)
     });
     await sb.rpc('triskel_save_push_subscription',{p_subscription:sub.toJSON(),p_tipo:'teacher'});
+    localStorage.removeItem(TEACHER_NOTIF_SNOOZE_KEY);
     showMsg('🔔 Notificaciones activadas');
     render();
   }catch(e){console.error(e);showMsg('Error al activar notificaciones');}

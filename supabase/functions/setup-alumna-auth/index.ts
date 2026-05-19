@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+const SUPABASE_URL        = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
@@ -18,32 +18,44 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { alumna_id, email, password } = await req.json();
+    // Verify the caller is authenticated and is NOT an alumna
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) return json({ ok: false, msg: 'not authenticated' }, 401);
 
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authErr } = await admin.auth.getUser(token);
+    if (authErr || !user) return json({ ok: false, msg: 'invalid token' }, 401);
+
+    // Block alumnas from calling this endpoint
+    const { data: alumnaRecord } = await admin
+      .from('triskel_alumnas')
+      .select('id')
+      .eq('auth_user_id', user.id)
+      .maybeSingle();
+
+    if (alumnaRecord) return json({ ok: false, msg: 'no autorizado' }, 403);
+
+    const { alumna_id, email, password } = await req.json();
     if (!alumna_id || !email || !password) {
       return json({ ok: false, msg: 'alumna_id, email y password son requeridos' }, 400);
     }
 
-    // Check if user already exists
-    const { data: existing } = await admin.auth.admin.listUsers();
-    const alreadyExists = existing?.users?.find(u => u.email === email);
-
+    // Use getUserByEmail instead of listing all users
     let userId: string;
+    const { data: existingUser } = await admin.auth.admin.getUserByEmail(email);
 
-    if (alreadyExists) {
-      // Update password if user already exists
-      const { data: updated, error: updateErr } = await admin.auth.admin.updateUserById(
-        alreadyExists.id,
+    if (existingUser?.user) {
+      const { error: updateErr } = await admin.auth.admin.updateUserById(
+        existingUser.user.id,
         { password }
       );
       if (updateErr) return json({ ok: false, msg: updateErr.message }, 400);
-      userId = alreadyExists.id;
+      userId = existingUser.user.id;
     } else {
-      // Create new auth user
       const { data: created, error: createErr } = await admin.auth.admin.createUser({
         email,
         password,
-        email_confirm: true,  // skip confirmation email
+        email_confirm: true,
       });
       if (createErr) return json({ ok: false, msg: createErr.message }, 400);
       userId = created.user!.id;
@@ -58,7 +70,6 @@ Deno.serve(async (req) => {
     if (linkErr) return json({ ok: false, msg: linkErr.message }, 400);
 
     return json({ ok: true, user_id: userId });
-
   } catch (e) {
     console.error(e);
     return json({ ok: false, msg: String(e) }, 500);

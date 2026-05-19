@@ -556,18 +556,52 @@ function renderPerfil(){
 }
 
 // ── NOTIFICATION BANNER ───────────────────────────────────────────────────────
+const NOTIF_SNOOZE_KEY='triskel_notif_snooze';
 
 function rNotifBanner(){
   if(!('Notification' in window)||!('serviceWorker' in navigator))return'';
-  if(Notification.permission==='granted')return'';
+  const perm=Notification.permission;
+
+  if(perm==='granted'){
+    return`<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:var(--radius);padding:.75rem 1rem;display:flex;align-items:center;gap:.6rem;margin-bottom:.75rem;">
+      <span style="font-size:20px;">✅</span>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:700;color:#15803d;">Notificaciones activas</div>
+        <div style="font-size:11px;color:#166534;">Vas a recibir recordatorios de pago y confirmaciones</div>
+      </div>
+    </div>`;
+  }
+
+  if(perm==='denied'){
+    return`<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:var(--radius);padding:.75rem 1rem;display:flex;align-items:center;gap:.6rem;margin-bottom:.75rem;">
+      <span style="font-size:20px;">🔕</span>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:700;color:#9a3412;">Notificaciones bloqueadas</div>
+        <div style="font-size:11px;color:#7c2d12;">Habilitá los permisos en Configuración del navegador para recibirlas</div>
+      </div>
+    </div>`;
+  }
+
+  // Check 5-day snooze
+  const snoozed=localStorage.getItem(NOTIF_SNOOZE_KEY);
+  if(snoozed&&Date.now()-Number(snoozed)<5*24*3600*1000)return'';
+
   return`<div class="notif-banner">
     <div class="ico">🔔</div>
     <div class="txt">
       <strong>Activá las notificaciones</strong>
       <span>Recibí recordatorios de pago y confirmaciones</span>
     </div>
-    <button class="btn-notif" onclick="activarNotif()">Activar</button>
+    <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
+      <button class="btn-notif" onclick="activarNotif()">Activar</button>
+      <button class="btn-notif" onclick="snoozeNotif()" style="font-size:10px;font-weight:400;opacity:.75;padding:.15rem .5rem;background:transparent;border-color:rgba(255,255,255,.4);">Ahora no</button>
+    </div>
   </div>`;
+}
+
+function snoozeNotif(){
+  localStorage.setItem(NOTIF_SNOOZE_KEY,Date.now().toString());
+  navTo(curPage);
 }
 
 async function activarNotif(){
@@ -575,15 +609,16 @@ async function activarNotif(){
   if(!('serviceWorker' in navigator)){showToast('Tu navegador no soporta notificaciones');return;}
   try{
     const perm=await Notification.requestPermission();
-    if(perm!=='granted'){showToast('Permiso denegado');return;}
+    if(perm!=='granted'){showToast('Permiso denegado. Habilitá las notificaciones en la configuración del navegador.');navTo(curPage);return;}
     const reg=await navigator.serviceWorker.ready;
     const sub=await reg.pushManager.subscribe({
       userVisibleOnly:true,
       applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC)
     });
     await sb.rpc('triskel_save_push_subscription',{p_subscription:sub.toJSON(),p_tipo:'alumna'});
+    localStorage.removeItem(NOTIF_SNOOZE_KEY);
     showToast('🔔 Notificaciones activadas');
-    navTo(curPage);  // re-render to hide banner
+    navTo(curPage);
   }catch(e){
     console.error(e);
     showToast('No se pudieron activar las notificaciones');
