@@ -44,8 +44,7 @@ DROP POLICY IF EXISTS "auth_full" ON triskel_horarios;
 ALTER TABLE triskel_clases ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "auth_full" ON triskel_clases;
 
-ALTER TABLE triskel_espera ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "auth_full" ON triskel_espera;
+-- triskel_espera: tabla opcional, omitida si no existe
 
 ALTER TABLE triskel_observaciones ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "auth_full" ON triskel_observaciones;
@@ -54,7 +53,6 @@ REVOKE SELECT ON triskel_alumnas       FROM anon;
 REVOKE SELECT ON triskel_pagos         FROM anon;
 REVOKE SELECT ON triskel_inscripciones FROM anon;
 REVOKE SELECT ON triskel_clases        FROM anon;
-REVOKE SELECT ON triskel_espera        FROM anon;
 REVOKE SELECT ON triskel_observaciones FROM anon;
 
 -- ── 2. Fix triskel_resolver_aviso ─────────────────────────────────────────────
