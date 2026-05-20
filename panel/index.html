@@ -1892,6 +1892,8 @@ async function loadConfig(){
     const{data}=await sb.rpc('triskel_get_configuracion');
     if(data&&typeof data==='object'&&!data.ok) return; // error
     if(data&&typeof data==='object') DB.config=data;
+    // Keep localStorage in sync as a cache-clear fallback
+    if(DB.config.tarifas) localStorage.setItem(TARIFAS_KEY,JSON.stringify(DB.config.tarifas));
     // Migrate tarifas from localStorage to Supabase on first run
     const lsTf=localStorage.getItem(TARIFAS_KEY);
     if(lsTf&&!DB.config.tarifas){
@@ -2109,6 +2111,7 @@ const TARIFAS_KEY='triskel_tarifas';
 function getTarifas(){return DB.config?.tarifas||{};}
 async function persistTarifas(t){
   DB.config.tarifas=t;
+  localStorage.setItem(TARIFAS_KEY,JSON.stringify(t));
   await sb.rpc('triskel_save_configuracion',{p_key:'tarifas',p_value:t});
 }
 function openModalTarifas(){
@@ -3640,8 +3643,9 @@ function renderBibList(){
   if(_bibCatFiltro) ejercs=ejercs.filter(e=>e.cat===_bibCatFiltro);
   if(_bibNivelFiltro) ejercs=ejercs.filter(e=>e.nivel===_bibNivelFiltro);
   const btnLabel=_bibSwapIdx!==null?'🔄 Reemplazar':'＋ Agregar';
+  window._bibCache=ejercs;
   document.getElementById('bib-list').innerHTML=ejercs.length
-    ?ejercs.map(e=>`<div class="banco-card" style="display:flex;flex-direction:column;gap:5px;" onclick="elegirDeBiblioteca(${JSON.stringify(e.nombre)},${JSON.stringify(e.vt||'')})">
+    ?ejercs.map((e,i)=>`<div class="banco-card" style="display:flex;flex-direction:column;gap:5px;" onclick="elegirDeBiblioteca(${i})">
         <div><span style="font-size:10px;font-weight:700;background:${NIVEL_BG[e.nivel]||'var(--s2)'};color:${NIVEL_COLOR[e.nivel]||'var(--tm)'};padding:1px 6px;border-radius:99px;text-transform:uppercase;">${e.nivel||''}</span></div>
         <div class="banco-card-title">${e.nombre}</div>
         ${e.vt?`<div class="banco-card-sub">${e.vt}</div>`:''}
@@ -3649,7 +3653,10 @@ function renderBibList(){
       </div>`).join('')
     :`<div style="font-size:13px;color:var(--tm);padding:.5rem;">Sin ejercicios para estos filtros.</div>`;
 }
-function elegirDeBiblioteca(nombre,vt){
+function elegirDeBiblioteca(idx){
+  const e=(window._bibCache||[])[idx];
+  if(!e){return;}
+  const nombre=e.nombre, vt=e.vt||'';
   if(_bibSwapIdx!==null){
     _claseEjs[_bibSwapIdx]={nombre,vt,orden:_bibSwapIdx+1};
     renderEjerciciosModal();
@@ -4097,6 +4104,7 @@ let _bibAdminNivelFil='';
 
 function renderBibAdminPage(){
   document.getElementById('main').innerHTML=rBibliotecaAdmin();
+  renderBibAdminGrid();
 }
 
 function rBibliotecaAdmin(){
@@ -4157,15 +4165,12 @@ function renderBibAdminGrid(){
     return;
   }
 
-  grid.innerHTML=ejs.map(e=>{
+  // Store in global cache — avoids escaping issues in onclick
+  window._bibAdminCache=ejs;
+
+  grid.innerHTML=ejs.map((e,i)=>{
     const isCustom=!!e.id&&customIds.has(e.id);
     const leftBorder=isCustom?'var(--fun)':'var(--b)';
-    const editBtn=isCustom
-      ?`onclick="openBibAdmin('${e.id}')"`
-      :`onclick="openBibAdminPredeterminado(${JSON.stringify(e.nombre)})"`;
-    const delBtn=isCustom
-      ?`onclick="deleteCustomEj('${e.id}')"`
-      :`onclick="deletePredeterminado(${JSON.stringify(e.nombre)})"`;
     return`<div style="background:var(--s);border:1.5px solid var(--b);border-left:3px solid ${leftBorder};border-radius:var(--r);padding:1rem;display:flex;flex-direction:column;gap:.5rem;">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
         <div style="font-size:14px;font-weight:700;line-height:1.3;flex:1;">${esc(e.nombre)}</div>
@@ -4177,11 +4182,29 @@ function renderBibAdminGrid(){
       </div>
       ${e.vt?`<div style="font-size:12px;color:var(--tm);line-height:1.4;">${esc(e.vt)}</div>`:''}
       <div style="display:flex;gap:6px;margin-top:auto;padding-top:.65rem;border-top:1px solid var(--b);">
-        <button ${editBtn} style="flex:1;padding:.35rem;font-size:12px;background:none;border:1px solid var(--b);border-radius:var(--rs);cursor:pointer;color:var(--t);">✏️ Editar</button>
-        <button ${delBtn} style="flex:1;padding:.35rem;font-size:12px;background:none;border:1px solid #fecaca;border-radius:var(--rs);cursor:pointer;color:var(--rd);">🗑️ Eliminar</button>
+        <button onclick="bibAdminEdit(${i})" style="flex:1;padding:.35rem;font-size:12px;background:none;border:1px solid var(--b);border-radius:var(--rs);cursor:pointer;color:var(--t);">✏️ Editar</button>
+        <button onclick="bibAdminDelete(${i})" style="flex:1;padding:.35rem;font-size:12px;background:none;border:1px solid #fecaca;border-radius:var(--rs);cursor:pointer;color:var(--rd);">🗑️ Eliminar</button>
       </div>
     </div>`;
   }).join('');
+}
+
+function bibAdminEdit(i){
+  const e=(window._bibAdminCache||[])[i];
+  if(!e)return;
+  const custom=DB.config.biblioteca_custom||{};
+  const isCustom=!!e.id&&Object.values(custom).some(arr=>(arr||[]).some(c=>c.id===e.id));
+  if(isCustom) openBibAdmin(e.id);
+  else openBibAdminPredeterminado(e.nombre);
+}
+
+function bibAdminDelete(i){
+  const e=(window._bibAdminCache||[])[i];
+  if(!e)return;
+  const custom=DB.config.biblioteca_custom||{};
+  const isCustom=!!e.id&&Object.values(custom).some(arr=>(arr||[]).some(c=>c.id===e.id));
+  if(isCustom) deleteCustomEj(e.id);
+  else deletePredeterminado(e.nombre);
 }
 
 function openBibAdmin(customId){
