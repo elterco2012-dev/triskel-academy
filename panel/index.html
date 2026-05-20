@@ -352,6 +352,7 @@
       <div style="font-size:12px;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;">Ejercicios</div>
       <div style="display:flex;gap:6px;">
         <button class="btn btn-s" onclick="openModalBanco()">📋 Cargar plan</button>
+        <button class="btn btn-s" onclick="openBiblioteca()">📚 Biblioteca</button>
         <button class="btn btn-s btn-p" onclick="addEjercicio()">+ Agregar</button>
       </div>
     </div>
@@ -471,6 +472,31 @@
     <div style="display:flex;justify-content:flex-end;gap:.5rem;margin-top:.75rem;">
       <button class="btn" onclick="closeEditBanco()">Cancelar</button>
       <button class="btn btn-p" onclick="saveEditBanco()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL BIBLIOTECA -->
+<div class="modal-bg" id="modal-biblioteca" style="display:none" onclick="if(event.target===this)closeBiblioteca()">
+  <div class="modal" style="max-width:640px;">
+    <h3 id="bib-title">📚 Biblioteca de ejercicios</h3>
+    <p style="font-size:12px;color:var(--tm);margin-bottom:.75rem;" id="bib-subtitle">Seleccioná un ejercicio para agregarlo a la clase.</p>
+    <div style="margin-bottom:.5rem;">
+      <div style="font-size:11px;font-weight:600;color:var(--tm);margin-bottom:.3rem;">Categoría</div>
+      <div id="bib-cats" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+    </div>
+    <div style="margin-bottom:.75rem;">
+      <div style="font-size:11px;font-weight:600;color:var(--tm);margin-bottom:.3rem;">Nivel</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;">
+        <button class="btn btn-s btn-p" id="bib-n-all" onclick="filtrarBibNivel(null)">Todos</button>
+        <button class="btn btn-s" id="bib-n-bas" onclick="filtrarBibNivel('básico')" style="background:var(--matl);color:var(--mat);border-color:var(--mat);">Básico</button>
+        <button class="btn btn-s" id="bib-n-int" onclick="filtrarBibNivel('intermedio')" style="background:var(--funl);color:var(--fun);border-color:var(--fun);">Intermedio</button>
+        <button class="btn btn-s" id="bib-n-avz" onclick="filtrarBibNivel('avanzado')" style="background:var(--refl);color:var(--ref);border-color:var(--ref);">Avanzado</button>
+      </div>
+    </div>
+    <div id="bib-list" class="banco-grid" style="max-height:55vh;overflow-y:auto;"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:.75rem;">
+      <button class="btn" onclick="closeBiblioteca()">Cerrar</button>
     </div>
   </div>
 </div>
@@ -1320,6 +1346,138 @@ const BANCO={
       {nombre:'Estocada · pie en carro',vt:'2 res. · 6 rep · cadera baja, columna recta'},
       {nombre:'Respiración y activación de suelo pélvico',vt:'carro quieto · 8 respiraciones conscientes'},
     ]},
+  ],
+};
+
+const BIBLIOTECA_EJS={
+  mat:[
+    {nombre:'Cien',nivel:'básico',cat:'core',vt:'100 bombeos · piernas en mesa'},
+    {nombre:'Cien · piernas a 45°',nivel:'intermedio',cat:'core',vt:'100 bombeos · extender piernas'},
+    {nombre:'Single leg stretch',nivel:'básico',cat:'core',vt:'8 rep c/lado · mod: cabeza apoyada'},
+    {nombre:'Double leg stretch',nivel:'básico',cat:'core',vt:'8 rep · exhalar al extender'},
+    {nombre:'Scissors',nivel:'intermedio',cat:'core',vt:'8 rep c/lado · pierna baja no toca piso'},
+    {nombre:'Lower lift',nivel:'intermedio',cat:'core',vt:'8 rep · lumbar pegada · sin balancear'},
+    {nombre:'Criss cross',nivel:'intermedio',cat:'core',vt:'8 rep c/lado · codo a rodilla opuesta'},
+    {nombre:'Teaser básico',nivel:'intermedio',cat:'core',vt:'6 rep · piernas en mesa · bajar 4 tiempos'},
+    {nombre:'Teaser completo',nivel:'avanzado',cat:'core',vt:'6 rep · piernas extendidas · sin apoyar'},
+    {nombre:'Roll up',nivel:'básico',cat:'columna',vt:'6-8 rep · sin ayuda de manos'},
+    {nombre:'Roll over',nivel:'avanzado',cat:'columna',vt:'5-6 rep · no pasar de cervicales'},
+    {nombre:'Rolling like a ball',nivel:'básico',cat:'columna',vt:'8 rep · sin tocar piso con pies'},
+    {nombre:'Spine stretch forward',nivel:'básico',cat:'columna',vt:'6 rep · exhalar al elongar'},
+    {nombre:'Saw',nivel:'intermedio',cat:'columna',vt:'5 rep c/lado · rotar desde la cintura'},
+    {nombre:'Open leg rocker',nivel:'intermedio',cat:'columna',vt:'6-8 rep · equilibrio en cóccix'},
+    {nombre:'Swan básico',nivel:'básico',cat:'columna',vt:'6 rep · codos cerca del cuerpo'},
+    {nombre:'Swan dive',nivel:'avanzado',cat:'columna',vt:'6 rep · balancear pecho-piernas alternado'},
+    {nombre:'Single leg kick',nivel:'intermedio',cat:'columna',vt:'8 rep c/lado · cadera en el suelo'},
+    {nombre:'Double leg kick',nivel:'intermedio',cat:'columna',vt:'4-6 rep c/lado · extender al máximo'},
+    {nombre:'Neck pull',nivel:'avanzado',cat:'columna',vt:'6-8 rep · manos detrás, no jalar'},
+    {nombre:'Jackknife',nivel:'avanzado',cat:'columna',vt:'5-6 rep · piernas al techo, bajar a 45°'},
+    {nombre:'Boomerang',nivel:'avanzado',cat:'columna',vt:'5 rep · control total de la secuencia'},
+    {nombre:'Corkscrew',nivel:'avanzado',cat:'columna',vt:'4 rep c/lado · círculo completo de piernas'},
+    {nombre:'De lateral · elevación de pierna',nivel:'básico',cat:'lateral',vt:'10 rep c/lado'},
+    {nombre:'De lateral · círculos',nivel:'básico',cat:'lateral',vt:'5 círculos c/dirección c/lado'},
+    {nombre:'De lateral · patada adelante/atrás',nivel:'básico',cat:'lateral',vt:'8 rep c/lado'},
+    {nombre:'De lateral · serie completa',nivel:'intermedio',cat:'lateral',vt:'8-10 rep c/ejercicio c/lado'},
+    {nombre:'De lateral · serie avanzada con plancha',nivel:'avanzado',cat:'lateral',vt:'10 rep · fluir sin pausa'},
+    {nombre:'Puente de hombros',nivel:'básico',cat:'glúteos',vt:'8 rep · sostener 2 seg arriba'},
+    {nombre:'Puente a una pierna',nivel:'intermedio',cat:'glúteos',vt:'8 rep c/lado · sin bajar cadera'},
+    {nombre:'Clam',nivel:'básico',cat:'glúteos',vt:'10 rep c/lado · con banda en muslos'},
+    {nombre:'Leg circles',nivel:'básico',cat:'piernas',vt:'5 círculos c/dirección · pelvis estable'},
+    {nombre:'Swimming',nivel:'intermedio',cat:'piernas',vt:'20-30 alternados · no balancear'},
+    {nombre:'Leg pull front',nivel:'avanzado',cat:'piernas',vt:'6 rep c/lado · plancha activa'},
+    {nombre:'Leg pull back',nivel:'avanzado',cat:'piernas',vt:'6 rep c/lado · sin hundir cadera'},
+    {nombre:'Stomage básico',nivel:'básico',cat:'espalda',vt:'8 rep · manos bajo la frente'},
+    {nombre:'Cuadrupedia gato/vaca',nivel:'básico',cat:'espalda',vt:'8 rep · exhalar en gato'},
+    {nombre:'Cuadrupedia extensión alternada',nivel:'básico',cat:'espalda',vt:'8 rep c/lado'},
+  ],
+  reformer:[
+    {nombre:'Footwork punta y flex',nivel:'básico',cat:'footwork',vt:'3 res. · 8 rep cada uno'},
+    {nombre:'Footwork talones',nivel:'básico',cat:'footwork',vt:'3 res. · luego arco'},
+    {nombre:'Footwork arco',nivel:'básico',cat:'footwork',vt:'3 res. · énfasis en el arco del pie'},
+    {nombre:'Footwork una pierna',nivel:'intermedio',cat:'footwork',vt:'2 res. · 8 rep c/pierna'},
+    {nombre:'Running',nivel:'básico',cat:'footwork',vt:'3 res. · talones alternados, carro quieto al final'},
+    {nombre:'Cien',nivel:'básico',cat:'core',vt:'1 res. · piernas a 45°'},
+    {nombre:'Coordinación',nivel:'básico',cat:'core',vt:'1 res. · exhalar al extender piernas'},
+    {nombre:'Short spine',nivel:'intermedio',cat:'core',vt:'2 res. · articular vértebra a vértebra'},
+    {nombre:'Semicírculo',nivel:'intermedio',cat:'core',vt:'3 res. · 4 tiempos bajar, 4 subir'},
+    {nombre:'Serpiente',nivel:'avanzado',cat:'core',vt:'2 res. · 4 rep c/lado · cadera arriba'},
+    {nombre:'Torsión',nivel:'avanzado',cat:'core',vt:'2 res. · 4 rep c/lado · rotación máxima'},
+    {nombre:'Elefante',nivel:'básico',cat:'core',vt:'1 res. · columna redondeada · desde el core'},
+    {nombre:'Tendon stretch',nivel:'intermedio',cat:'core',vt:'2 res. · de pie en borde del carro'},
+    {nombre:'Plancha en pie iso',nivel:'básico',cat:'core',vt:'2 res. · manos en barra · alinear hombros'},
+    {nombre:'Frog',nivel:'básico',cat:'cadera',vt:'2 res. · rango cómodo · pelvis neutra'},
+    {nombre:'Leg circles en frog',nivel:'básico',cat:'cadera',vt:'2 res. · 4 c/dirección'},
+    {nombre:'Up-down',nivel:'intermedio',cat:'cadera',vt:'2 res. · piernas al techo y bajan'},
+    {nombre:'Hip openings',nivel:'intermedio',cat:'cadera',vt:'2 res. · apertura hacia afuera · pelvis quieta'},
+    {nombre:'Estocada en el reformer',nivel:'intermedio',cat:'cadera',vt:'2 res. · 8 rep · pie en carro'},
+    {nombre:'Puente una pierna reformer',nivel:'intermedio',cat:'cadera',vt:'2 res. · hombros en plataforma'},
+    {nombre:'Caja corta redondo',nivel:'intermedio',cat:'espalda',vt:'carro quieto · 1 res. · 6 rep'},
+    {nombre:'Caja corta plano',nivel:'intermedio',cat:'espalda',vt:'carro quieto · 1 res. · extensión torácica'},
+    {nombre:'Caja corta oblicuo',nivel:'intermedio',cat:'espalda',vt:'carro quieto · 1 res. · 5 rep c/lado'},
+    {nombre:'Árbol',nivel:'intermedio',cat:'espalda',vt:'carro quieto · 1 res. · bajar pierna 4 tiempos'},
+    {nombre:'Pulling straps',nivel:'intermedio',cat:'espalda',vt:'2-3 res. · extensión de dorsal'},
+    {nombre:'T-press',nivel:'intermedio',cat:'espalda',vt:'2 res. · brazos en T · escápulas juntas'},
+    {nombre:'Swan básico',nivel:'básico',cat:'espalda',vt:'2 res. · manos en barra · codos pegados'},
+    {nombre:'Swan avanzado',nivel:'avanzado',cat:'espalda',vt:'2 res. · balancear pecho-piernas'},
+    {nombre:'Remo desde el pecho palmas arriba',nivel:'básico',cat:'brazos',vt:'1 res. · codos pegados'},
+    {nombre:'Remo desde la cadera',nivel:'intermedio',cat:'brazos',vt:'1 res. · elongar columna al extender'},
+    {nombre:'Hug a tree',nivel:'básico',cat:'brazos',vt:'1 res. · mantener altura hombros · arcos lentos'},
+    {nombre:'Bíceps con correas sentada',nivel:'básico',cat:'brazos',vt:'1 res. · codos fijos · luego de pie'},
+    {nombre:'Tríceps con correas',nivel:'básico',cat:'brazos',vt:'1 res. · codo fijo · extender sin mover hombro'},
+    {nombre:'Rowing zip up',nivel:'intermedio',cat:'brazos',vt:'1 res. · codos al techo · escápulas'},
+    {nombre:'Rowing shave the head',nivel:'intermedio',cat:'brazos',vt:'1 res. · codos atrás · apertura torácica'},
+    {nombre:'Side stretch',nivel:'básico',cat:'lateral',vt:'1 res. · carro quieto · elongar lateral'},
+    {nombre:'Side splits',nivel:'intermedio',cat:'lateral',vt:'2 res. · abrir controlado · pies en plataforma'},
+    {nombre:'Star',nivel:'avanzado',cat:'lateral',vt:'1-2 res. · elevar pierna y brazo superior'},
+    {nombre:'Mermaid',nivel:'avanzado',cat:'lateral',vt:'1 res. · arco lateral · volver controlado'},
+  ],
+  funcional:[
+    {nombre:'Plancha iso',nivel:'básico',cat:'core',vt:'30-40 seg · no hundas cadera'},
+    {nombre:'Plancha toca hombros',nivel:'intermedio',cat:'core',vt:'40 seg · cadera quieta al tocar'},
+    {nombre:'Plancha lateral',nivel:'intermedio',cat:'core',vt:'30 seg c/lado · cuerpo en línea'},
+    {nombre:'Plancha oruga',nivel:'avanzado',cat:'core',vt:'40 seg · caminar con manos y volver'},
+    {nombre:'Mountain climbers',nivel:'básico',cat:'core',vt:'40 seg · ritmo sostenido'},
+    {nombre:'Bicicleta',nivel:'básico',cat:'core',vt:'40 seg · codo a rodilla opuesta'},
+    {nombre:'Sit ups',nivel:'básico',cat:'core',vt:'40 seg · manos en la nuca · sin jalar'},
+    {nombre:'Cortitos',nivel:'básico',cat:'core',vt:'30-40 seg · elevo cabeza y hombros'},
+    {nombre:'Tijeras',nivel:'intermedio',cat:'core',vt:'40 seg · lumbar pegada al suelo'},
+    {nombre:'Dead bug',nivel:'básico',cat:'core',vt:'40 seg · brazo-pierna opuestos'},
+    {nombre:'Barquito',nivel:'básico',cat:'core',vt:'30 seg · balancear adelante y atrás'},
+    {nombre:'Ruedita',nivel:'avanzado',cat:'core',vt:'40 seg · control lumbar estricto'},
+    {nombre:'Sentadilla clásica',nivel:'básico',cat:'piernas',vt:'30-40 seg · talones en el suelo'},
+    {nombre:'Sentadilla sumo',nivel:'básico',cat:'piernas',vt:'40 seg · pies abiertos · rodillas afuera'},
+    {nombre:'Sentadilla ISO',nivel:'intermedio',cat:'piernas',vt:'40 seg · sostener posición'},
+    {nombre:'Sentadilla búlgara',nivel:'avanzado',cat:'piernas',vt:'40 seg · pie trasero en step'},
+    {nombre:'Sentadilla pistols',nivel:'avanzado',cat:'piernas',vt:'40 seg · a una pierna'},
+    {nombre:'Estocada adelante',nivel:'básico',cat:'piernas',vt:'40 seg · rodilla trasera roza el suelo'},
+    {nombre:'Estocada lateral',nivel:'intermedio',cat:'piernas',vt:'40 seg · empujar desde el talón'},
+    {nombre:'Estocada con step',nivel:'intermedio',cat:'piernas',vt:'40 seg · pie trasero elevado'},
+    {nombre:'Peso muerto romano',nivel:'básico',cat:'piernas',vt:'40 seg · bisagra de cadera'},
+    {nombre:'Peso muerto a un pie',nivel:'avanzado',cat:'piernas',vt:'40 seg · equilibrio'},
+    {nombre:'Thrusters',nivel:'intermedio',cat:'piernas',vt:'40 seg · sentadilla + press hombros'},
+    {nombre:'Remo cerrado',nivel:'básico',cat:'espalda',vt:'40 seg · codos pegados al cuerpo'},
+    {nombre:'Remo abierto',nivel:'básico',cat:'espalda',vt:'40 seg · codos a 90° · escápulas juntas'},
+    {nombre:'Vuelo lateral tronco a 45°',nivel:'básico',cat:'espalda',vt:'40 seg · discos livianos'},
+    {nombre:'Jalón al pecho con banda',nivel:'intermedio',cat:'espalda',vt:'40 seg · bajar escápulas primero'},
+    {nombre:'Pullover',nivel:'básico',cat:'espalda',vt:'40 seg · boca arriba · codos levemente flexionados'},
+    {nombre:'Superman',nivel:'básico',cat:'espalda',vt:'30 seg · boca abajo · elevo brazos y piernas'},
+    {nombre:'Flexiones completas',nivel:'intermedio',cat:'pecho',vt:'40 seg · cuerpo en línea'},
+    {nombre:'Flexiones con rodillas',nivel:'básico',cat:'pecho',vt:'30-40 seg · cuerpo recto desde rodillas'},
+    {nombre:'Flexiones en diamante',nivel:'avanzado',cat:'pecho',vt:'40 seg · foco en tríceps'},
+    {nombre:'Codos a 90° con discos',nivel:'básico',cat:'pecho',vt:'40 seg · abrir y cerrar'},
+    {nombre:'Vuelo frontal',nivel:'básico',cat:'hombros',vt:'40 seg · brazos a la altura del hombro'},
+    {nombre:'Press Arnold',nivel:'intermedio',cat:'hombros',vt:'40 seg · girar muñecas al subir'},
+    {nombre:'Trote lateral',nivel:'básico',cat:'cardio',vt:'40 seg · pasos rápidos de lado'},
+    {nombre:'Saltos al frente',nivel:'intermedio',cat:'cardio',vt:'40 seg · aterrizar suave'},
+    {nombre:'Step lateral',nivel:'básico',cat:'cardio',vt:'40 seg · ritmo constante'},
+    {nombre:'Saltos con sentadilla',nivel:'intermedio',cat:'cardio',vt:'40 seg · sentadilla y salto al subir'},
+    {nombre:'Escalera abro y cierro',nivel:'intermedio',cat:'cardio',vt:'40 seg · coordinación'},
+    {nombre:'Trote con rodillas arriba',nivel:'básico',cat:'cardio',vt:'40 seg · levantar rodillas a la cadera'},
+    {nombre:'Puente de glúteos',nivel:'básico',cat:'glúteos',vt:'40 seg · sostener 2 seg arriba'},
+    {nombre:'Puente a una pierna',nivel:'intermedio',cat:'glúteos',vt:'40 seg · no bajar cadera'},
+    {nombre:'Clam con banda',nivel:'básico',cat:'glúteos',vt:'40 seg · de lado · banda en muslos'},
+    {nombre:'Patada en cuadrupedia',nivel:'básico',cat:'glúteos',vt:'40 seg · cadera neutra'},
+    {nombre:'Abducción con banda de pie',nivel:'básico',cat:'glúteos',vt:'40 seg · banda en tobillo'},
   ],
 };
 
@@ -3005,13 +3163,14 @@ async function confirmarClone(){
 
 function renderEjerciciosModal(){
   const cont=document.getElementById('mcl-ejercicios');
-  if(!_claseEjs.length){cont.innerHTML=`<div style="font-size:12px;color:var(--tm);padding:.5rem 0;">Sin ejercicios. Hacé clic en "+ Agregar".</div>`;return;}
+  if(!_claseEjs.length){cont.innerHTML=`<div style="font-size:12px;color:var(--tm);padding:.5rem 0;">Sin ejercicios. Hacé clic en "+ Agregar" o "📚 Biblioteca".</div>`;return;}
   cont.innerHTML=_claseEjs.map((e,i)=>`<div class="ej-row">
     <div class="ej-num">${i+1}</div>
     <div class="ej-body" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
       <input value="${e.nombre||''}" placeholder="Ejercicio" oninput="_claseEjs[${i}].nombre=this.value" style="margin:0;font-size:12px;">
       <input value="${e.vt||''}" placeholder="VT (variante, opcional)" oninput="_claseEjs[${i}].vt=this.value" style="margin:0;font-size:12px;">
     </div>
+    <button onclick="openBiblioteca(${i})" title="Cambiar por otro de la biblioteca" style="background:none;border:1px solid var(--bm);border-radius:var(--rs);padding:2px 5px;font-size:11px;color:var(--tm);cursor:pointer;flex-shrink:0;white-space:nowrap;">🔄</button>
     <div style="display:flex;flex-direction:column;gap:1px;margin-right:2px;">
       <button onclick="moveEj(${i},-1)" ${i===0?'disabled':''} style="background:none;border:1px solid var(--b);border-radius:4px;width:20px;height:20px;cursor:pointer;font-size:10px;color:var(--tm);padding:0;line-height:1;">↑</button>
       <button onclick="moveEj(${i},1)" ${i===_claseEjs.length-1?'disabled':''} style="background:none;border:1px solid var(--b);border-radius:4px;width:20px;height:20px;cursor:pointer;font-size:10px;color:var(--tm);padding:0;line-height:1;">↓</button>
@@ -3019,6 +3178,79 @@ function renderEjerciciosModal(){
     <button class="ej-del" onclick="removeEj(${i})">✕</button>
   </div>`).join('');
 }
+// ─── BIBLIOTECA DE EJERCICIOS ────────────────────────────
+const CAT_LABELS_BIB={core:'Core',columna:'Columna',lateral:'Lateral',piernas:'Piernas',glúteos:'Glúteos',espalda:'Espalda',footwork:'Footwork',cadera:'Cadera',brazos:'Brazos',pecho:'Pecho',hombros:'Hombros',cardio:'Cardio'};
+const NIVEL_COLOR={básico:'var(--mat)',intermedio:'var(--fun)',avanzado:'var(--ref)'};
+const NIVEL_BG={básico:'var(--matl)',intermedio:'var(--funl)',avanzado:'var(--refl)'};
+
+let _bibMod='mat';
+let _bibSwapIdx=null;
+let _bibCatFiltro=null;
+let _bibNivelFiltro=null;
+
+function openBiblioteca(swapIdx){
+  const horId=parseInt(document.getElementById('mcl-horario')?.value);
+  const hor=DB.horarios.find(h=>h.id===horId);
+  _bibMod=hor?.modalidad||'mat';
+  _bibSwapIdx=(swapIdx===undefined||swapIdx===null)?null:swapIdx;
+  _bibCatFiltro=null;_bibNivelFiltro=null;
+  document.getElementById('bib-title').textContent=`📚 Biblioteca · ${MOD_LABEL[_bibMod]||_bibMod}`;
+  document.getElementById('bib-subtitle').textContent=_bibSwapIdx!==null
+    ?`Elegí el ejercicio con el que reemplazás el N°${_bibSwapIdx+1}`
+    :'Seleccioná un ejercicio para agregarlo a la clase.';
+  renderBibCats();
+  renderBibList();
+  document.getElementById('modal-biblioteca').style.display='flex';
+}
+function closeBiblioteca(){document.getElementById('modal-biblioteca').style.display='none';}
+
+function renderBibCats(){
+  const ejercs=BIBLIOTECA_EJS[_bibMod]||[];
+  const cats=[...new Set(ejercs.map(e=>e.cat))];
+  document.getElementById('bib-cats').innerHTML=
+    `<button class="btn btn-s ${!_bibCatFiltro?'btn-p':''}" onclick="filtrarBibCat(null)">Todos</button>`+
+    cats.map(c=>`<button class="btn btn-s ${_bibCatFiltro===c?'btn-p':''}" onclick="filtrarBibCat('${c}')">${CAT_LABELS_BIB[c]||c}</button>`).join('');
+}
+function filtrarBibCat(cat){_bibCatFiltro=cat;renderBibCats();renderBibList();}
+function filtrarBibNivel(nivel){
+  _bibNivelFiltro=nivel;
+  ['all','bas','int','avz'].forEach(k=>{
+    const el=document.getElementById('bib-n-'+k);
+    if(el){el.className='btn btn-s';el.style.background='';el.style.color='';el.style.borderColor='';}
+  });
+  const activeId=nivel===null?'all':nivel==='básico'?'bas':nivel==='intermedio'?'int':'avz';
+  const activeEl=document.getElementById('bib-n-'+activeId);
+  if(activeEl){
+    if(nivel===null){activeEl.className='btn btn-s btn-p';}
+    else{activeEl.style.background=NIVEL_BG[nivel];activeEl.style.color=NIVEL_COLOR[nivel];activeEl.style.borderColor=NIVEL_COLOR[nivel];activeEl.style.fontWeight='700';}
+  }
+  renderBibList();
+}
+function renderBibList(){
+  let ejercs=BIBLIOTECA_EJS[_bibMod]||[];
+  if(_bibCatFiltro) ejercs=ejercs.filter(e=>e.cat===_bibCatFiltro);
+  if(_bibNivelFiltro) ejercs=ejercs.filter(e=>e.nivel===_bibNivelFiltro);
+  document.getElementById('bib-list').innerHTML=ejercs.length
+    ?ejercs.map(e=>`<div class="banco-card" onclick="elegirDeBiblioteca(${JSON.stringify(e.nombre)},${JSON.stringify(e.vt||'')})">
+        <div style="margin-bottom:4px;"><span style="font-size:10px;font-weight:700;background:${NIVEL_BG[e.nivel]};color:${NIVEL_COLOR[e.nivel]};padding:1px 6px;border-radius:99px;text-transform:uppercase;">${e.nivel}</span></div>
+        <div class="banco-card-title">${e.nombre}</div>
+        ${e.vt?`<div class="banco-card-sub">${e.vt}</div>`:''}
+      </div>`).join('')
+    :`<div style="font-size:13px;color:var(--tm);padding:.5rem;">Sin ejercicios para estos filtros.</div>`;
+}
+function elegirDeBiblioteca(nombre,vt){
+  if(_bibSwapIdx!==null){
+    _claseEjs[_bibSwapIdx]={nombre,vt,orden:_bibSwapIdx+1};
+    showMsg('✓ Ejercicio reemplazado');
+  }else{
+    _claseEjs.push({nombre,vt,orden:_claseEjs.length+1});
+    showMsg('✓ Ejercicio agregado');
+  }
+  renderEjerciciosModal();
+  closeBiblioteca();
+}
+// ─── FIN BIBLIOTECA ──────────────────────────────────────
+
 function moveEj(i, dir){
   const j = i + dir;
   if(j < 0 || j >= _claseEjs.length) return;
