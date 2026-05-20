@@ -1986,7 +1986,7 @@ function render(){
   else if(currentPage==='historial')m.innerHTML=warn+rHistorial();
   else if(currentPage==='pagos')m.innerHTML=warn+rPagos();
   else if(currentPage==='ficha')m.innerHTML=rFicha();
-  else if(currentPage==='biblioteca')m.innerHTML=warn+rBibliotecaAdmin();
+  else if(currentPage==='biblioteca'){m.innerHTML=warn+rBibliotecaAdmin();renderBibAdminGrid();}
 }
 
 // ─── HELPERS ────────────────────────────────────────────
@@ -3581,7 +3581,8 @@ let _bibCatFiltro=null;
 let _bibNivelFiltro=null;
 
 function getBibEjs(mod){
-  const defaults=BIBLIOTECA_EJS[mod]||[];
+  const hidden=new Set((DB.config.biblioteca_hidden||{})[mod]||[]);
+  const defaults=(BIBLIOTECA_EJS[mod]||[]).filter(e=>!hidden.has(e.nombre));
   const custom=(DB.config.biblioteca_custom||{})[mod]||[];
   return [...defaults,...custom];
 }
@@ -4089,52 +4090,111 @@ async function deleteBancoTarjeta(id){
 // ─── BIBLIOTECA ADMIN ────────────────────────────────────
 let _bibAdminMod='mat';
 let _bibAdminEditId=null;
+let _bibAdminOrigNombre=null;
+let _bibAdminSearch='';
+let _bibAdminCatFil='';
+let _bibAdminNivelFil='';
 
 function renderBibAdminPage(){
   document.getElementById('main').innerHTML=rBibliotecaAdmin();
 }
 
 function rBibliotecaAdmin(){
+  const allMods=['mat','reformer','funcional'];
+  const modTabs=allMods.map(m=>{
+    const tot=getBibEjs(m).length;
+    return`<button class="btn btn-s ${_bibAdminMod===m?'btn-p':''}" onclick="_bibAdminMod='${m}';_bibAdminSearch='';_bibAdminCatFil='';_bibAdminNivelFil='';renderBibAdminPage();" style="display:flex;flex-direction:column;align-items:center;gap:1px;padding:.4rem .9rem;">
+      <span style="font-size:13px;font-weight:700;">${MOD_LABEL[m]||m}</span>
+      <span style="font-size:10px;opacity:.7;">${tot} ejs</span>
+    </button>`;
+  }).join('');
+
+  const allEjs=getBibEjs(_bibAdminMod);
+  const custom=DB.config.biblioteca_custom||{};
+  const customIds=new Set((custom[_bibAdminMod]||[]).map(e=>e.id));
+
+  const cats=[...new Set(allEjs.map(e=>e.cat).filter(Boolean))];
+  const catOpts=cats.map(c=>`<option value="${c}">${CAT_LABELS_BIB[c]||c}</option>`).join('');
+
+  return`<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:1.25rem;">
+    <div class="ptitle" style="margin-bottom:0;">📚 Biblioteca de ejercicios</div>
+    <button class="btn btn-p" onclick="openBibAdmin(null)" style="white-space:nowrap;">＋ Nuevo ejercicio</button>
+  </div>
+  <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1.25rem;">${modTabs}</div>
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center;">
+    <input id="ba-search" type="search" placeholder="🔍 Buscar ejercicio..." value="${_bibAdminSearch}"
+      oninput="_bibAdminSearch=this.value;renderBibAdminGrid();"
+      style="flex:1;min-width:180px;padding:.45rem .75rem;border:1.5px solid var(--b);border-radius:var(--r);background:var(--s1);color:var(--t);font-size:13px;">
+    <select id="ba-cat-fil" onchange="_bibAdminCatFil=this.value;renderBibAdminGrid();"
+      style="padding:.45rem .75rem;border:1.5px solid var(--b);border-radius:var(--r);background:var(--s1);color:var(--t);font-size:13px;">
+      <option value="">Todas las categorías</option>${catOpts}
+    </select>
+    <select id="ba-nivel-fil" onchange="_bibAdminNivelFil=this.value;renderBibAdminGrid();"
+      style="padding:.45rem .75rem;border:1.5px solid var(--b);border-radius:var(--r);background:var(--s1);color:var(--t);font-size:13px;">
+      <option value="">Todos los niveles</option>
+      <option value="básico">Básico</option>
+      <option value="intermedio">Intermedio</option>
+      <option value="avanzado">Avanzado</option>
+    </select>
+  </div>
+  <div id="bib-admin-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;"></div>`;
+}
+
+function renderBibAdminGrid(){
+  const grid=document.getElementById('bib-admin-grid');
+  if(!grid)return;
   const custom=DB.config.biblioteca_custom||{};
   const customMod=custom[_bibAdminMod]||[];
-  const defaultEjs=BIBLIOTECA_EJS[_bibAdminMod]||[];
+  const customIds=new Set(customMod.map(e=>e.id));
+  let ejs=getBibEjs(_bibAdminMod);
+  const q=_bibAdminSearch.toLowerCase().trim();
+  if(q) ejs=ejs.filter(e=>e.nombre.toLowerCase().includes(q)||(e.vt||'').toLowerCase().includes(q)||(e.cat||'').toLowerCase().includes(q));
+  if(_bibAdminCatFil) ejs=ejs.filter(e=>e.cat===_bibAdminCatFil);
+  if(_bibAdminNivelFil) ejs=ejs.filter(e=>e.nivel===_bibAdminNivelFil);
 
-  const modTabs=['mat','reformer','funcional'].map(m=>
-    `<button class="btn btn-s ${_bibAdminMod===m?'btn-p':''}" onclick="_bibAdminMod='${m}';renderBibAdminPage();">${MOD_LABEL[m]||m}</button>`
-  ).join('');
+  if(!ejs.length){
+    grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:2.5rem;color:var(--tm);font-size:14px;">Sin ejercicios para estos filtros.</div>`;
+    return;
+  }
 
-  const renderRow=(e,isCustom)=>`
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--b);">
-      <span style="font-size:10px;font-weight:700;background:${NIVEL_BG[e.nivel]||'var(--s2)'};color:${NIVEL_COLOR[e.nivel]||'var(--tm)'};padding:1px 7px;border-radius:99px;text-transform:uppercase;flex-shrink:0;">${e.nivel||''}</span>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(e.nombre)}</div>
-        ${e.vt?`<div style="font-size:11px;color:var(--tm);">${esc(e.vt)}</div>`:''}
+  grid.innerHTML=ejs.map(e=>{
+    const isCustom=!!e.id&&customIds.has(e.id);
+    const leftBorder=isCustom?'var(--fun)':'var(--b)';
+    const editBtn=isCustom
+      ?`onclick="openBibAdmin('${e.id}')"`
+      :`onclick="openBibAdminPredeterminado(${JSON.stringify(e.nombre)})"`;
+    const delBtn=isCustom
+      ?`onclick="deleteCustomEj('${e.id}')"`
+      :`onclick="deletePredeterminado(${JSON.stringify(e.nombre)})"`;
+    return`<div style="background:var(--s);border:1.5px solid var(--b);border-left:3px solid ${leftBorder};border-radius:var(--r);padding:1rem;display:flex;flex-direction:column;gap:.5rem;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+        <div style="font-size:14px;font-weight:700;line-height:1.3;flex:1;">${esc(e.nombre)}</div>
+        <span style="font-size:10px;font-weight:700;background:${NIVEL_BG[e.nivel]||'var(--s2)'};color:${NIVEL_COLOR[e.nivel]||'var(--tm)'};padding:2px 8px;border-radius:99px;text-transform:uppercase;white-space:nowrap;flex-shrink:0;">${e.nivel||''}</span>
       </div>
-      <span style="font-size:10px;color:var(--tm);background:var(--s2);border-radius:99px;padding:1px 7px;flex-shrink:0;">${CAT_LABELS_BIB[e.cat]||e.cat||''}</span>
-      ${isCustom?`
-        <button onclick="openBibAdmin('${e.id}')" style="background:none;border:1px solid var(--b);border-radius:var(--rs);padding:2px 6px;cursor:pointer;font-size:12px;">✏️</button>
-        <button onclick="deleteCustomEj('${e.id}')" style="background:none;border:1px solid var(--b);border-radius:var(--rs);padding:2px 6px;cursor:pointer;font-size:12px;color:var(--rd);">🗑️</button>
-      `:`<span style="font-size:10px;color:var(--th);">base</span>`}
+      <div style="display:flex;gap:5px;flex-wrap:wrap;">
+        <span style="font-size:11px;background:var(--vl);color:var(--v);padding:1px 8px;border-radius:99px;">${CAT_LABELS_BIB[e.cat]||e.cat||''}</span>
+        ${isCustom?`<span style="font-size:11px;background:var(--funl);color:var(--fun);padding:1px 8px;border-radius:99px;">Propio</span>`:''}
+      </div>
+      ${e.vt?`<div style="font-size:12px;color:var(--tm);line-height:1.4;">${esc(e.vt)}</div>`:''}
+      <div style="display:flex;gap:6px;margin-top:auto;padding-top:.65rem;border-top:1px solid var(--b);">
+        <button ${editBtn} style="flex:1;padding:.35rem;font-size:12px;background:none;border:1px solid var(--b);border-radius:var(--rs);cursor:pointer;color:var(--t);">✏️ Editar</button>
+        <button ${delBtn} style="flex:1;padding:.35rem;font-size:12px;background:none;border:1px solid #fecaca;border-radius:var(--rs);cursor:pointer;color:var(--rd);">🗑️ Eliminar</button>
+      </div>
     </div>`;
-
-  return`<div class="ptitle">📚 Biblioteca de ejercicios</div>
-  <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1rem;">${modTabs}</div>
-  <button class="btn btn-p" onclick="openBibAdmin(null)" style="width:100%;margin-bottom:1rem;">＋ Nuevo ejercicio de ${MOD_LABEL[_bibAdminMod]||_bibAdminMod}</button>
-  ${customMod.length?`<div style="font-size:11px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">Mis ejercicios (${customMod.length})</div>
-  <div style="margin-bottom:1rem;">${customMod.map(e=>renderRow(e,true)).join('')}</div>`:''}
-  <div style="font-size:11px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">Ejercicios predeterminados (${defaultEjs.length})</div>
-  <div>${defaultEjs.map(e=>renderRow(e,false)).join('')}</div>`;
+  }).join('');
 }
 
 function openBibAdmin(customId){
   _bibAdminEditId=customId||null;
+  _bibAdminOrigNombre=null;
   const custom=DB.config.biblioteca_custom||{};
   if(customId){
     let found=null;
-    for(const arr of Object.values(custom)){found=(arr||[]).find(e=>e.id===customId);if(found)break;}
+    let foundMod=_bibAdminMod;
+    for(const m of Object.keys(custom)){const arr=custom[m]||[];const f=arr.find(e=>e.id===customId);if(f){found=f;foundMod=m;break;}}
     if(!found)return;
     document.getElementById('ba-title').textContent='Editar ejercicio';
-    document.getElementById('ba-mod').value=Object.keys(custom).find(m=>(custom[m]||[]).some(e=>e.id===customId))||'mat';
+    document.getElementById('ba-mod').value=foundMod;
     document.getElementById('ba-nivel').value=found.nivel||'básico';
     document.getElementById('ba-cat').value=found.cat||'core';
     document.getElementById('ba-nombre').value=found.nombre||'';
@@ -4151,6 +4211,21 @@ function openBibAdmin(customId){
   document.getElementById('modal-bib-admin').style.display='flex';
 }
 
+function openBibAdminPredeterminado(nombre){
+  const ej=(BIBLIOTECA_EJS[_bibAdminMod]||[]).find(e=>e.nombre===nombre);
+  if(!ej)return;
+  _bibAdminEditId=null;
+  _bibAdminOrigNombre=nombre;
+  document.getElementById('ba-title').textContent='Editar ejercicio predeterminado';
+  document.getElementById('ba-mod').value=_bibAdminMod;
+  document.getElementById('ba-nivel').value=ej.nivel||'básico';
+  document.getElementById('ba-cat').value=ej.cat||'core';
+  document.getElementById('ba-nombre').value=ej.nombre;
+  document.getElementById('ba-vt').value=ej.vt||'';
+  document.getElementById('ba-err').textContent='';
+  document.getElementById('modal-bib-admin').style.display='flex';
+}
+
 function closeBibAdmin(){document.getElementById('modal-bib-admin').style.display='none';}
 
 async function saveBibAdmin(){
@@ -4161,8 +4236,9 @@ async function saveBibAdmin(){
   const vt=document.getElementById('ba-vt').value.trim();
   const err=document.getElementById('ba-err');
   if(!nombre){err.textContent='El nombre es requerido.';return;}
-  if(!DB.config.biblioteca_custom) DB.config.biblioteca_custom={};
-  if(!DB.config.biblioteca_custom[mod]) DB.config.biblioteca_custom[mod]=[];
+  if(!DB.config.biblioteca_custom)DB.config.biblioteca_custom={};
+  if(!DB.config.biblioteca_custom[mod])DB.config.biblioteca_custom[mod]=[];
+  // Remove previous version (edit or predeterminado override)
   if(_bibAdminEditId){
     for(const m of Object.keys(DB.config.biblioteca_custom)){
       const arr=DB.config.biblioteca_custom[m]||[];
@@ -4170,17 +4246,26 @@ async function saveBibAdmin(){
       if(idx>=0){arr.splice(idx,1);break;}
     }
   }
+  if(_bibAdminOrigNombre){
+    // Hide the predefined original
+    if(!DB.config.biblioteca_hidden)DB.config.biblioteca_hidden={};
+    if(!DB.config.biblioteca_hidden[mod])DB.config.biblioteca_hidden[mod]=[];
+    if(!DB.config.biblioteca_hidden[mod].includes(_bibAdminOrigNombre))
+      DB.config.biblioteca_hidden[mod].push(_bibAdminOrigNombre);
+    await sb.rpc('triskel_save_configuracion',{p_key:'biblioteca_hidden',p_value:DB.config.biblioteca_hidden});
+  }
   const newEj={id:_bibAdminEditId||Date.now().toString(),nombre,nivel,cat,vt};
   DB.config.biblioteca_custom[mod].push(newEj);
   await sb.rpc('triskel_save_configuracion',{p_key:'biblioteca_custom',p_value:DB.config.biblioteca_custom});
   closeBibAdmin();
   _bibAdminMod=mod;
   renderBibAdminPage();
+  setTimeout(renderBibAdminGrid,0);
   showMsg('✓ Ejercicio guardado');
 }
 
 async function deleteCustomEj(id){
-  if(!confirm('¿Eliminar este ejercicio?'))return;
+  if(!confirm('¿Eliminar este ejercicio propio?'))return;
   const custom=DB.config.biblioteca_custom||{};
   for(const m of Object.keys(custom)){
     const arr=custom[m]||[];
@@ -4188,8 +4273,19 @@ async function deleteCustomEj(id){
     if(idx>=0){arr.splice(idx,1);break;}
   }
   await sb.rpc('triskel_save_configuracion',{p_key:'biblioteca_custom',p_value:custom});
-  renderBibAdminPage();
+  renderBibAdminGrid();
   showMsg('✓ Ejercicio eliminado');
+}
+
+async function deletePredeterminado(nombre){
+  if(!confirm(`¿Ocultar "${nombre}"?\n\nEl ejercicio predeterminado quedará oculto en esta biblioteca.`))return;
+  if(!DB.config.biblioteca_hidden)DB.config.biblioteca_hidden={};
+  if(!DB.config.biblioteca_hidden[_bibAdminMod])DB.config.biblioteca_hidden[_bibAdminMod]=[];
+  if(!DB.config.biblioteca_hidden[_bibAdminMod].includes(nombre))
+    DB.config.biblioteca_hidden[_bibAdminMod].push(nombre);
+  await sb.rpc('triskel_save_configuracion',{p_key:'biblioteca_hidden',p_value:DB.config.biblioteca_hidden});
+  renderBibAdminGrid();
+  showMsg('✓ Ejercicio ocultado');
 }
 
 // ─── MODO CLASE ──────────────────────────────────────────
