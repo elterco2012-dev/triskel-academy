@@ -501,17 +501,24 @@
   </div>
 </div>
 
-<!-- MODAL RESUMEN MENSUAL -->
+<!-- MODAL INFORME MENSUAL -->
 <div class="modal-bg" id="modal-resumen" style="display:none" onclick="if(event.target===this)closeResumenMes()">
-  <div class="modal" style="max-width:480px;">
-    <h3>Resumen mensual</h3>
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:1rem;">
-      <input type="month" id="res-mes" onchange="generarResumen()" style="margin:0;flex:1;">
-      <button class="btn btn-p" onclick="copiarResumen()">📋 Copiar</button>
+  <div class="modal" style="max-width:520px;">
+    <!-- Header con navegación de mes -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:1.25rem;">
+      <button onclick="navMesInforme(-1)" class="btn btn-s" style="padding:4px 10px;font-size:16px;">‹</button>
+      <input type="month" id="res-mes" onchange="generarResumen()" style="margin:0;flex:1;text-align:center;font-weight:600;font-size:14px;">
+      <button onclick="navMesInforme(1)" class="btn btn-s" style="padding:4px 10px;font-size:16px;">›</button>
     </div>
-    <pre id="res-output" style="background:var(--s2);border-radius:var(--rs);padding:.75rem;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word;max-height:360px;overflow-y:auto;font-family:'DM Sans',sans-serif;"></pre>
-    <div style="display:flex;justify-content:flex-end;margin-top:.75rem;">
-      <button class="btn" onclick="closeResumenMes()">Cerrar</button>
+
+    <!-- Contenido visual del informe -->
+    <div id="res-visual"></div>
+
+    <!-- Botones de exportación -->
+    <div style="display:flex;gap:8px;margin-top:1rem;">
+      <button class="btn" style="flex:1;" onclick="copiarResumen()">📋 Copiar texto</button>
+      <button class="btn" style="flex:1;background:#25D366;color:#fff;border-color:#25D366;" onclick="compartirResumenWA()">📲 WhatsApp</button>
+      <button class="btn" onclick="closeResumenMes()" style="flex:0 0 auto;">Cerrar</button>
     </div>
   </div>
 </div>
@@ -2056,45 +2063,122 @@ async function deleteObs(id){
 }
 
 // ─── RESUMEN MENSUAL ─────────────────────────────────────
-function openResumenMes(){
-  const mes=document.getElementById('pag-mes')?.value||new Date().toISOString().slice(0,7);
-  document.getElementById('res-mes').value=mes;
+function openResumenMes(mes){
+  const m=mes||document.getElementById('pag-mes')?.value||new Date().toISOString().slice(0,7);
+  document.getElementById('res-mes').value=m;
   generarResumen();
   document.getElementById('modal-resumen').style.display='flex';
 }
 function closeResumenMes(){document.getElementById('modal-resumen').style.display='none';}
+function navMesInforme(dir){
+  const el=document.getElementById('res-mes');
+  const[y,m]=el.value.split('-').map(Number);
+  const d=new Date(y,m-1+dir,1);
+  el.value=d.toISOString().slice(0,7);
+  generarResumen();
+}
+
 function generarResumen(){
   const mes=document.getElementById('res-mes').value;
+  if(!mes)return;
+  const activas=DB.alumnas.filter(a=>a.estado==='activa');
   const pagosDelMes=DB.pagos.filter(p=>p.mes===mes);
   const pagados=pagosDelMes.filter(p=>p.pagado);
-  const pendientes=pagosDelMes.filter(p=>!p.pagado);
   const total=pagados.reduce((s,p)=>s+(p.monto||0),0);
   const clasesDelMes=DB.clases.filter(c=>c.fecha&&c.fecha.startsWith(mes));
   const alumnasPagaron=[...new Set(pagados.map(p=>p.alumna_id))].map(id=>alumnaById(id)).filter(Boolean);
-  const alumnasPendientes=[...new Set(pendientes.map(p=>p.alumna_id))].map(id=>alumnaById(id)).filter(Boolean);
+  const idsPagaron=new Set(alumnasPagaron.map(a=>a.id));
+  const alumnasPendientes=activas.filter(a=>!idsPagaron.has(a.id));
+  const nuevas=DB.alumnas.filter(a=>a.created_at&&a.created_at.slice(0,7)===mes);
+  const ausenciasMes=(DB.ausencias||[]).filter(a=>a.fecha&&a.fecha.slice(0,7)===mes);
 
-  // Desglose por medio de pago
+  // Desglose por medio
   const byMedio={transferencia:0,efectivo:0,otro:0};
   pagados.forEach(p=>{const m=parseMedioPago(p.nota);if(m==='transferencia')byMedio.transferencia+=p.monto||0;else if(m==='efectivo')byMedio.efectivo+=p.monto||0;else byMedio.otro+=p.monto||0;});
+  const pctTransf=total?Math.round(byMedio.transferencia/total*100):0;
+  const pctEfect=total?Math.round(byMedio.efectivo/total*100):0;
+
+  // ── Visual ────────────────────────────────────────────
+  const seccion=(ico,titulo,contenido)=>`
+    <div style="margin-bottom:.85rem;">
+      <div style="font-size:11px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">${ico} ${titulo}</div>
+      ${contenido}
+    </div>`;
+
+  const barrita=(pct,color)=>`<div style="height:6px;border-radius:3px;background:var(--s2);margin-top:3px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${color};border-radius:3px;"></div></div>`;
+
+  const recaudacionHtml=`
+    <div style="font-size:2rem;font-weight:800;color:var(--t);line-height:1;">$${total.toLocaleString('es-AR')}</div>
+    <div style="font-size:11px;color:var(--tm);margin-bottom:.6rem;">${alumnasPagaron.length} de ${activas.length} alumnas activas</div>
+    ${byMedio.transferencia||byMedio.efectivo?`
+    <div style="display:grid;grid-template-columns:1fr 1fr ${byMedio.otro?'1fr':''};gap:8px;margin-top:.5rem;">
+      ${byMedio.transferencia?`<div style="background:var(--refl);border-radius:var(--rs);padding:.5rem .65rem;">
+        <div style="font-size:10px;color:var(--ref);font-weight:700;">🏦 Transferencia</div>
+        <div style="font-size:13px;font-weight:700;margin-top:2px;">$${byMedio.transferencia.toLocaleString('es-AR')}</div>
+        ${barrita(pctTransf,'var(--ref)')}
+        <div style="font-size:10px;color:var(--ref);margin-top:2px;">${pctTransf}%</div>
+      </div>`:''}
+      ${byMedio.efectivo?`<div style="background:var(--matl);border-radius:var(--rs);padding:.5rem .65rem;">
+        <div style="font-size:10px;color:var(--mat);font-weight:700;">💵 Efectivo</div>
+        <div style="font-size:13px;font-weight:700;margin-top:2px;">$${byMedio.efectivo.toLocaleString('es-AR')}</div>
+        ${barrita(pctEfect,'var(--mat)')}
+        <div style="font-size:10px;color:var(--mat);margin-top:2px;">${pctEfect}%</div>
+      </div>`:''}
+      ${byMedio.otro?`<div style="background:var(--s2);border-radius:var(--rs);padding:.5rem .65rem;">
+        <div style="font-size:10px;color:var(--tm);font-weight:700;">📋 Sin medio</div>
+        <div style="font-size:13px;font-weight:700;margin-top:2px;">$${byMedio.otro.toLocaleString('es-AR')}</div>
+      </div>`:''}
+    </div>`:''}`;
+
+  const pagaronHtml=alumnasPagaron.length
+    ?alumnasPagaron.map(a=>`<span style="display:inline-block;font-size:12px;background:var(--matl);color:var(--mat);border-radius:99px;padding:2px 10px;margin:2px;">${a.nombre} ${a.apellido||''}</span>`).join('')
+    :`<span style="font-size:12px;color:var(--th);">Ninguna aún</span>`;
+
+  const pendientesHtml=alumnasPendientes.length
+    ?alumnasPendientes.map(a=>`<span style="display:inline-block;font-size:12px;background:#fee2e2;color:#dc2626;border-radius:99px;padding:2px 10px;margin:2px;">${a.nombre} ${a.apellido||''}</span>`).join('')
+    :`<span style="font-size:12px;color:var(--mat);">✓ Todas pagaron</span>`;
+
+  const actividadHtml=`
+    <div style="display:flex;gap:16px;flex-wrap:wrap;">
+      <div><span style="font-size:1.3rem;font-weight:700;color:var(--v);">${clasesDelMes.length}</span> <span style="font-size:12px;color:var(--tm);">clases dadas</span></div>
+      ${ausenciasMes.length?`<div><span style="font-size:1.3rem;font-weight:700;color:var(--fun);">${ausenciasMes.length}</span> <span style="font-size:12px;color:var(--tm);">ausencias avisadas</span></div>`:''}
+      ${nuevas.length?`<div><span style="font-size:1.3rem;font-weight:700;color:var(--mat);">${nuevas.length}</span> <span style="font-size:12px;color:var(--tm);">alumna${nuevas.length!==1?'s':''} nueva${nuevas.length!==1?'s':''} 🎉</span></div>`:''}
+    </div>
+    ${ausenciasMes.length?`<div style="margin-top:.5rem;font-size:11px;color:var(--tm);">${ausenciasMes.map(a=>`${a.alumna_nombre||''} (${a.modalidad||'?'} · ${a.fecha?.slice(5)||''}${a.motivo?' · '+a.motivo:''})`).join(' · ')}</div>`:''}`;
+
+  document.getElementById('res-visual').innerHTML=
+    `<div style="border-bottom:1px solid var(--b);padding-bottom:.85rem;margin-bottom:.85rem;">${recaudacionHtml}</div>`+
+    seccion('✅',`Pagaron (${alumnasPagaron.length})`,pagaronHtml)+
+    (alumnasPendientes.length?seccion('⏳',`Pendientes (${alumnasPendientes.length})`,pendientesHtml):'')+
+    seccion('📋','Actividad del mes',actividadHtml);
+
+  // ── Texto para copiar/WA ──────────────────────────────
   const medioLineas=[
-    byMedio.transferencia?`   🏦 Transferencia: $${byMedio.transferencia.toLocaleString('es-AR')}`:'',
-    byMedio.efectivo?`   💵 Efectivo:       $${byMedio.efectivo.toLocaleString('es-AR')}`:'',
+    byMedio.transferencia?`   🏦 Transferencia: $${byMedio.transferencia.toLocaleString('es-AR')} (${pctTransf}%)`:'',
+    byMedio.efectivo?`   💵 Efectivo: $${byMedio.efectivo.toLocaleString('es-AR')} (${pctEfect}%)`:'',
     byMedio.otro?`   📋 Sin especificar: $${byMedio.otro.toLocaleString('es-AR')}`:'',
   ].filter(Boolean).join('\n');
-
-  const txt=`RESUMEN ${mesLabel(mes).toUpperCase()} — TRISKEL ACADEMY
+  window._resumenTxt=`📊 INFORME ${mesLabel(mes).toUpperCase()} — TRISKEL ACADEMY
 ${'─'.repeat(40)}
 💰 Total cobrado: $${total.toLocaleString('es-AR')}
 ${medioLineas}
-✅ Pagaron (${alumnasPagaron.length}): ${alumnasPagaron.map(a=>`${a.nombre} ${a.apellido||''}`).join(', ')||'—'}
-⏳ Pendientes (${alumnasPendientes.length}): ${alumnasPendientes.map(a=>`${a.nombre} ${a.apellido||''}`).join(', ')||'—'}
-📋 Clases dadas: ${clasesDelMes.length}
-${'─'.repeat(40)}`;
 
-  document.getElementById('res-output').textContent=txt;
+✅ Pagaron (${alumnasPagaron.length}/${activas.length}):
+${alumnasPagaron.map(a=>`   · ${a.nombre} ${a.apellido||''}`).join('\n')||'   —'}
+
+${alumnasPendientes.length?`⏳ Pendientes (${alumnasPendientes.length}):
+${alumnasPendientes.map(a=>`   · ${a.nombre} ${a.apellido||''}`).join('\n')}
+
+`:''}📋 Clases dadas: ${clasesDelMes.length}${ausenciasMes.length?`\n🙁 Ausencias avisadas: ${ausenciasMes.length}`:''}${nuevas.length?`\n🆕 Alumnas nuevas: ${nuevas.length}`:''}
+${'─'.repeat(40)}`;
 }
+
 function copiarResumen(){
-  navigator.clipboard.writeText(document.getElementById('res-output').textContent).then(()=>showMsg('✓ Copiado al portapapeles'));
+  navigator.clipboard.writeText(window._resumenTxt||'').then(()=>showMsg('✓ Copiado al portapapeles'));
+}
+function compartirResumenWA(){
+  const txt=encodeURIComponent(window._resumenTxt||'');
+  window.open(`https://wa.me/?text=${txt}`,'_blank');
 }
 
 // ─── VISTA DE HOY ───────────────────────────────────────
@@ -2484,6 +2568,9 @@ function rInicio(){
         </div>`;
       }).join(''):`<div style="font-size:13px;color:var(--tm);">Sin clases registradas aún.</div>`}
     </div>
+  </div>
+  <div style="margin-bottom:1rem;">
+    <button class="btn" style="width:100%;background:var(--ref);color:#fff;border-color:var(--ref);" onclick="openResumenMes()">📊 Ver informe mensual</button>
   </div>
   ${rResumenSemana()}
   ${rProyeccionMes()}
