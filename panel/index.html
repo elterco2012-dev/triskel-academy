@@ -546,7 +546,7 @@ const DIA_ORDER={lun:0,mar:1,mie:2,jue:3,vie:4};
 const MOD_LABEL={mat:'Mat',reformer:'Reformer',funcional:'Funcional'};
 const MOD_CLASS={mat:'mat',reformer:'ref',funcional:'fun'};
 
-let DB={horarios:[],alumnas:[],inscripciones:[],clases:[],pagos:[],espera:[],observaciones:[],avisos:[],config:{},banco:{}};
+let DB={horarios:[],alumnas:[],inscripciones:[],clases:[],pagos:[],espera:[],observaciones:[],avisos:[],ausencias:[],config:{},banco:{}};
 let currentPage='inicio';
 let _claseEjs=[];
 let _editClaseId=null;
@@ -1300,7 +1300,7 @@ async function loadAll(){
   DB.observaciones=data?.observaciones||[];
   console.log('DB cargado — horarios:',DB.horarios.length,'alumnas:',DB.alumnas.length);
   await loadAvisos();
-  await Promise.all([loadConfig(), loadBanco()]);
+  await Promise.all([loadConfig(), loadBanco(), loadAusencias()]);
   render();
 }
 
@@ -1340,6 +1340,19 @@ async function loadBanco(){
     const{data}=await sb.rpc('triskel_get_banco');
     if(data?.ok) DB.banco=data.data||{};
   }catch(e){console.warn('loadBanco:',e);}
+}
+
+async function loadAusencias(){
+  try{
+    const hoy=new Date();
+    const desde=new Date(hoy);desde.setDate(hoy.getDate()-1);
+    const hasta=new Date(hoy);hasta.setDate(hoy.getDate()+7);
+    const{data}=await sb.rpc('triskel_get_ausencias',{
+      p_desde:desde.toISOString().split('T')[0],
+      p_hasta:hasta.toISOString().split('T')[0]
+    });
+    DB.ausencias=data?.data||[];
+  }catch(e){DB.ausencias=[];}
 }
 
 async function loadAvisos(){
@@ -2121,6 +2134,29 @@ function openModalPagoParaAlumna(alumnaId){
 }
 
 // ─── INICIO ─────────────────────────────────────────────
+function rAusencias(){
+  if(!DB.ausencias||!DB.ausencias.length)return'';
+  const hoy=new Date().toISOString().split('T')[0];
+  const sorted=[...DB.ausencias].sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  return`<div class="card" style="border-left:4px solid var(--fun);margin-bottom:1rem;">
+    <div class="ctitle" style="color:var(--fun);">🙁 Avisos de ausencia (${sorted.length})</div>
+    ${sorted.map(a=>{
+      const nombre=[a.alumna_nombre,a.alumna_apellido].filter(Boolean).join(' ');
+      const clase=a.modalidad?`${MOD_LABEL[a.modalidad]||a.modalidad}${a.dia?' · '+DIA_LABEL[a.dia]:''}${a.hora_inicio?' '+a.hora_inicio:''}`:'';
+      const fechaD=new Date(a.fecha+'T12:00:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+      const esHoy=a.fecha===hoy;
+      return`<div style="display:flex;align-items:flex-start;gap:.75rem;padding:.5rem 0;border-bottom:1px solid var(--b);">
+        <div style="font-size:20px;flex-shrink:0;">🙁</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:600;">${nombre}${esHoy?` <span style="font-size:10px;background:var(--funl);color:var(--fun);padding:1px 6px;border-radius:99px;font-weight:700;">HOY</span>`:''}</div>
+          <div style="font-size:12px;color:var(--tm);">${clase?clase+' · ':''}${fechaD}</div>
+          ${a.motivo?`<div style="font-size:11px;color:var(--tm);font-style:italic;">"${a.motivo}"</div>`:''}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
 function rInicio(){
   const activas=DB.alumnas.filter(a=>a.estado==='activa').length;
   const mesActual=new Date().toISOString().slice(0,7);
@@ -2143,6 +2179,7 @@ function rInicio(){
   return`<div class="ptitle">Inicio</div>
   ${rCumpleanos()}
   ${rEsperaAlerta()}
+  ${rAusencias()}
   ${rRecordatorios()}
   ${rVistaHoy()}
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:.75rem;">
