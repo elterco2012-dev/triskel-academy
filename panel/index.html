@@ -235,6 +235,7 @@
       <a href="#" onclick="goTo('historial')" id="n-historial">📚 Historial</a>
       <div class="sep">Gestión</div>
       <a href="#" onclick="goTo('pagos')" id="n-pagos">💰 Pagos<span id="avisos-badge-top" style="display:none;background:var(--rd);color:#fff;font-size:10px;font-weight:700;border-radius:99px;padding:1px 5px;margin-left:3px;vertical-align:middle;"></span></a>
+      <a href="#" onclick="goTo('biblioteca')" id="n-biblioteca">📚 Biblioteca</a>
       <a href="#" onclick="openModalTarifas()">⚙ Tarifas</a>
       <a href="#" onclick="openModalMensajes()">💬 Mensajes WA</a>
     </nav>
@@ -464,14 +465,53 @@
         <input id="mbe-titulo" type="text" placeholder="Ej: Banda elástica I" style="width:100%;box-sizing:border-box;">
       </div>
       <div>
-        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Ejercicios — uno por línea · formato: <em>nombre | variante</em></label>
-        <textarea id="mbe-ejs" placeholder="Cien | 100 bombeos&#10;Roll up&#10;Piernas al techo | 8 rep c/lado" style="width:100%;height:180px;box-sizing:border-box;font-size:12px;font-family:inherit;resize:vertical;padding:8px;border:1px solid var(--b);border-radius:var(--rs);background:var(--s1);color:var(--t);"></textarea>
+        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Ejercicios</label>
+        <div id="mbe-ejs-list" style="min-height:40px;border:1px solid var(--b);border-radius:var(--rs);padding:4px;margin-bottom:6px;"></div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-s" onclick="openBiblioteca(null,'banco')" style="flex:1;">📚 De biblioteca</button>
+          <button class="btn btn-s btn-p" onclick="addBancoPlanEj()" style="flex:1;">＋ Manual</button>
+        </div>
       </div>
     </div>
     <div id="mbe-err" style="font-size:12px;color:var(--rd);margin-top:.5rem;"></div>
     <div style="display:flex;justify-content:flex-end;gap:.5rem;margin-top:.75rem;">
       <button class="btn" onclick="closeEditBanco()">Cancelar</button>
       <button class="btn btn-p" onclick="saveEditBanco()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL BLIB ADMIN (add/edit custom exercise) -->
+<div class="modal-bg" id="modal-bib-admin" style="display:none" onclick="if(event.target===this)closeBibAdmin()">
+  <div class="modal" style="max-width:440px;">
+    <h3 id="ba-title">Nuevo ejercicio</h3>
+    <div style="display:flex;flex-direction:column;gap:.6rem;">
+      <div style="display:flex;gap:.5rem;">
+        <div style="flex:1;"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Modalidad</label>
+          <select id="ba-mod" style="width:100%;padding:6px 8px;border-radius:var(--rs);border:1px solid var(--b);background:var(--s1);color:var(--t);">
+            <option value="mat">Mat</option><option value="reformer">Reformer</option><option value="funcional">Funcional</option>
+          </select></div>
+        <div style="flex:1;"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Nivel</label>
+          <select id="ba-nivel" style="width:100%;padding:6px 8px;border-radius:var(--rs);border:1px solid var(--b);background:var(--s1);color:var(--t);">
+            <option value="básico">Básico</option><option value="intermedio">Intermedio</option><option value="avanzado">Avanzado</option>
+          </select></div>
+      </div>
+      <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Categoría</label>
+        <select id="ba-cat" style="width:100%;padding:6px 8px;border-radius:var(--rs);border:1px solid var(--b);background:var(--s1);color:var(--t);">
+          <option value="core">Core</option><option value="columna">Columna</option><option value="lateral">Lateral</option>
+          <option value="glúteos">Glúteos</option><option value="piernas">Piernas</option><option value="espalda">Espalda</option>
+          <option value="footwork">Footwork</option><option value="cadera">Cadera</option><option value="brazos">Brazos</option>
+          <option value="pecho">Pecho</option><option value="hombros">Hombros</option><option value="cardio">Cardio</option>
+        </select></div>
+      <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Nombre del ejercicio</label>
+        <input id="ba-nombre" type="text" placeholder="Ej: Roll up con toalla" style="width:100%;box-sizing:border-box;"></div>
+      <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Indicaciones / variante</label>
+        <input id="ba-vt" type="text" placeholder="Ej: 6-8 rep · sin forzar cuello" style="width:100%;box-sizing:border-box;"></div>
+    </div>
+    <div id="ba-err" style="font-size:12px;color:var(--rd);margin-top:.5rem;"></div>
+    <div style="display:flex;justify-content:flex-end;gap:.5rem;margin-top:.75rem;">
+      <button class="btn" onclick="closeBibAdmin()">Cancelar</button>
+      <button class="btn btn-p" onclick="saveBibAdmin()">Guardar ejercicio</button>
     </div>
   </div>
 </div>
@@ -586,6 +626,7 @@ let _editClaseId=null;
 let _editAlumnaId=null;
 let _fichaAlumnaId=null;
 let _loadError=false;
+let _bancoPlanEjs=[];
 
 const BANCO={
   mat:[
@@ -1945,6 +1986,7 @@ function render(){
   else if(currentPage==='historial')m.innerHTML=warn+rHistorial();
   else if(currentPage==='pagos')m.innerHTML=warn+rPagos();
   else if(currentPage==='ficha')m.innerHTML=rFicha();
+  else if(currentPage==='biblioteca')m.innerHTML=warn+rBibliotecaAdmin();
 }
 
 // ─── HELPERS ────────────────────────────────────────────
@@ -3540,19 +3582,36 @@ const NIVEL_BG={básico:'var(--matl)',intermedio:'var(--funl)',avanzado:'var(--r
 
 let _bibMod='mat';
 let _bibSwapIdx=null;
+let _bibContext='clase';
 let _bibCatFiltro=null;
 let _bibNivelFiltro=null;
 
-function openBiblioteca(swapIdx){
-  const horId=parseInt(document.getElementById('mcl-horario')?.value);
-  const hor=DB.horarios.find(h=>h.id===horId);
-  _bibMod=hor?.modalidad||'mat';
+function getBibEjs(mod){
+  const defaults=BIBLIOTECA_EJS[mod]||[];
+  const custom=(DB.config.biblioteca_custom||{})[mod]||[];
+  return [...defaults,...custom];
+}
+
+function openBiblioteca(swapIdx, context){
+  _bibContext = context||'clase';
   _bibSwapIdx=(swapIdx===undefined||swapIdx===null)?null:swapIdx;
+  if(_bibContext==='banco'){
+    const modVal=document.getElementById('mbe-cat')?.value||'mat';
+    _bibMod=modVal;
+  } else {
+    const horId=parseInt(document.getElementById('mcl-horario')?.value);
+    const hor=DB.horarios.find(h=>h.id===horId);
+    _bibMod=hor?.modalidad||'mat';
+  }
   _bibCatFiltro=null;_bibNivelFiltro=null;
   document.getElementById('bib-title').textContent=`📚 Biblioteca · ${MOD_LABEL[_bibMod]||_bibMod}`;
-  document.getElementById('bib-subtitle').textContent=_bibSwapIdx!==null
-    ?`Elegí el ejercicio con el que reemplazás el N°${_bibSwapIdx+1}`
-    :'Seleccioná un ejercicio para agregarlo a la clase.';
+  if(_bibSwapIdx!==null){
+    document.getElementById('bib-subtitle').textContent=`Elegí el ejercicio con el que reemplazás el N°${_bibSwapIdx+1}`;
+  } else if(_bibContext==='banco'){
+    document.getElementById('bib-subtitle').textContent='Seleccioná ejercicios para el plan. Podés agregar varios.';
+  } else {
+    document.getElementById('bib-subtitle').textContent='Seleccioná ejercicios para agregar. Podés agregar varios.';
+  }
   renderBibCats();
   renderBibList();
   document.getElementById('modal-biblioteca').style.display='flex';
@@ -3560,7 +3619,7 @@ function openBiblioteca(swapIdx){
 function closeBiblioteca(){document.getElementById('modal-biblioteca').style.display='none';}
 
 function renderBibCats(){
-  const ejercs=BIBLIOTECA_EJS[_bibMod]||[];
+  const ejercs=getBibEjs(_bibMod);
   const cats=[...new Set(ejercs.map(e=>e.cat))];
   document.getElementById('bib-cats').innerHTML=
     `<button class="btn btn-s ${!_bibCatFiltro?'btn-p':''}" onclick="filtrarBibCat(null)">Todos</button>`+
@@ -3582,13 +3641,13 @@ function filtrarBibNivel(nivel){
   renderBibList();
 }
 function renderBibList(){
-  let ejercs=BIBLIOTECA_EJS[_bibMod]||[];
+  let ejercs=getBibEjs(_bibMod);
   if(_bibCatFiltro) ejercs=ejercs.filter(e=>e.cat===_bibCatFiltro);
   if(_bibNivelFiltro) ejercs=ejercs.filter(e=>e.nivel===_bibNivelFiltro);
   const btnLabel=_bibSwapIdx!==null?'🔄 Reemplazar':'＋ Agregar';
   document.getElementById('bib-list').innerHTML=ejercs.length
     ?ejercs.map(e=>`<div class="banco-card" style="display:flex;flex-direction:column;gap:5px;" onclick="elegirDeBiblioteca(${JSON.stringify(e.nombre)},${JSON.stringify(e.vt||'')})">
-        <div><span style="font-size:10px;font-weight:700;background:${NIVEL_BG[e.nivel]};color:${NIVEL_COLOR[e.nivel]};padding:1px 6px;border-radius:99px;text-transform:uppercase;">${e.nivel}</span></div>
+        <div><span style="font-size:10px;font-weight:700;background:${NIVEL_BG[e.nivel]||'var(--s2)'};color:${NIVEL_COLOR[e.nivel]||'var(--tm)'};padding:1px 6px;border-radius:99px;text-transform:uppercase;">${e.nivel||''}</span></div>
         <div class="banco-card-title">${e.nombre}</div>
         ${e.vt?`<div class="banco-card-sub">${e.vt}</div>`:''}
         <div style="margin-top:2px;"><span style="display:inline-block;font-size:11px;font-weight:700;color:var(--v);background:var(--vl);border-radius:99px;padding:2px 10px;">${btnLabel}</span></div>
@@ -3598,13 +3657,22 @@ function renderBibList(){
 function elegirDeBiblioteca(nombre,vt){
   if(_bibSwapIdx!==null){
     _claseEjs[_bibSwapIdx]={nombre,vt,orden:_bibSwapIdx+1};
-    showMsg('✓ Ejercicio reemplazado');
-  }else{
+    renderEjerciciosModal();
+    closeBiblioteca();
+    showMsg('✓ reemplazado');
+  } else if(_bibContext==='banco'){
+    _bancoPlanEjs.push({nombre,vt,orden:0});
+    renderBancoPlanEjs();
+    const count=_bancoPlanEjs.filter(e=>e.nombre.trim()).length;
+    document.getElementById('bib-subtitle').textContent=`✓ ${count} ejercicio${count!==1?'s':''} en el plan. Seguí eligiendo o cerrá.`;
+    showMsg('✓ Ejercicio agregado al plan');
+  } else {
     _claseEjs.push({nombre,vt,orden:_claseEjs.length+1});
+    renderEjerciciosModal();
+    const count=_claseEjs.length;
+    document.getElementById('bib-subtitle').textContent=`✓ ${count} ejercicio${count!==1?'s':''} en la clase. Seguí eligiendo o cerrá.`;
     showMsg('✓ Ejercicio agregado');
   }
-  renderEjerciciosModal();
-  closeBiblioteca();
 }
 // ─── FIN BIBLIOTECA ──────────────────────────────────────
 
@@ -3961,21 +4029,52 @@ function openEditBanco(id){
       if(found)break;
     }
     document.getElementById('mbe-titulo').value=found?.titulo||'';
-    document.getElementById('mbe-ejs').value=(found?.ejs||[]).map(e=>e.vt?`${e.nombre} | ${e.vt}`:e.nombre).join('\n');
+    _bancoPlanEjs=(found?.ejs||[]).map(e=>({nombre:e.nombre||'',vt:e.vt||''}));
   } else {
     document.getElementById('mbe-titulo').value='';
-    document.getElementById('mbe-ejs').value='';
+    _bancoPlanEjs=[];
   }
+  renderBancoPlanEjs();
   document.getElementById('modal-banco-edit').style.display='flex';
 }
 function closeEditBanco(){document.getElementById('modal-banco-edit').style.display='none';}
+
+function renderBancoPlanEjs(){
+  const cont=document.getElementById('mbe-ejs-list');
+  if(!cont)return;
+  if(!_bancoPlanEjs.length){
+    cont.innerHTML=`<div style="font-size:12px;color:var(--th);padding:.5rem;text-align:center;">Sin ejercicios. Agregá desde biblioteca o manualmente.</div>`;
+    return;
+  }
+  cont.innerHTML=_bancoPlanEjs.map((e,i)=>`
+    <div style="display:flex;align-items:center;gap:6px;padding:4px 2px;border-bottom:1px solid var(--b);">
+      <span style="color:var(--th);cursor:grab;font-size:14px;padding:0 2px;">⠿</span>
+      <input value="${e.nombre.replace(/"/g,'&quot;')}" placeholder="Nombre del ejercicio" oninput="_bancoPlanEjs[${i}].nombre=this.value" style="flex:2;margin:0;font-size:12px;padding:4px 6px;">
+      <input value="${(e.vt||'').replace(/"/g,'&quot;')}" placeholder="Indicaciones opcional" oninput="_bancoPlanEjs[${i}].vt=this.value" style="flex:3;margin:0;font-size:12px;padding:4px 6px;">
+      <button onclick="deleteBancoPlanEj(${i})" style="background:none;border:none;color:var(--th);cursor:pointer;font-size:15px;padding:0 3px;flex-shrink:0;" title="Eliminar">✕</button>
+    </div>`).join('');
+}
+
+function addBancoPlanEj(){
+  _bancoPlanEjs.push({nombre:'',vt:'',orden:0});
+  renderBancoPlanEjs();
+  setTimeout(()=>{
+    const inputs=document.querySelectorAll('#mbe-ejs-list input[placeholder="Nombre del ejercicio"]');
+    if(inputs.length)inputs[inputs.length-1].focus();
+  },50);
+}
+
+function deleteBancoPlanEj(i){
+  _bancoPlanEjs.splice(i,1);
+  renderBancoPlanEjs();
+}
+
 async function saveEditBanco(){
   const titulo=document.getElementById('mbe-titulo').value.trim();
   const cat=document.getElementById('mbe-cat').value;
-  const ejsRaw=document.getElementById('mbe-ejs').value.trim();
   const err=document.getElementById('mbe-err');
   if(!titulo){err.textContent='El título es requerido.';return;}
-  const ejs=ejsRaw?ejsRaw.split('\n').filter(l=>l.trim()).map(l=>{const pts=l.split(' | ');return{nombre:pts[0].trim(),vt:pts[1]?.trim()||''};}):[];
+  const ejs=_bancoPlanEjs.filter(e=>e.nombre.trim()).map((e,i)=>({nombre:e.nombre.trim(),vt:e.vt||'',orden:i+1}));
   const{data,error}=await rpc('triskel_save_banco_tarjeta',{p_id:_editBancoId||0,p_categoria:cat,p_titulo:titulo,p_ejs:ejs,p_orden:0});
   if(error||data?.ok===false){err.textContent='Error al guardar: '+(data?.msg||error?.message||'');return;}
   closeEditBanco();
@@ -3991,6 +4090,112 @@ async function deleteBancoTarjeta(id){
   await loadBanco();
   renderBancoList();
   showMsg('✓ Tarjeta eliminada');
+}
+
+// ─── BIBLIOTECA ADMIN ────────────────────────────────────
+let _bibAdminMod='mat';
+let _bibAdminEditId=null;
+
+function renderBibAdminPage(){
+  document.getElementById('main').innerHTML=rBibliotecaAdmin();
+}
+
+function rBibliotecaAdmin(){
+  const custom=DB.config.biblioteca_custom||{};
+  const customMod=custom[_bibAdminMod]||[];
+  const defaultEjs=BIBLIOTECA_EJS[_bibAdminMod]||[];
+
+  const modTabs=['mat','reformer','funcional'].map(m=>
+    `<button class="btn btn-s ${_bibAdminMod===m?'btn-p':''}" onclick="_bibAdminMod='${m}';renderBibAdminPage();">${MOD_LABEL[m]||m}</button>`
+  ).join('');
+
+  const renderRow=(e,isCustom)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--b);">
+      <span style="font-size:10px;font-weight:700;background:${NIVEL_BG[e.nivel]||'var(--s2)'};color:${NIVEL_COLOR[e.nivel]||'var(--tm)'};padding:1px 7px;border-radius:99px;text-transform:uppercase;flex-shrink:0;">${e.nivel||''}</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(e.nombre)}</div>
+        ${e.vt?`<div style="font-size:11px;color:var(--tm);">${esc(e.vt)}</div>`:''}
+      </div>
+      <span style="font-size:10px;color:var(--tm);background:var(--s2);border-radius:99px;padding:1px 7px;flex-shrink:0;">${CAT_LABELS_BIB[e.cat]||e.cat||''}</span>
+      ${isCustom?`
+        <button onclick="openBibAdmin('${e.id}')" style="background:none;border:1px solid var(--b);border-radius:var(--rs);padding:2px 6px;cursor:pointer;font-size:12px;">✏️</button>
+        <button onclick="deleteCustomEj('${e.id}')" style="background:none;border:1px solid var(--b);border-radius:var(--rs);padding:2px 6px;cursor:pointer;font-size:12px;color:var(--rd);">🗑️</button>
+      `:`<span style="font-size:10px;color:var(--th);">base</span>`}
+    </div>`;
+
+  return`<div class="ptitle">📚 Biblioteca de ejercicios</div>
+  <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1rem;">${modTabs}</div>
+  <button class="btn btn-p" onclick="openBibAdmin(null)" style="width:100%;margin-bottom:1rem;">＋ Nuevo ejercicio de ${MOD_LABEL[_bibAdminMod]||_bibAdminMod}</button>
+  ${customMod.length?`<div style="font-size:11px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">Mis ejercicios (${customMod.length})</div>
+  <div style="margin-bottom:1rem;">${customMod.map(e=>renderRow(e,true)).join('')}</div>`:''}
+  <div style="font-size:11px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">Ejercicios predeterminados (${defaultEjs.length})</div>
+  <div>${defaultEjs.map(e=>renderRow(e,false)).join('')}</div>`;
+}
+
+function openBibAdmin(customId){
+  _bibAdminEditId=customId||null;
+  const custom=DB.config.biblioteca_custom||{};
+  if(customId){
+    let found=null;
+    for(const arr of Object.values(custom)){found=(arr||[]).find(e=>e.id===customId);if(found)break;}
+    if(!found)return;
+    document.getElementById('ba-title').textContent='Editar ejercicio';
+    document.getElementById('ba-mod').value=Object.keys(custom).find(m=>(custom[m]||[]).some(e=>e.id===customId))||'mat';
+    document.getElementById('ba-nivel').value=found.nivel||'básico';
+    document.getElementById('ba-cat').value=found.cat||'core';
+    document.getElementById('ba-nombre').value=found.nombre||'';
+    document.getElementById('ba-vt').value=found.vt||'';
+  } else {
+    document.getElementById('ba-title').textContent='Nuevo ejercicio';
+    document.getElementById('ba-mod').value=_bibAdminMod;
+    document.getElementById('ba-nivel').value='básico';
+    document.getElementById('ba-cat').value='core';
+    document.getElementById('ba-nombre').value='';
+    document.getElementById('ba-vt').value='';
+  }
+  document.getElementById('ba-err').textContent='';
+  document.getElementById('modal-bib-admin').style.display='flex';
+}
+
+function closeBibAdmin(){document.getElementById('modal-bib-admin').style.display='none';}
+
+async function saveBibAdmin(){
+  const mod=document.getElementById('ba-mod').value;
+  const nivel=document.getElementById('ba-nivel').value;
+  const cat=document.getElementById('ba-cat').value;
+  const nombre=document.getElementById('ba-nombre').value.trim();
+  const vt=document.getElementById('ba-vt').value.trim();
+  const err=document.getElementById('ba-err');
+  if(!nombre){err.textContent='El nombre es requerido.';return;}
+  if(!DB.config.biblioteca_custom) DB.config.biblioteca_custom={};
+  if(!DB.config.biblioteca_custom[mod]) DB.config.biblioteca_custom[mod]=[];
+  if(_bibAdminEditId){
+    for(const m of Object.keys(DB.config.biblioteca_custom)){
+      const arr=DB.config.biblioteca_custom[m]||[];
+      const idx=arr.findIndex(e=>e.id===_bibAdminEditId);
+      if(idx>=0){arr.splice(idx,1);break;}
+    }
+  }
+  const newEj={id:_bibAdminEditId||Date.now().toString(),nombre,nivel,cat,vt};
+  DB.config.biblioteca_custom[mod].push(newEj);
+  await sb.rpc('triskel_save_configuracion',{p_key:'biblioteca_custom',p_value:DB.config.biblioteca_custom});
+  closeBibAdmin();
+  _bibAdminMod=mod;
+  renderBibAdminPage();
+  showMsg('✓ Ejercicio guardado');
+}
+
+async function deleteCustomEj(id){
+  if(!confirm('¿Eliminar este ejercicio?'))return;
+  const custom=DB.config.biblioteca_custom||{};
+  for(const m of Object.keys(custom)){
+    const arr=custom[m]||[];
+    const idx=arr.findIndex(e=>e.id===id);
+    if(idx>=0){arr.splice(idx,1);break;}
+  }
+  await sb.rpc('triskel_save_configuracion',{p_key:'biblioteca_custom',p_value:custom});
+  renderBibAdminPage();
+  showMsg('✓ Ejercicio eliminado');
 }
 
 // ─── MODO CLASE ──────────────────────────────────────────
