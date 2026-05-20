@@ -2421,7 +2421,7 @@ function generarResumen(){
     <div style="font-size:2rem;font-weight:800;color:var(--t);line-height:1;">$${total.toLocaleString('es-AR')}</div>
     <div style="font-size:11px;color:var(--tm);margin-bottom:.6rem;">${alumnasPagaron.length} de ${activas.length} alumnas activas</div>
     ${byMedio.transferencia||byMedio.efectivo?`
-    <div style="display:grid;grid-template-columns:1fr 1fr ${byMedio.otro?'1fr':''};gap:8px;margin-top:.5rem;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:.5rem;">
       ${byMedio.transferencia?`<div style="background:var(--refl);border-radius:var(--rs);padding:.5rem .65rem;">
         <div style="font-size:10px;color:var(--ref);font-weight:700;">🏦 Transferencia</div>
         <div style="font-size:13px;font-weight:700;margin-top:2px;">$${byMedio.transferencia.toLocaleString('es-AR')}</div>
@@ -2433,10 +2433,6 @@ function generarResumen(){
         <div style="font-size:13px;font-weight:700;margin-top:2px;">$${byMedio.efectivo.toLocaleString('es-AR')}</div>
         ${barrita(pctEfect,'var(--mat)')}
         <div style="font-size:10px;color:var(--mat);margin-top:2px;">${pctEfect}%</div>
-      </div>`:''}
-      ${byMedio.otro?`<div style="background:var(--s2);border-radius:var(--rs);padding:.5rem .65rem;">
-        <div style="font-size:10px;color:var(--tm);font-weight:700;">📋 Sin medio</div>
-        <div style="font-size:13px;font-weight:700;margin-top:2px;">$${byMedio.otro.toLocaleString('es-AR')}</div>
       </div>`:''}
     </div>`:''}`;
 
@@ -2466,7 +2462,6 @@ function generarResumen(){
   const medioLineas=[
     byMedio.transferencia?`   🏦 Transferencia: $${byMedio.transferencia.toLocaleString('es-AR')} (${pctTransf}%)`:'',
     byMedio.efectivo?`   💵 Efectivo: $${byMedio.efectivo.toLocaleString('es-AR')} (${pctEfect}%)`:'',
-    byMedio.otro?`   📋 Sin especificar: $${byMedio.otro.toLocaleString('es-AR')}`:'',
   ].filter(Boolean).join('\n');
   window._resumenTxt=`📊 INFORME ${mesLabel(mes).toUpperCase()} — TRISKEL ACADEMY
 ${'─'.repeat(40)}
@@ -2851,10 +2846,9 @@ function rInicio(){
   </div>
   <div class="card" style="margin-bottom:1.25rem;padding:.85rem 1rem;">
     <div class="ctitle" style="margin-bottom:.6rem;">Desglose por medio — ${mesLabel(mesActual)}</div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;">
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;text-align:center;">
       <div><div style="font-size:11px;color:var(--tm);margin-bottom:.2rem;">🏦 Transferencia</div><div style="font-size:1.1rem;font-weight:700;">$${byMedio.transferencia.toLocaleString('es-AR')}</div></div>
       <div><div style="font-size:11px;color:var(--tm);margin-bottom:.2rem;">💵 Efectivo</div><div style="font-size:1.1rem;font-weight:700;">$${byMedio.efectivo.toLocaleString('es-AR')}</div></div>
-      <div><div style="font-size:11px;color:var(--tm);margin-bottom:.2rem;">Sin especificar</div><div style="font-size:1.1rem;font-weight:700;color:var(--th);">$${byMedio.otro.toLocaleString('es-AR')}</div></div>
     </div>
   </div>
 
