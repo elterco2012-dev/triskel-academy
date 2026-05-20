@@ -36,6 +36,7 @@
       --matl:#0a2e20;--refl:#0f1e3a;--funl:#2a1a05;
       --rd:#f09595;--rl:#2a1010;
     }
+    html{overflow-x:hidden;}
     body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);transition:background .3s;overflow-x:hidden;}
     input,select,textarea{width:100%;padding:8px 12px;border:1px solid var(--bm);border-radius:var(--rs);font-size:13px;font-family:'DM Sans',sans-serif;background:var(--s2);color:var(--t);margin-bottom:10px;transition:border-color .15s;}
     input:focus,select:focus,textarea:focus{outline:none;border-color:var(--v);}
@@ -160,7 +161,7 @@
     #msg{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--t);color:var(--bg);padding:.65rem 1.1rem;border-radius:var(--rs);font-size:13px;display:none;z-index:200;max-width:320px;}
 
     /* ── Bottom nav (mobile) ── */
-    .bnav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--s);border-top:1px solid var(--b);z-index:50;padding-bottom:env(safe-area-inset-bottom,0);transform:translateZ(0);-webkit-transform:translateZ(0);will-change:transform;}
+    .bnav{display:none;position:fixed;bottom:0;left:0;right:0;width:100%;background:var(--s);border-top:1px solid var(--b);z-index:50;padding-bottom:env(safe-area-inset-bottom,0);transform:translateZ(0);-webkit-transform:translateZ(0);will-change:transform;backface-visibility:hidden;-webkit-backface-visibility:hidden;}
     .bnav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 0 9px;font-size:10px;color:var(--tm);text-decoration:none;-webkit-tap-highlight-color:transparent;transition:color .15s;}
     .bnav a .bi{font-size:21px;line-height:1.2;}
     .bnav a.active{color:var(--v);}
@@ -169,7 +170,7 @@
     @media(max-width:680px){
       .sidebar{display:none;}
       .bnav{display:flex;}
-      .main{margin-left:0;padding:1rem 1rem 72px;}
+      .main{margin-left:0;padding:1rem 1rem 72px;max-width:100%;overflow-x:hidden;}
       /* modales: hoja desde abajo */
       .modal-bg{padding:0;align-items:flex-end;}
       .modal{border-radius:var(--r) var(--r) 0 0;max-height:92vh;max-width:100%;}
@@ -184,6 +185,10 @@
       .main [style*="grid-template-columns:1fr 1fr;"]{grid-template-columns:1fr!important;}
       /* título */
       .ptitle{font-size:1.3rem;}
+      /* alumna cards: wrap content on narrow screens */
+      .arow{flex-wrap:wrap;}
+      .arow-info{min-width:0;}
+      .arow-btns{width:100%;justify-content:flex-end;margin-top:4px;}
     }
   </style>
 </head>
@@ -1587,7 +1592,11 @@ function renderModalHorarios(alumnaId){
   const sorted=Object.values(groups).sort((a,b)=>(modOrder[a.modalidad]-modOrder[b.modalidad])||a.hora_inicio.localeCompare(b.hora_inicio));
   sorted.forEach(g=>g.items.sort((a,b)=>DIA_ORDER[a.dia]-DIA_ORDER[b.dia]));
   const tf=getTarifas();
-  let html='';let lastMod=null;
+  const noTarifas=Object.keys(tf).length===0;
+  let html=noTarifas
+    ?`<div class="alert alert-warn" style="margin-bottom:.5rem;font-size:12px;">Sin tarifas configuradas — los montos no se completarán automáticamente. Cerrá este modal, andá a <strong>⚙ Tarifas</strong> en el menú y guardá los valores.</div>`
+    :'';
+  let lastMod=null;
   sorted.forEach(g=>{
     if(g.modalidad!==lastMod){
       const modEnrolled=DB.horarios.filter(h=>h.modalidad===g.modalidad&&existingIds.has(h.id)).length;
@@ -2234,15 +2243,15 @@ function rAlumnas(){
         :`<span style="font-size:10px;background:var(--funl);color:var(--fun);padding:1px 7px;border-radius:99px;">Vence día ${a.dia_pago}</span>`;
     return`<div class="arow">
       <div class="avatar">${alumnaInits(a.nombre,a.apellido)}</div>
-      <div style="flex:1;">
-        <div class="aname" style="cursor:pointer;text-decoration:underline;text-underline-offset:3px;" onclick="goTo('ficha',${a.id})">${a.nombre} ${a.apellido||''}</div>
+      <div class="arow-info" style="flex:1;min-width:0;">
+        <div class="aname" style="cursor:pointer;text-decoration:underline;text-underline-offset:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" onclick="goTo('ficha',${a.id})">${a.nombre} ${a.apellido||''}</div>
         <div class="asub" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;">
           ${inscs.map(i=>{const h=i.triskel_horarios;return`<span style="display:inline-flex;align-items:center;gap:3px;">${modBadge(h?.modalidad)}<span style="font-size:10px;color:var(--tm);">${h?DIA_LABEL[h.dia]+' '+h.hora_inicio:''}</span></span>`;}).join('')}
           ${a.tel?`<a href="https://wa.me/${a.tel}" target="_blank" style="font-size:11px;color:var(--mat);">💬 WA</a>`:''}
         </div>
       </div>
       ${inscs.length>0?pago:''}
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <div class="arow-btns" style="display:flex;gap:6px;flex-wrap:wrap;">
         <button class="btn btn-s" onclick="openModalAlumna(${a.id})">Editar</button>
         ${a.estado==='activa'?`<button class="btn btn-s" onclick="pausarAlumna(${a.id})">⏸ Pausar</button>`:''}
         ${a.estado==='pausada'?`<button class="btn btn-s btn-p" onclick="reactivarAlumna(${a.id})">▶ Reactivar</button>`:''}
