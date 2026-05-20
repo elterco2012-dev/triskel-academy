@@ -371,6 +371,13 @@
       <div><label>Mes</label><input id="mp-mes" type="month"></div>
       <div><label>Monto ($)</label><input id="mp-monto" type="number" placeholder="0"></div>
     </div>
+    <label>Medio de pago</label>
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <button id="mp-medio-transf" type="button" onclick="selMedioPago('transferencia')"
+        style="flex:1;padding:7px;border-radius:var(--rs);border:1.5px solid var(--v);background:var(--v);color:#fff;font-size:13px;font-weight:600;cursor:pointer;">🏦 Transferencia</button>
+      <button id="mp-medio-efect" type="button" onclick="selMedioPago('efectivo')"
+        style="flex:1;padding:7px;border-radius:var(--rs);border:1.5px solid var(--bm);background:var(--s);color:var(--t);font-size:13px;font-weight:600;cursor:pointer;">💵 Efectivo</button>
+    </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:.5rem;">
       <button class="btn" onclick="closeModalPago()">Cancelar</button>
       <button class="btn btn-p" onclick="savePago()">Guardar</button>
@@ -1777,9 +1784,19 @@ function generarResumen(){
   const alumnasPagaron=[...new Set(pagados.map(p=>p.alumna_id))].map(id=>alumnaById(id)).filter(Boolean);
   const alumnasPendientes=[...new Set(pendientes.map(p=>p.alumna_id))].map(id=>alumnaById(id)).filter(Boolean);
 
+  // Desglose por medio de pago
+  const byMedio={transferencia:0,efectivo:0,otro:0};
+  pagados.forEach(p=>{const m=parseMedioPago(p.nota);if(m==='transferencia')byMedio.transferencia+=p.monto||0;else if(m==='efectivo')byMedio.efectivo+=p.monto||0;else byMedio.otro+=p.monto||0;});
+  const medioLineas=[
+    byMedio.transferencia?`   🏦 Transferencia: $${byMedio.transferencia.toLocaleString('es-AR')}`:'',
+    byMedio.efectivo?`   💵 Efectivo:       $${byMedio.efectivo.toLocaleString('es-AR')}`:'',
+    byMedio.otro?`   📋 Sin especificar: $${byMedio.otro.toLocaleString('es-AR')}`:'',
+  ].filter(Boolean).join('\n');
+
   const txt=`RESUMEN ${mesLabel(mes).toUpperCase()} — TRISKEL ACADEMY
 ${'─'.repeat(40)}
 💰 Total cobrado: $${total.toLocaleString('es-AR')}
+${medioLineas}
 ✅ Pagaron (${alumnasPagaron.length}): ${alumnasPagaron.map(a=>`${a.nombre} ${a.apellido||''}`).join(', ')||'—'}
 ⏳ Pendientes (${alumnasPendientes.length}): ${alumnasPendientes.map(a=>`${a.nombre} ${a.apellido||''}`).join(', ')||'—'}
 📋 Clases dadas: ${clasesDelMes.length}
@@ -2101,7 +2118,10 @@ function rInicio(){
   const pagosMes=DB.pagos.filter(p=>p.mes===mesActual);
   const pagados=new Set(pagosMes.filter(p=>p.pagado).map(p=>p.alumna_id)).size;
   const pendientes=new Set(DB.alumnas.filter(a=>a.estado==='activa'&&!pagosMes.some(p=>p.alumna_id===a.id&&p.pagado)).map(a=>a.id)).size;
-  const totalMes=pagosMes.filter(p=>p.pagado).reduce((s,p)=>s+(p.monto||0),0);
+  const pagadosMes=pagosMes.filter(p=>p.pagado);
+  const totalMes=pagadosMes.reduce((s,p)=>s+(p.monto||0),0);
+  const byMedio={transferencia:0,efectivo:0,otro:0};
+  pagadosMes.forEach(p=>{const m=parseMedioPago(p.nota);if(m==='transferencia')byMedio.transferencia+=p.monto||0;else if(m==='efectivo')byMedio.efectivo+=p.monto||0;else byMedio.otro+=p.monto||0;});
 
   const modCount={mat:0,reformer:0,funcional:0};
   // Contar alumnas únicas por modalidad (no inscripciones)
@@ -2116,11 +2136,19 @@ function rInicio(){
   ${rEsperaAlerta()}
   ${rRecordatorios()}
   ${rVistaHoy()}
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem;">
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:.75rem;">
     <div class="metric"><div class="mlabel">Alumnas activas</div><div class="mval g">${activas}</div></div>
     <div class="metric"><div class="mlabel">Pagaron ${mesLabel(mesActual)}</div><div class="mval g">${pagados}</div></div>
     <div class="metric"><div class="mlabel">Pendientes</div><div class="mval" style="color:var(--fun);">${pendientes}</div></div>
     <div class="metric"><div class="mlabel">Recaudado ${mesLabel(mesActual)}</div><div class="mval">$${totalMes.toLocaleString('es-AR')}</div></div>
+  </div>
+  <div class="card" style="margin-bottom:1.25rem;padding:.85rem 1rem;">
+    <div class="ctitle" style="margin-bottom:.6rem;">Desglose por medio — ${mesLabel(mesActual)}</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;">
+      <div><div style="font-size:11px;color:var(--tm);margin-bottom:.2rem;">🏦 Transferencia</div><div style="font-size:1.1rem;font-weight:700;">$${byMedio.transferencia.toLocaleString('es-AR')}</div></div>
+      <div><div style="font-size:11px;color:var(--tm);margin-bottom:.2rem;">💵 Efectivo</div><div style="font-size:1.1rem;font-weight:700;">$${byMedio.efectivo.toLocaleString('es-AR')}</div></div>
+      <div><div style="font-size:11px;color:var(--tm);margin-bottom:.2rem;">Sin especificar</div><div style="font-size:1.1rem;font-weight:700;color:var(--th);">$${byMedio.otro.toLocaleString('es-AR')}</div></div>
+    </div>
   </div>
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
@@ -2877,12 +2905,28 @@ async function deleteClase(id){
 }
 
 // ─── MODAL PAGO ─────────────────────────────────────────
+let _mpMedio='transferencia';
+function parseMedioPago(nota){
+  if(!nota)return null;
+  const n=nota.toLowerCase();
+  if(n.startsWith('transferencia'))return'transferencia';
+  if(n.startsWith('efectivo'))return'efectivo';
+  return null;
+}
+function selMedioPago(m){
+  _mpMedio=m;
+  const ON=`flex:1;padding:7px;border-radius:var(--rs);border:1.5px solid var(--v);background:var(--v);color:#fff;font-size:13px;font-weight:600;cursor:pointer;`;
+  const OFF=`flex:1;padding:7px;border-radius:var(--rs);border:1.5px solid var(--bm);background:var(--s);color:var(--t);font-size:13px;font-weight:600;cursor:pointer;`;
+  document.getElementById('mp-medio-transf').style.cssText=m==='transferencia'?ON:OFF;
+  document.getElementById('mp-medio-efect').style.cssText=m==='efectivo'?ON:OFF;
+}
 function openModalPago(){
   document.getElementById('mp-err').textContent='';
   const selA=document.getElementById('mp-alumna');
   selA.innerHTML=DB.alumnas.filter(a=>a.estado==='activa').map(a=>`<option value="${a.id}">${a.nombre} ${a.apellido||''}</option>`).join('');
   document.getElementById('mp-mes').value=new Date().toISOString().slice(0,7);
   document.getElementById('mp-monto').value='';
+  selMedioPago('transferencia');
   renderPagoHorarios();
   document.getElementById('modal-pago').style.display='flex';document.body.style.overflow='hidden';
 }
@@ -2928,9 +2972,9 @@ async function savePago(){
   const monto=parseFloat(document.getElementById('mp-monto').value)||0;
   if(!mes){document.getElementById('mp-err').textContent='El mes es obligatorio.';return;}
   const hoy=new Date().toISOString().split('T')[0];
+  const nota=_mpMedio==='transferencia'?'Transferencia':'Efectivo';
   const[tipo,idsStr]=selVal.split(':');
   if(tipo==='plan'){
-    // Plan multi-día: RPC atómica — un solo viaje, sin riesgo de estado inconsistente
     const ids=idsStr.split(',').map(Number);
     const alumna_inscIds=ids.filter(iid=>DB.inscripciones.find(x=>x.id===iid));
     const{data,error}=await rpc('triskel_insertar_pagos_plan',{
@@ -2939,12 +2983,13 @@ async function savePago(){
       p_mes:mes,
       p_monto_total:monto,
       p_pagado:true,
-      p_fecha_pago:hoy
+      p_fecha_pago:hoy,
+      p_nota:nota
     });
     if(error||!data?.ok){document.getElementById('mp-err').textContent='Error al guardar.';return;}
   }else{
     const inscripcion_id=parseInt(idsStr);
-    const{error}=await rpc('triskel_insert_pago',{p_alumna_id:alumna_id,p_inscripcion_id:inscripcion_id,p_mes:mes,p_monto:monto,p_pagado:true,p_fecha_pago:hoy});
+    const{error}=await rpc('triskel_insert_pago',{p_alumna_id:alumna_id,p_inscripcion_id:inscripcion_id,p_mes:mes,p_monto:monto,p_pagado:true,p_fecha_pago:hoy,p_nota:nota});
     if(error){document.getElementById('mp-err').textContent='Error al guardar.';return;}
   }
   showMsg('✓ Pago registrado');
