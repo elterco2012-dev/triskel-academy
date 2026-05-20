@@ -141,6 +141,15 @@ input,select,textarea,button{font-family:'DM Sans',-apple-system,BlinkMacSystemF
 .notif-banner .btn-notif{background:rgba(255,255,255,.25);border:1.5px solid rgba(255,255,255,.6);color:#fff;padding:.4rem .85rem;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
 .notif-banner .btn-notif:active{opacity:.75;}
 
+/* ── MOTIVO CHIPS ── */
+.motivo-chips{display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0 .75rem;}
+.motivo-chip{padding:.35rem .8rem;border:1.5px solid var(--border);border-radius:20px;font-size:13px;font-weight:600;background:var(--white);color:var(--sub);cursor:pointer;transition:all .15s;}
+.motivo-chip.sel{border-color:var(--tm);background:var(--tm);color:#fff;}
+
+/* ── AUSENCIA INSC OPTION ── */
+.ausencia-insc-opt{display:flex;align-items:center;gap:.75rem;padding:.65rem .75rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);margin-bottom:.4rem;cursor:pointer;transition:all .15s;}
+.ausencia-insc-opt.sel{border-color:var(--tm);background:#f0ebf8;}
+
 /* Loading */
 .loading{display:flex;align-items:center;justify-content:center;padding:3rem;color:var(--sub);font-size:14px;}
 .spinner{width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--tm);border-radius:50%;animation:spin .7s linear infinite;margin-right:.5rem;}
@@ -228,6 +237,27 @@ input,select,textarea,button{font-family:'DM Sans',-apple-system,BlinkMacSystemF
       <div style="font-size:11px;color:var(--sub);margin-bottom:.3rem;">Datos para transferir</div>
       <div style="font-size:14px;font-weight:700;color:var(--tm);letter-spacing:.02em;">Triskelcasares1</div>
       <div style="font-size:12px;color:var(--sub);margin-top:.15rem;">Titular: Lorena Montiel</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL AUSENCIA ── -->
+<div id="modal-ausencia" style="display:none;" class="modal-overlay" onclick="if(event.target===this)cerrarModalAusencia()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🙁 No voy a poder ir</div>
+    <div id="modal-ausencia-inscs" style="margin-bottom:.75rem;"></div>
+    <label class="modal-label">Motivo (opcional)</label>
+    <div class="motivo-chips">
+      <button class="motivo-chip" onclick="selMotivo('Me enfermé')">🤒 Me enfermé</button>
+      <button class="motivo-chip" onclick="selMotivo('Trabajo')">💼 Trabajo</button>
+      <button class="motivo-chip" onclick="selMotivo('Viaje')">✈️ Viaje</button>
+      <button class="motivo-chip" onclick="selMotivo('Lesión / dolor')">🤕 Lesión/dolor</button>
+    </div>
+    <input class="modal-input" id="ausencia-motivo-texto" type="text" placeholder="O escribí el motivo..." maxlength="200" oninput="limpiarChips()">
+    <div class="modal-row">
+      <button class="btn-cancel" onclick="cerrarModalAusencia()">Cancelar</button>
+      <button class="btn-confirm" id="btn-confirmar-ausencia" onclick="confirmarAusencia()">Avisar ausencia</button>
     </div>
   </div>
 </div>
@@ -443,6 +473,9 @@ function renderInicio(){
     }
   }
 
+  // Botón ausencia
+  const noVoyBtn=inscs.length?`<button onclick="abrirModalAusencia()" style="width:100%;background:none;border:1.5px solid var(--border);color:var(--sub);padding:.65rem;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:.75rem;">🙁 No voy a poder ir</button>`:'';
+
   // Mis clases (compact, agrupado por plan)
   let misClasesCard='';
   if(inscs.length){
@@ -469,7 +502,7 @@ function renderInicio(){
   // Notification banner: solo mostrar si NO está activa (CTA para activar / bloqueada)
   const notifCard=rNotifBanner({suppressDefault:!cobrado&&!aviso, showActive:false});
 
-  setContent(notifCard+pagoCard+proximaCard+misClasesCard);
+  setContent(notifCard+pagoCard+proximaCard+noVoyBtn+misClasesCard);
 }
 
 // ── HORARIOS ──────────────────────────────────────────────────────────────────
@@ -849,6 +882,120 @@ function toggleDarkAlumna(){
 function _initDarkBtn(){
   const btn=document.getElementById('dark-btn-alumna');
   if(btn) btn.textContent=_darkAlumna?'☀️':'🌙';
+}
+
+// ── AUSENCIA ─────────────────────────────────────────────────────────────────
+
+let _ausenciaInscId=null;
+let _ausenciaFecha=null;
+let _ausenciaMotivo='';
+
+function proximaFechaInscripcion(diaKey){
+  const dayNum={lun:1,mar:2,mie:3,jue:4,vie:5};
+  const target=dayNum[diaKey];
+  if(target===undefined) return new Date().toISOString().split('T')[0];
+  const hoy=new Date();
+  const dow=hoy.getDay()===0?7:hoy.getDay(); // 1=Lun…7=Dom
+  let diff=target-dow;
+  if(diff<0) diff+=7; // pasó esta semana → próxima semana
+  // diff===0 significa hoy → se usa hoy
+  const fecha=new Date(hoy);
+  fecha.setDate(hoy.getDate()+diff);
+  return fecha.toISOString().split('T')[0];
+}
+
+function fechaLegible(isoDate){
+  return new Date(isoDate+'T12:00:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+}
+
+function abrirModalAusencia(){
+  const inscs=STATE.inscripciones||[];
+  if(!inscs.length){showToast('No tenés clases inscriptas');return;}
+  _ausenciaInscId=null;_ausenciaFecha=null;_ausenciaMotivo='';
+  document.getElementById('ausencia-motivo-texto').value='';
+  limpiarChips();
+
+  const inscEl=document.getElementById('modal-ausencia-inscs');
+  if(inscs.length===1){
+    const i=inscs[0];
+    const fecha=proximaFechaInscripcion(i.dia);
+    _ausenciaInscId=i.id;_ausenciaFecha=fecha;
+    inscEl.innerHTML=`<div style="background:var(--bg);border-radius:var(--radius-sm);padding:.75rem;text-align:center;">
+      <div style="font-size:14px;font-weight:700;color:var(--txt);">${i.modalidad.charAt(0).toUpperCase()+i.modalidad.slice(1)} · ${DIA_LABEL[i.dia]||i.dia}</div>
+      <div style="font-size:12px;color:var(--sub);margin-top:.2rem;">${i.horario||''} · ${fechaLegible(fecha)}</div>
+    </div>`;
+  }else{
+    inscEl.innerHTML=`<div><div style="font-size:12px;font-weight:600;color:var(--sub);margin-bottom:.4rem;">¿A cuál clase?</div>
+      ${inscs.map(i=>{
+        const fecha=proximaFechaInscripcion(i.dia);
+        return`<div class="ausencia-insc-opt" data-id="${i.id}" data-fecha="${fecha}" onclick="selAusenciaInsc(this)">
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;color:var(--txt);">${i.modalidad.charAt(0).toUpperCase()+i.modalidad.slice(1)} · ${DIA_LABEL[i.dia]||i.dia}</div>
+            <div style="font-size:11px;color:var(--sub);margin-top:.1rem;">${i.horario||''} · ${fechaLegible(fecha)}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+  document.getElementById('modal-ausencia').style.display='flex';
+}
+
+function selAusenciaInsc(el){
+  document.querySelectorAll('.ausencia-insc-opt').forEach(e=>e.classList.remove('sel'));
+  el.classList.add('sel');
+  _ausenciaInscId=parseInt(el.dataset.id);
+  _ausenciaFecha=el.dataset.fecha;
+}
+
+function selMotivo(m){
+  _ausenciaMotivo=m;
+  document.getElementById('ausencia-motivo-texto').value='';
+  document.querySelectorAll('.motivo-chip').forEach(c=>{
+    c.classList.toggle('sel',c.textContent.trim().includes(m.split(' ')[1]||m));
+  });
+}
+
+function limpiarChips(){
+  _ausenciaMotivo='';
+  document.querySelectorAll('.motivo-chip').forEach(c=>c.classList.remove('sel'));
+}
+
+function cerrarModalAusencia(){document.getElementById('modal-ausencia').style.display='none';}
+
+async function confirmarAusencia(){
+  if(!_ausenciaInscId||!_ausenciaFecha){showToast('Seleccioná la clase que vas a faltar');return;}
+  const motivoTexto=document.getElementById('ausencia-motivo-texto').value.trim();
+  const motivo=motivoTexto||_ausenciaMotivo||null;
+  const btn=document.getElementById('btn-confirmar-ausencia');
+  btn.disabled=true;btn.textContent='Enviando...';
+
+  const{data,error}=await sb.rpc('triskel_avisar_ausencia',{
+    p_inscripcion_id:_ausenciaInscId,
+    p_fecha:_ausenciaFecha,
+    p_motivo:motivo
+  });
+
+  if(error||!data?.ok){
+    showToast('❌ Error al enviar aviso');
+    btn.disabled=false;btn.textContent='Avisar ausencia';return;
+  }
+
+  // Notificación push a la profe
+  try{
+    const a=STATE.alumna;
+    const{data:{session:sess}}=await sb.auth.getSession();
+    const inscObj=(STATE.inscripciones||[]).find(i=>i.id===_ausenciaInscId);
+    const claseLabel=inscObj?`${inscObj.modalidad} · ${DIA_LABEL[inscObj.dia]||inscObj.dia}`:'clase';
+    await fetch(`${SB_URL}/functions/v1/send-push`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(sess?.access_token||SB_KEY)},
+      body:JSON.stringify({tipo:'ausencia',target_tipo:'teacher',nombre:a?.nombre||'Una alumna',clase:claseLabel,fecha:_ausenciaFecha,motivo})
+    });
+  }catch(e){console.warn('Push failed:',e);}
+
+  cerrarModalAusencia();
+  btn.disabled=false;btn.textContent='Avisar ausencia';
+  showToast('✅ Aviso enviado — ¡hasta la próxima!');
 }
 
 // ── SERVICE WORKER ────────────────────────────────────────────────────────────
