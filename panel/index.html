@@ -4087,47 +4087,111 @@ function closeModalBanco(){document.getElementById('modal-banco').style.display=
 
 // ─── PLANES (sección standalone) ────────────────────────
 let _planesMod='mat';
+const PLANES_MOD_COLOR={mat:'var(--mat)',reformer:'var(--ref)',funcional:'var(--fun)'};
+const PLANES_MOD_LIGHT={mat:'var(--matl)',reformer:'var(--refl)',funcional:'var(--funl)'};
+const PLANES_MOD_ICON={mat:'🧘‍♀️',reformer:'⚙️',funcional:'💪'};
+
+let _planesSearch='';
+
 function rPlanes(){
   const mods=['mat','reformer','funcional'];
-  const modTabs=mods.map(m=>`<button class="btn btn-s ${_planesMod===m?'btn-p':''}" onclick="_planesMod='${m}';renderBancoStandaloneGrid();" style="display:flex;flex-direction:column;align-items:center;gap:1px;padding:.4rem 1rem;">
-    <span style="font-size:13px;font-weight:700;">${MOD_LABEL[m]||m}</span>
-    <span style="font-size:10px;opacity:.7;">${(DB.banco[m]||[]).length} planes</span>
-  </button>`).join('');
   const totalPlanes=mods.reduce((s,m)=>s+(DB.banco[m]||[]).length,0);
-  return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem;">
-    <div class="ptitle" style="margin:0;">🗂 Planes de clase</div>
-    <button class="btn btn-p" onclick="_planesMod=_planesMod;openEditBanco(null);" style="white-space:nowrap;">＋ Nueva tarjeta</button>
+  const modColor=PLANES_MOD_COLOR[_planesMod]||'var(--v)';
+  const modLight=PLANES_MOD_LIGHT[_planesMod]||'var(--vl)';
+
+  const modTabs=mods.map(m=>{
+    const n=(DB.banco[m]||[]).length;
+    const active=_planesMod===m;
+    const mc=PLANES_MOD_COLOR[m];
+    const ml=PLANES_MOD_LIGHT[m];
+    const icon=PLANES_MOD_ICON[m];
+    return`<button onclick="_planesMod='${m}';_planesSearch='';renderBancoStandaloneGrid();"
+      style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:.6rem 1.4rem;border-radius:12px;border:2px solid ${active?mc:'var(--b)'};background:${active?mc:'var(--s)'};color:${active?'#fff':'var(--t)'};cursor:pointer;transition:all .2s;min-width:100px;">
+      <span style="font-size:20px;line-height:1;">${icon}</span>
+      <span style="font-size:13px;font-weight:700;">${MOD_LABEL[m]||m}</span>
+      <span style="font-size:11px;opacity:${active?'.85':'.55'};">${n} plan${n!==1?'es':''}</span>
+    </button>`;
+  }).join('');
+
+  return`
+  <div style="background:linear-gradient(135deg,${modColor}18,${modColor}08);border-bottom:1px solid var(--b);padding:1.25rem 1.5rem 1rem;margin:-1rem -1rem .5rem;border-radius:var(--r) var(--r) 0 0;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:22px;font-weight:800;color:var(--t);margin-bottom:.2rem;">🗂 Planes de clase</div>
+        <div style="font-size:13px;color:var(--tm);">Secuencias reutilizables para tus clases — <strong style="color:${modColor};">${totalPlanes} planes</strong> guardados</div>
+      </div>
+      <button class="btn btn-p" onclick="openEditBanco(null);" style="white-space:nowrap;padding:.55rem 1.1rem;font-size:13px;">＋ Nueva tarjeta</button>
+    </div>
   </div>
-  <p style="font-size:13px;color:var(--tm);margin-bottom:1rem;">Guardá secuencias de ejercicios reutilizables. <strong>${totalPlanes} planes</strong> disponibles.</p>
-  <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1.25rem;">${modTabs}</div>
-  <div id="planes-standalone-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;"></div>`;
+  <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin:.75rem 0 1rem;">${modTabs}</div>
+  <div style="margin-bottom:1rem;">
+    <div style="position:relative;">
+      <span style="position:absolute;left:.7rem;top:50%;transform:translateY(-50%);color:var(--tm);font-size:14px;pointer-events:none;">🔍</span>
+      <input type="search" id="planes-search" value="${_planesSearch}" placeholder="Buscar plan..."
+        oninput="_planesSearch=this.value;renderBancoStandaloneGrid();"
+        style="width:100%;padding:.5rem .75rem .5rem 2.2rem;border:1.5px solid var(--b);border-radius:var(--rs);background:var(--s);color:var(--t);font-size:13px;">
+    </div>
+  </div>
+  <div id="planes-standalone-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;"></div>`;
 }
 
 function renderBancoStandaloneGrid(){
   const grid=document.getElementById('planes-standalone-grid');
   if(!grid)return;
-  const planes=DB.banco[_planesMod]||[];
-  // sync _bancoMod so edit modal uses the right mod
   _bancoMod=_planesMod;
+  let planes=DB.banco[_planesMod]||[];
+  const q=(_planesSearch||'').toLowerCase().trim();
+  if(q) planes=planes.filter(p=>p.titulo.toLowerCase().includes(q)||(p.ejs||[]).some(e=>e.nombre.toLowerCase().includes(q)));
+
+  const modColor=PLANES_MOD_COLOR[_planesMod]||'var(--v)';
+  const modLight=PLANES_MOD_LIGHT[_planesMod]||'var(--vl)';
+  const modColorHex={'mat':'#1D9E75','reformer':'#2563EB','funcional':'#D97706'}[_planesMod]||'#7c3aed';
+
   if(!planes.length){
-    grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--tm);font-size:14px;">Sin planes para ${MOD_LABEL[_planesMod]}.<br><span style="font-size:13px;">Usá <strong>+ Nueva tarjeta</strong> para crear el primero.</span></div>`;
+    grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:3.5rem 1rem;color:var(--tm);">
+      <div style="font-size:36px;margin-bottom:.75rem;">${PLANES_MOD_ICON[_planesMod]||'📋'}</div>
+      <div style="font-size:15px;font-weight:600;margin-bottom:.4rem;color:var(--t);">${q?'Sin resultados para "'+q+'"':'Sin planes para '+MOD_LABEL[_planesMod]}</div>
+      <div style="font-size:13px;">${q?'Probá con otro término':'Usá <strong>+ Nueva tarjeta</strong> para crear el primero'}</div>
+    </div>`;
     return;
   }
+
   grid.innerHTML=planes.map(p=>{
-    const preview=(p.ejs||[]).slice(0,4).map(e=>`<div style="font-size:11px;color:var(--tm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">· ${esc(e.nombre)}</div>`).join('');
-    const nEjs=(p.ejs||[]).length;
+    const ejs=p.ejs||[];
+    const nEjs=ejs.length;
     const isClaude=p.titulo.includes('- Claude');
-    return`<div style="background:var(--s);border:1.5px solid var(--b);border-radius:var(--r);padding:1rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer;position:relative;" onclick="openEditBanco(${p.id})">
-      <div style="display:flex;align-items:flex-start;gap:6px;justify-content:space-between;">
-        <div style="font-size:14px;font-weight:700;line-height:1.3;flex:1;">${esc(p.titulo)}</div>
-        <div style="display:flex;gap:2px;flex-shrink:0;" onclick="event.stopPropagation()">
-          <button onclick="openEditBanco(${p.id})" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px;" title="Editar">✏️</button>
-          <button onclick="deleteBancoTarjeta(${p.id})" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px;" title="Eliminar">🗑</button>
+    const displayTitle=p.titulo.replace(' - Claude','');
+    const preview=ejs.slice(0,5).map((e,i)=>`
+      <div style="display:flex;align-items:baseline;gap:5px;padding:2px 0;">
+        <span style="font-size:9px;font-weight:700;color:${modColorHex};background:${modColorHex}18;border-radius:99px;min-width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">${i+1}</span>
+        <span style="font-size:11px;color:var(--tm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(e.nombre)}</span>
+      </div>`).join('');
+    return`<div onclick="openEditBanco(${p.id})"
+      style="background:var(--s);border:1.5px solid var(--b);border-top:3px solid ${modColor};border-radius:var(--r);padding:1rem;display:flex;flex-direction:column;gap:.6rem;cursor:pointer;transition:box-shadow .18s,border-color .18s;"
+      onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,0,0,.1)';this.style.borderColor='${modColorHex}'"
+      onmouseleave="this.style.boxShadow='none';this.style.borderColor='var(--b)'">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;">
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:700;line-height:1.3;color:var(--t);">${esc(displayTitle)}</div>
+          ${isClaude?`<span style="font-size:9px;font-weight:700;background:${modColorHex}18;color:${modColorHex};padding:1px 6px;border-radius:99px;margin-top:3px;display:inline-block;">✨ Claude</span>`:''}
+        </div>
+        <div style="display:flex;gap:1px;flex-shrink:0;" onclick="event.stopPropagation()">
+          <button onclick="openEditBanco(${p.id})" title="Editar"
+            style="background:none;border:none;cursor:pointer;padding:3px 5px;border-radius:var(--rs);color:var(--tm);font-size:13px;transition:background .15s;"
+            onmouseenter="this.style.background='var(--s2)'" onmouseleave="this.style.background='none'">✏️</button>
+          <button onclick="deleteBancoTarjeta(${p.id})" title="Eliminar"
+            style="background:none;border:none;cursor:pointer;padding:3px 5px;border-radius:var(--rs);color:var(--tm);font-size:13px;transition:background .15s;"
+            onmouseenter="this.style.background='#fee2e2'" onmouseleave="this.style.background='none'">🗑</button>
         </div>
       </div>
-      ${isClaude?`<span style="font-size:10px;background:var(--vl);color:var(--v);padding:1px 7px;border-radius:99px;width:fit-content;">✨ Claude</span>`:''}
-      <div style="flex:1;">${preview}${nEjs>4?`<div style="font-size:11px;color:var(--th);margin-top:2px;">+${nEjs-4} más</div>`:''}</div>
-      <div style="font-size:11px;color:var(--tm);border-top:1px solid var(--b);padding-top:.5rem;margin-top:auto;">${nEjs} ejercicio${nEjs!==1?'s':''}</div>
+      <div style="background:${modColorHex}08;border-radius:var(--rs);padding:.5rem .6rem;flex:1;min-height:80px;">
+        ${preview}
+        ${nEjs>5?`<div style="font-size:10px;font-weight:600;color:${modColorHex};margin-top:4px;">+${nEjs-5} más</div>`:''}
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-top:.4rem;border-top:1px solid var(--b);">
+        <span style="font-size:11px;font-weight:700;color:${modColorHex};background:${modColorHex}15;padding:2px 9px;border-radius:99px;">${nEjs} ejercicio${nEjs!==1?'s':''}</span>
+        <span style="font-size:11px;color:var(--tm);">→ Editar</span>
+      </div>
     </div>`;
   }).join('');
 }
