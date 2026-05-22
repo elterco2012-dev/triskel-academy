@@ -602,9 +602,12 @@
     </div>
     <div id="mc-overlay-ejercicios"></div>
     <div id="mc-overlay-notas" style="margin-top:2rem;font-size:15px;color:#888;font-style:italic;border-top:1px solid #eee;padding-top:1rem;"></div>
-    <!-- Notas rápidas de alumnas -->
+    <!-- Asistencia + Notas rápidas -->
     <div id="mc-overlay-alumnas" style="margin-top:2rem;border-top:2px solid #eee;padding-top:1.5rem;display:none;">
-      <div style="font-size:14px;font-weight:700;color:#555;margin-bottom:1rem;">📝 Notas rápidas de alumnas</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;gap:10px;flex-wrap:wrap;">
+        <div style="font-size:14px;font-weight:700;color:#555;">✅ Asistencia</div>
+        <button onclick="guardarAsistencia()" style="background:#1D9E75;color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;">Guardar asistencia</button>
+      </div>
       <div id="mc-overlay-alumnas-list"></div>
     </div>
   </div>
@@ -620,7 +623,7 @@ const DIA_ORDER={lun:0,mar:1,mie:2,jue:3,vie:4};
 const MOD_LABEL={mat:'Mat',reformer:'Reformer',funcional:'Funcional'};
 const MOD_CLASS={mat:'mat',reformer:'ref',funcional:'fun'};
 
-let DB={horarios:[],alumnas:[],inscripciones:[],clases:[],pagos:[],espera:[],observaciones:[],avisos:[],ausencias:[],config:{},banco:{}};
+let DB={horarios:[],alumnas:[],inscripciones:[],clases:[],pagos:[],espera:[],observaciones:[],avisos:[],ausencias:[],asistencia:[],config:{},banco:{}};
 let currentPage='inicio';
 let _claseEjs=[];
 let _editClaseId=null;
@@ -1884,7 +1887,7 @@ async function loadAll(){
   DB.observaciones=data?.observaciones||[];
   console.log('DB cargado — horarios:',DB.horarios.length,'alumnas:',DB.alumnas.length);
   await loadAvisos();
-  await Promise.all([loadConfig(), loadBanco(), loadAusencias()]);
+  await Promise.all([loadConfig(), loadBanco(), loadAusencias(), loadAsistencia()]);
   render();
 }
 
@@ -1939,6 +1942,18 @@ async function loadAusencias(){
     });
     DB.ausencias=data?.data||[];
   }catch(e){DB.ausencias=[];}
+}
+
+async function loadAsistencia(){
+  try{
+    const hoy=new Date();
+    const desde=new Date(hoy);desde.setMonth(hoy.getMonth()-3);
+    const{data}=await sb.rpc('triskel_get_asistencia',{
+      p_desde:desde.toISOString().split('T')[0],
+      p_hasta:hoy.toISOString().split('T')[0]
+    });
+    DB.asistencia=data?.data||[];
+  }catch(e){DB.asistencia=[];}
 }
 
 async function loadAvisos(){
@@ -2367,6 +2382,64 @@ function rCumpleanos(){
     </div>`;
   }
   return html;
+}
+
+// ─── ALERTAS INTELIGENTES ─────────────────────────────────
+function rAlertasInteligentes(){
+  const hoy=new Date();
+  const mes0=hoy.toISOString().slice(0,7);
+  const mes1=new Date(hoy.getFullYear(),hoy.getMonth()-1,1).toISOString().slice(0,7);
+  const mes2=new Date(hoy.getFullYear(),hoy.getMonth()-2,1).toISOString().slice(0,7);
+  const activas=DB.alumnas.filter(a=>a.estado==='activa');
+
+  // Morosas: sin pago en mes actual NI mes anterior
+  const morosas=activas.filter(a=>{
+    const p0=DB.pagos.some(p=>p.alumna_id===a.id&&p.mes===mes0&&p.pagado);
+    const p1=DB.pagos.some(p=>p.alumna_id===a.id&&p.mes===mes1&&p.pagado);
+    return !p0&&!p1;
+  });
+
+  // 3+ ausencias seguidas (basado en registros de asistencia)
+  const ausentes3=activas.filter(a=>{
+    const asis=DB.asistencia.filter(x=>x.alumna_id===a.id).sort((x,y)=>y.fecha?.localeCompare(x.fecha)||0);
+    if(asis.length<3)return false;
+    return asis[0]?.presente===false&&asis[1]?.presente===false&&asis[2]?.presente===false;
+  });
+
+  const totalAlertas=morosas.length+ausentes3.length;
+  if(!totalAlertas)return'';
+
+  return`<div class="card" style="margin-bottom:1rem;border-left:4px solid var(--rd);background:var(--rl);">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem;">
+      <span style="font-size:16px;">🚨</span>
+      <div class="ctitle" style="margin:0;color:var(--rd);">Requiere atención (${totalAlertas})</div>
+    </div>
+    ${morosas.length?`
+    <div style="margin-bottom:.5rem;">
+      <div style="font-size:11px;font-weight:700;color:var(--rd);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.4rem;">Sin pago 2+ meses</div>
+      ${morosas.map(a=>{
+        const inscs=DB.inscripciones.filter(i=>i.alumna_id===a.id);
+        const mods=[...new Set(inscs.map(i=>i.triskel_horarios?.modalidad).filter(Boolean))];
+        return`<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid rgba(163,45,45,.1);">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--rd);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">${alumnaInits(a.nombre,a.apellido)}</div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:600;color:var(--t);">${a.nombre} ${a.apellido||''}</div>
+            <div style="font-size:11px;color:var(--rd);">No pagó ${mes1} ni ${mes0}${mods.length?' · '+mods.map(m=>MOD_LABEL[m]).join(', '):''}</div>
+          </div>
+          <button onclick="goTo('pagos')" class="btn btn-s" style="font-size:11px;background:var(--rd);color:#fff;border-color:var(--rd);white-space:nowrap;">Ver pagos</button>
+        </div>`;
+      }).join('')}
+    </div>`:''}
+    ${ausentes3.length?`
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--rd);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.4rem;">3+ ausencias seguidas</div>
+      ${ausentes3.map(a=>`<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid rgba(163,45,45,.1);">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--rd);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">${alumnaInits(a.nombre,a.apellido)}</div>
+        <div style="flex:1;font-size:13px;font-weight:600;color:var(--t);">${a.nombre} ${a.apellido||''}</div>
+        <span style="font-size:11px;color:var(--rd);font-weight:600;">Riesgo abandono</span>
+      </div>`).join('')}
+    </div>`:''}
+  </div>`;
 }
 
 // ─── OBSERVACIONES ───────────────────────────────────────
@@ -2845,6 +2918,7 @@ function rInicio(){
 
   return`<div class="ptitle">Inicio</div>
   ${rCumpleanos()}
+  ${rAlertasInteligentes()}
   ${rEsperaAlerta()}
   ${rAusencias()}
   ${rRecordatorios()}
@@ -3191,6 +3265,63 @@ function rClases(){
 // ─── HISTORIAL ──────────────────────────────────────────
 let _histLimit=8;
 let _histExpanded=new Set();
+let _histView='list';
+let _histCalMes=new Date().toISOString().slice(0,7);
+let _asistenciaPresentes=new Set();
+
+function rCalendarioMensual(filtMod){
+  const[y,m]=_histCalMes.split('-').map(Number);
+  const primerDia=new Date(y,m-1,1);
+  const ultimoDia=new Date(y,m,0);
+  const mesLabel=primerDia.toLocaleDateString('es-AR',{month:'long',year:'numeric'});
+  // Fill grid: start from Monday of first week
+  let dow=primerDia.getDay()||7; // 1=Mon..7=Sun
+  const celdas=[];
+  for(let i=1;i<dow;i++)celdas.push(null); // empty prefix
+  for(let d=1;d<=ultimoDia.getDate();d++)celdas.push(d);
+  while(celdas.length%7!==0)celdas.push(null);
+  const semanas=[];
+  for(let i=0;i<celdas.length;i+=7)semanas.push(celdas.slice(i,i+7));
+  const dias=['L','M','X','J','V','S','D'];
+  const hoyStr=new Date().toISOString().split('T')[0];
+  return`<div class="card" style="margin-bottom:1rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;">
+      <button onclick="_histCalMes=prevMes(_histCalMes);render();" class="btn btn-s">◀</button>
+      <div style="font-size:14px;font-weight:700;text-transform:capitalize;">${mesLabel}</div>
+      <button onclick="_histCalMes=nextMes(_histCalMes);render();" class="btn btn-s">▶</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;">
+      ${dias.map(d=>`<div style="text-align:center;font-size:10px;font-weight:700;color:var(--tm);padding:2px 0;">${d}</div>`).join('')}
+    </div>
+    ${semanas.map(sem=>`<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:2px;">${sem.map(d=>{
+      if(!d)return`<div></div>`;
+      const dd=String(d).padStart(2,'0');
+      const mm=String(m).padStart(2,'0');
+      const fechaStr=`${y}-${mm}-${dd}`;
+      const clasesDia=DB.clases.filter(c=>{
+        if(c.fecha!==fechaStr)return false;
+        if(!filtMod)return true;
+        const h=DB.horarios.find(x=>x.id===c.horario_id);
+        return h?.modalidad===filtMod;
+      });
+      const esHoy=fechaStr===hoyStr;
+      const mods=[...new Set(clasesDia.map(c=>{const h=DB.horarios.find(x=>x.id===c.horario_id);return h?.modalidad;}).filter(Boolean))];
+      const dotColors={mat:'var(--mat)',reformer:'var(--ref)',funcional:'var(--fun)'};
+      return`<div onclick="${clasesDia.length?`_histView='list';_histLimit=50;render();`:''}" style="text-align:center;padding:4px 2px;border-radius:6px;cursor:${clasesDia.length?'pointer':'default'};background:${esHoy?'var(--vl)':clasesDia.length?'var(--s2)':'transparent'};border:1px solid ${esHoy?'var(--v)':'transparent'};min-height:36px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;">
+        <span style="font-size:12px;font-weight:${esHoy?'700':'400'};color:${esHoy?'var(--vd)':'var(--t)'};">${d}</span>
+        ${mods.length?`<div style="display:flex;gap:2px;flex-wrap:wrap;justify-content:center;">${mods.map(mod=>`<span style="width:6px;height:6px;border-radius:50%;background:${dotColors[mod]||'var(--tm)'};" title="${MOD_LABEL[mod]||mod}"></span>`).join('')}</div>`:''}
+        ${clasesDia.length>1?`<span style="font-size:9px;color:var(--tm);line-height:1;">${clasesDia.length}</span>`:''}
+      </div>`;
+    }).join('')}</div>`).join('')}
+    <div style="display:flex;gap:12px;margin-top:.75rem;flex-wrap:wrap;">
+      <div style="font-size:11px;color:var(--tm);display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--mat);display:inline-block;"></span>Mat</div>
+      <div style="font-size:11px;color:var(--tm);display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--ref);display:inline-block;"></span>Reformer</div>
+      <div style="font-size:11px;color:var(--tm);display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--fun);display:inline-block;"></span>Funcional</div>
+    </div>
+  </div>`;
+}
+function prevMes(mes){const[y,m]=mes.split('-').map(Number);const d=new Date(y,m-2,1);return d.toISOString().slice(0,7);}
+function nextMes(mes){const[y,m]=mes.split('-').map(Number);const d=new Date(y,m,1);return d.toISOString().slice(0,7);}
 
 function rHistorial(){
   const filtMod=document.getElementById('hist-mod')?.value||'';
@@ -3205,6 +3336,10 @@ function rHistorial(){
 
   return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem;">
     <div class="ptitle" style="margin:0;">Historial de clases</div>
+    <div style="display:flex;gap:6px;">
+      <button onclick="_histView='list';render();" class="btn btn-s" style="${_histView==='list'?'background:var(--v);color:#fff;border-color:var(--v);':''}">☰ Lista</button>
+      <button onclick="_histView='calendar';render();" class="btn btn-s" style="${_histView==='calendar'?'background:var(--v);color:#fff;border-color:var(--v);':''}">📅 Calendario</button>
+    </div>
   </div>
   <div style="display:flex;gap:8px;margin-bottom:1rem;align-items:center;flex-wrap:wrap;">
     <select id="hist-mod" onchange="_histLimit=8;_histExpanded.clear();render();" style="margin:0;width:150px;font-size:13px;">
@@ -3215,6 +3350,8 @@ function rHistorial(){
     </select>
     <span style="font-size:12px;color:var(--tm);">${totalClases} clase${totalClases!==1?'s':''} registrada${totalClases!==1?'s':''}</span>
   </div>
+  ${_histView==='calendar'?rCalendarioMensual(filtMod):''}
+  ${_histView==='list'?`
   ${shown.length?shown.map(c=>{
     const h=DB.horarios.find(x=>x.id===c.horario_id);
     const ejs=Array.isArray(c.ejercicios)?c.ejercicios:[];
@@ -3222,12 +3359,15 @@ function rHistorial(){
     const ejsVis=isExp?ejs:ejs.slice(0,3);
     const fDate=new Date(c.fecha+'T12:00:00');
     const fechaLabel=fDate.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+    const asistDia=DB.asistencia.filter(x=>x.clase_id===c.id);
+    const nPresentes=asistDia.filter(x=>x.presente).length;
     return`<div class="card" style="margin-bottom:.6rem;">
       <div style="display:flex;align-items:flex-start;gap:10px;">
         <div style="flex:1;">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:.35rem;">
             <span style="font-size:13px;font-weight:700;">${fechaLabel}</span>
             ${h?`${modBadge(h.modalidad)}<span style="font-size:11px;color:var(--tm);">${DIA_LABEL[h.dia]||''} ${h.hora_inicio}–${h.hora_fin}</span>`:''}
+            ${nPresentes>0?`<span style="font-size:11px;background:var(--matl);color:var(--mat);padding:1px 7px;border-radius:99px;">✅ ${nPresentes} presente${nPresentes!==1?'s':''}</span>`:''}
           </div>
           ${c.notas?`<div style="font-size:12px;color:var(--tm);font-style:italic;margin-bottom:.3rem;">"${esc(c.notas)}"</div>`:''}
           <div style="font-size:11px;color:var(--tm);margin-bottom:.5rem;">${ejs.length} ejercicio${ejs.length!==1?'s':''}</div>
@@ -3250,7 +3390,8 @@ function rHistorial(){
       </div>`:'<div style="font-size:12px;color:var(--tm);font-style:italic;">Sin ejercicios registrados.</div>'}
     </div>`;
   }).join(''):`<div class="card"><div style="font-size:13px;color:var(--tm);text-align:center;padding:.5rem;">Sin clases registradas${filtMod?' para esta modalidad':''}.</div></div>`}
-  ${totalClases>_histLimit?`<div style="text-align:center;margin-top:.75rem;"><button class="btn btn-s" onclick="_histLimit+=8;render();" style="font-size:13px;">Cargar más (${totalClases-_histLimit} restantes)</button></div>`:''}`;
+  ${totalClases>_histLimit?`<div style="text-align:center;margin-top:.75rem;"><button class="btn btn-s" onclick="_histLimit+=8;render();" style="font-size:13px;">Cargar más (${totalClases-_histLimit} restantes)</button></div>`:''}
+  `:''}`;
 }
 
 function copiarClase(claseId){
@@ -4538,7 +4679,11 @@ function iniciarModoClase(claseId) {
   const inscEnHorario=h?DB.inscripciones.filter(i=>i.horario_id===h.id).map(i=>alumnaById(i.alumna_id)).filter(Boolean):[];
   const todasActivas=DB.alumnas.filter(a=>a.estado==='activa');
   function rowNota(a,destacada){
-    return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f5f5f5;">
+    const checked=_asistenciaPresentes.has(a.id);
+    return`<div id="row-asist-${a.id}" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f5f5f5;transition:opacity .15s;${!checked?'opacity:.5;':''}" >
+      <label style="display:flex;align-items:center;gap:0;cursor:pointer;flex-shrink:0;">
+        <input type="checkbox" id="chk-asist-${a.id}" ${checked?'checked':''} onchange="toggleAsistencia(${a.id})" style="width:20px;height:20px;accent-color:#1D9E75;cursor:pointer;margin:0;">
+      </label>
       <div style="width:32px;height:32px;border-radius:50%;background:${destacada?'#ede9f7':'#f3f4f6'};color:${destacada?'#7C5CBF':'#555'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${alumnaInits(a.nombre,a.apellido)}</div>
       <div style="flex:1;">
         <div style="font-size:14px;font-weight:${destacada?'600':'400'};color:#1a1a2e;">${a.nombre} ${a.apellido||''}${destacada?'':' <span style="font-size:11px;color:#aaa;">(otra clase)</span>'}</div>
@@ -4555,6 +4700,13 @@ function iniciarModoClase(claseId) {
     </div>`;
   }
   const inscIds=new Set(inscEnHorario.map(a=>a.id));
+  // Init attendance: check existing records first, fall back to all inscriptas present
+  const existingAsistencia=DB.asistencia.filter(x=>x.clase_id===c.id);
+  if(existingAsistencia.length){
+    _asistenciaPresentes=new Set(existingAsistencia.filter(x=>x.presente).map(x=>x.alumna_id));
+  } else {
+    _asistenciaPresentes=new Set(inscEnHorario.map(a=>a.id));
+  }
   const otras=todasActivas.filter(a=>!inscIds.has(a.id));
   alumnasList.innerHTML=`
     ${inscEnHorario.length?`<div style="font-size:11px;font-weight:600;color:#7C5CBF;text-transform:uppercase;letter-spacing:.04em;padding:4px 0 6px;">Inscriptas en este horario</div>${inscEnHorario.map(a=>rowNota(a,true)).join('')}`:''}
@@ -4588,6 +4740,31 @@ async function guardarNotaRapida(alumnaId){
   document.getElementById(`nota-txt-${alumnaId}`).value='';
   showMsg('✓ Nota guardada en la ficha');
   await loadAll();
+}
+function toggleAsistencia(alumnaId){
+  const row=document.getElementById(`row-asist-${alumnaId}`);
+  if(_asistenciaPresentes.has(alumnaId)){
+    _asistenciaPresentes.delete(alumnaId);
+    if(row)row.style.opacity='.5';
+  } else {
+    _asistenciaPresentes.add(alumnaId);
+    if(row)row.style.opacity='1';
+  }
+}
+async function guardarAsistencia(){
+  if(!_modoClaseId){showMsg('No hay clase activa');return;}
+  const presentes=[..._asistenciaPresentes];
+  const{error}=await sb.rpc('triskel_save_asistencia',{p_clase_id:_modoClaseId,p_presentes:presentes});
+  if(error){
+    if(error.code==='42883'||error.message?.includes('does not exist')){
+      showMsg('⚠️ Aplicá la migración 025 en Supabase para activar el registro de asistencia.',5000);
+    } else {
+      showMsg('Error al guardar asistencia: '+error.message);
+    }
+    return;
+  }
+  showMsg(`✅ Asistencia guardada — ${presentes.length} presente${presentes.length!==1?'s':''}`);
+  await loadAsistencia();
 }
 function compartirClase(){
   const c=DB.clases.find(x=>x.id===_modoClaseId);
