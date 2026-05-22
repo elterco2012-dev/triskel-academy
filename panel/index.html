@@ -1890,8 +1890,8 @@ async function loadAll(){
 
 async function loadConfig(){
   try{
-    const{data}=await sb.rpc('triskel_get_configuracion');
-    if(data&&typeof data==='object'&&!data.ok) return; // error
+    const{data,error}=await sb.rpc('triskel_get_configuracion');
+    if(error){console.warn('loadConfig RPC error:',error);throw error;}
     if(data&&typeof data==='object') DB.config=data;
     // Keep localStorage in sync as a cache-clear fallback
     if(DB.config.tarifas) localStorage.setItem(TARIFAS_KEY,JSON.stringify(DB.config.tarifas));
@@ -2117,8 +2117,10 @@ async function persistTarifas(t){
   const{error}=await sb.rpc('triskel_save_configuracion',{p_key:'tarifas',p_value:t});
   if(error){
     console.error('persistTarifas Supabase error:',error);
-    showMsg('⚠️ Tarifas guardadas localmente. Para sincronizar entre dispositivos, aplicá la migración 020 en Supabase.',5000);
+    showMsg('⚠️ Guardado solo localmente. Aplicá la migración 020 en Supabase para sincronizar entre dispositivos.',6000);
+    return false;
   }
+  return true;
 }
 function openModalTarifas(){
   const t=getTarifas();
@@ -2141,9 +2143,9 @@ async function saveTarifasModal(){
     if(v1)t[m+'_1']=v1;
     if(v2)t[m+'_2']=v2;
   });
-  await persistTarifas(t);
+  const ok=await persistTarifas(t);
   closeModalTarifas();
-  showMsg('✓ Tarifas guardadas');
+  if(ok) showMsg('✓ Tarifas guardadas en Supabase');
 }
 async function actualizarPreciosMasivo(){
   const mod=document.getElementById('pm-modalidad').value;
