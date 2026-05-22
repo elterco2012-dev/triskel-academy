@@ -2626,18 +2626,25 @@ function rAlertasInteligentes(){
   const mes2=new Date(hoy.getFullYear(),hoy.getMonth()-2,1).toISOString().slice(0,7);
   const activas=DB.alumnas.filter(a=>a.estado==='activa');
 
-  // Morosas: sin pago en mes actual NI mes anterior
+  // Morosas: sin pago en dos meses consecutivos, con gracia de 10 días al inicio de mes
+  const diasGracia=10;
+  const esInicioMes=new Date().getDate()<=diasGracia;
   const morosas=activas.filter(a=>{
     const p0=DB.pagos.some(p=>p.alumna_id===a.id&&p.mes===mes0&&p.pagado);
     const p1=DB.pagos.some(p=>p.alumna_id===a.id&&p.mes===mes1&&p.pagado);
+    const p2=DB.pagos.some(p=>p.alumna_id===a.id&&p.mes===mes2&&p.pagado);
+    if(esInicioMes)return !p1&&!p2;
     return !p0&&!p1;
   });
 
-  // 3+ ausencias seguidas (basado en registros de asistencia)
+  // 3+ ausencias seguidas: alumna no aparece en los últimos 3 registros de asistencia de sus horarios
   const ausentes3=activas.filter(a=>{
-    const asis=DB.asistencia.filter(x=>x.alumna_id===a.id).sort((x,y)=>y.fecha?.localeCompare(x.fecha)||0);
-    if(asis.length<3)return false;
-    return asis[0]?.presente===false&&asis[1]?.presente===false&&asis[2]?.presente===false;
+    const horIds=new Set(DB.inscripciones.filter(i=>i.alumna_id===a.id).map(i=>i.horario_id));
+    if(!horIds.size)return false;
+    const clasesRecientes=DB.clases.filter(c=>horIds.has(c.horario_id)).sort((x,y)=>y.fecha.localeCompare(x.fecha)).slice(0,3);
+    if(clasesRecientes.length<3)return false;
+    const asistIds=new Set(DB.asistencia.filter(x=>x.alumna_id===a.id).map(x=>x.clase_id));
+    return clasesRecientes.every(c=>!asistIds.has(c.id));
   });
 
   const totalAlertas=morosas.length+ausentes3.length;
@@ -2940,6 +2947,7 @@ function rFicha(){
   for(let i=0;i<24;i++){
     const d=new Date(now.getFullYear(),now.getMonth()-i,1);
     const m=d.toISOString().slice(0,7);
+    if(i===0&&!mesesPagados.has(m))continue; // mes en curso: no romper racha si aún no pagó
     if(mesesPagados.has(m))racha++;
     else break;
   }
@@ -2950,7 +2958,7 @@ function rFicha(){
   for(let i=0;i<mesesCheck;i++){const d=new Date(now.getFullYear(),now.getMonth()-i,1);if(mesesPagados.has(d.toISOString().slice(0,7)))pagosEnPeriodo++;}
   const regularidad=Math.round((pagosEnPeriodo/mesesCheck)*100);
   const regColor=regularidad>=80?'var(--mat)':regularidad>=50?'var(--fun)':'var(--rd)';
-  const regLabel=regularidad>=80?'Regular ✓':regularidad>=50?'Irregular':'En deuda';
+  const regLabel=regularidad>=80?'Regular ✓':regularidad>=50?'Irregular':'Poco regular';
   // Asistencia: cruza clases de sus horarios con registros de asistencia
   const horarioIdsSet=new Set(inscs.map(i=>i.horario_id));
   const tresMesesAtras=new Date();tresMesesAtras.setMonth(tresMesesAtras.getMonth()-3);
@@ -3219,7 +3227,7 @@ function rInicio(){
   DB.inscripciones.forEach(i=>{const mod=i.triskel_horarios?.modalidad;if(mod&&modAlumnas[mod])modAlumnas[mod].add(i.alumna_id);});
   Object.keys(modCount).forEach(m=>modCount[m]=modAlumnas[m].size);
 
-  const ultimasClases=DB.clases.slice(0,5);
+  const ultimasClases=[...DB.clases].sort((a,b)=>b.fecha.localeCompare(a.fecha)).slice(0,5);
 
   return`<div class="ptitle">Inicio</div>
   ${rCumpleanos()}
@@ -3236,9 +3244,10 @@ function rInicio(){
   </div>
   <div class="card" style="margin-bottom:1.25rem;padding:.85rem 1rem;">
     <div class="ctitle" style="margin-bottom:.6rem;">Desglose por medio — ${mesLabel(mesActual)}</div>
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;text-align:center;">
+    <div style="display:grid;grid-template-columns:repeat(${byMedio.otro>0?3:2},1fr);gap:8px;text-align:center;">
       <div><div style="font-size:11px;color:var(--tm);margin-bottom:.2rem;">🏦 Transferencia</div><div style="font-size:1.1rem;font-weight:700;">$${byMedio.transferencia.toLocaleString('es-AR')}</div></div>
       <div><div style="font-size:11px;color:var(--tm);margin-bottom:.2rem;">💵 Efectivo</div><div style="font-size:1.1rem;font-weight:700;">$${byMedio.efectivo.toLocaleString('es-AR')}</div></div>
+      ${byMedio.otro>0?`<div><div style="font-size:11px;color:var(--tm);margin-bottom:.2rem;">📎 Otro</div><div style="font-size:1.1rem;font-weight:700;">$${byMedio.otro.toLocaleString('es-AR')}</div></div>`:''}
     </div>
   </div>
 
