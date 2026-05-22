@@ -201,6 +201,9 @@ input,select,textarea,button{font-family:'DM Sans',-apple-system,BlinkMacSystemF
     <button class="nav-item" onclick="navTo('pagos')" id="nav-pagos">
       <span class="nav-icon" id="nav-pagos-icon">💳</span>Pagos
     </button>
+    <button class="nav-item" onclick="navTo('biblioteca')" id="nav-biblioteca">
+      <span class="nav-icon">📚</span>Ejercicios
+    </button>
     <button class="nav-item" onclick="navTo('perfil')" id="nav-perfil">
       <span class="nav-icon">👤</span>Perfil
     </button>
@@ -366,9 +369,10 @@ function navTo(page){
   const navEl=document.getElementById('nav-'+page);
   if(navEl) navEl.classList.add('active');
   switch(page){
-    case 'inicio':   renderInicio();break;
-    case 'pagos':    renderPagos();break;
-    case 'perfil':   renderPerfil();break;
+    case 'inicio':      renderInicio();break;
+    case 'pagos':       renderPagos();break;
+    case 'biblioteca':  renderBibliotecaAlumna();break;
+    case 'perfil':      renderPerfil();break;
   }
 }
 
@@ -607,6 +611,119 @@ function renderPagos(){
     :(_showAllPagos&&extra>0?`<button onclick="toggleAllPagos()" style="width:100%;padding:.6rem;margin-top:.25rem;background:none;border:1px solid var(--b);border-radius:var(--radius-sm);font-size:12px;color:var(--sub);cursor:pointer;">▲ Ver menos</button>`:'');
 
   setContent(ctaHtml+`<div class="card"><div class="card-title">💰 Mis pagos</div>${filas}${verMasBtn}</div>`);
+}
+
+// ── BIBLIOTECA DE EJERCICIOS ─────────────────────────────────────────────────
+
+const BIB_EJS_ALUMNA={
+  mat:[
+    {nombre:'Cien',nivel:'básico',cat:'core',vt:'100 bombeos · piernas en mesa'},
+    {nombre:'Roll up',nivel:'básico',cat:'columna',vt:'6-8 rep · sin ayuda de manos'},
+    {nombre:'Rolling like a ball',nivel:'básico',cat:'columna',vt:'8 rep · sin tocar piso con pies'},
+    {nombre:'Single leg stretch',nivel:'básico',cat:'core',vt:'8 rep c/lado · mod: cabeza apoyada'},
+    {nombre:'Double leg stretch',nivel:'básico',cat:'core',vt:'8 rep · exhalar al extender'},
+    {nombre:'Spine stretch forward',nivel:'básico',cat:'columna',vt:'6 rep · exhalar al elongar'},
+    {nombre:'Swan básico',nivel:'básico',cat:'columna',vt:'6 rep · codos cerca del cuerpo'},
+    {nombre:'Puente de hombros',nivel:'básico',cat:'glúteos',vt:'8 rep · sostener 2 seg arriba'},
+    {nombre:'Clam',nivel:'básico',cat:'glúteos',vt:'10 rep c/lado · con banda en muslos'},
+    {nombre:'Scissors',nivel:'intermedio',cat:'core',vt:'8 rep c/lado · pierna baja no toca piso'},
+    {nombre:'Criss cross',nivel:'intermedio',cat:'core',vt:'8 rep c/lado · codo a rodilla opuesta'},
+    {nombre:'Teaser básico',nivel:'intermedio',cat:'core',vt:'6 rep · piernas en mesa · bajar 4 tiempos'},
+    {nombre:'Teaser completo',nivel:'avanzado',cat:'core',vt:'6 rep · piernas extendidas · sin apoyar'},
+    {nombre:'Open leg rocker',nivel:'intermedio',cat:'columna',vt:'6-8 rep · equilibrio en cóccix'},
+    {nombre:'Swan dive',nivel:'avanzado',cat:'columna',vt:'6 rep · balancear pecho-piernas alternado'},
+    {nombre:'Swimming',nivel:'intermedio',cat:'piernas',vt:'20-30 alternados · no balancear'},
+    {nombre:'Boomerang',nivel:'avanzado',cat:'columna',vt:'5 rep · control total de la secuencia'},
+    {nombre:'De lateral · elevación de pierna',nivel:'básico',cat:'lateral',vt:'10 rep c/lado'},
+    {nombre:'De lateral · círculos',nivel:'básico',cat:'lateral',vt:'5 círculos c/dirección c/lado'},
+    {nombre:'Stomage básico',nivel:'básico',cat:'espalda',vt:'8 rep · manos bajo la frente'},
+  ],
+  reformer:[
+    {nombre:'Footwork punta y flex',nivel:'básico',cat:'footwork',vt:'3 res. · 8 rep cada uno'},
+    {nombre:'Footwork talones',nivel:'básico',cat:'footwork',vt:'3 res. · luego arco'},
+    {nombre:'Running',nivel:'básico',cat:'footwork',vt:'3 res. · talones alternados'},
+    {nombre:'Cien',nivel:'básico',cat:'core',vt:'1 res. · piernas a 45°'},
+    {nombre:'Frog',nivel:'básico',cat:'cadera',vt:'2 res. · rango cómodo · pelvis neutra'},
+    {nombre:'Short spine',nivel:'intermedio',cat:'core',vt:'2 res. · articular vértebra a vértebra'},
+    {nombre:'Semicírculo',nivel:'intermedio',cat:'core',vt:'3 res. · 4 tiempos bajar, 4 subir'},
+    {nombre:'Swan básico',nivel:'básico',cat:'espalda',vt:'2 res. · manos en barra'},
+    {nombre:'Remo desde el pecho palmas arriba',nivel:'básico',cat:'brazos',vt:'1 res. · codos pegados'},
+    {nombre:'Hug a tree',nivel:'básico',cat:'brazos',vt:'1 res. · mantener altura hombros'},
+    {nombre:'Pulling straps',nivel:'intermedio',cat:'espalda',vt:'2-3 res. · extensión de dorsal'},
+    {nombre:'Side splits',nivel:'intermedio',cat:'lateral',vt:'2 res. · abrir controlado'},
+  ],
+  funcional:[
+    {nombre:'Plancha iso',nivel:'básico',cat:'core',vt:'30-40 seg · no hundas cadera'},
+    {nombre:'Mountain climbers',nivel:'básico',cat:'core',vt:'40 seg · ritmo sostenido'},
+    {nombre:'Sentadilla clásica',nivel:'básico',cat:'piernas',vt:'40 seg · talones en suelo'},
+    {nombre:'Estocada adelante',nivel:'básico',cat:'piernas',vt:'40 seg · rodilla trasera roza el suelo'},
+    {nombre:'Puente de glúteos',nivel:'básico',cat:'glúteos',vt:'40 seg · sostener 2 seg arriba'},
+    {nombre:'Remo cerrado',nivel:'básico',cat:'espalda',vt:'40 seg · codos pegados al cuerpo'},
+    {nombre:'Flexiones con rodillas',nivel:'básico',cat:'pecho',vt:'30-40 seg · cuerpo recto desde rodillas'},
+    {nombre:'Sentadilla ISO',nivel:'intermedio',cat:'piernas',vt:'40 seg · sostener posición'},
+    {nombre:'Sentadilla búlgara',nivel:'avanzado',cat:'piernas',vt:'40 seg · pie trasero en step'},
+    {nombre:'Dead bug',nivel:'básico',cat:'core',vt:'40 seg · brazo-pierna opuestos'},
+    {nombre:'Bicicleta',nivel:'básico',cat:'core',vt:'40 seg · codo a rodilla opuesta'},
+    {nombre:'Burpees',nivel:'avanzado',cat:'cardio',vt:'40 seg · completo · sin pausas'},
+  ],
+};
+
+const BIB_CAT_ICON={core:'🎯',columna:'🌿',lateral:'↔️',piernas:'🦵',glúteos:'🍑',espalda:'🏹',footwork:'🦶',cadera:'💫',brazos:'💪',pecho:'🤲',hombros:'🙌',cardio:'❤️‍🔥'};
+const BIB_NIVEL_COLOR={básico:'#27ae60',intermedio:'#e67e22',avanzado:'#2980b9'};
+
+let _bibAlumnaMod='mat';
+let _bibAlumnaSearch='';
+let _bibAlumnaCat='';
+let _bibAlumnaNivel='';
+
+function renderBibliotecaAlumna(){
+  const mods=['mat','reformer','funcional'];
+  const modLabel={mat:'Mat',reformer:'Reformer',funcional:'Funcional'};
+  const modTab=m=>`<button onclick="_bibAlumnaMod='${m}';_bibAlumnaSearch='';_bibAlumnaCat='';_bibAlumnaNivel='';renderBibAlumnaGrid();"
+    style="padding:.4rem .85rem;border-radius:99px;border:1.5px solid ${_bibAlumnaMod===m?'var(--tm)':'var(--border)'};background:${_bibAlumnaMod===m?'var(--tm)':'var(--white)'};color:${_bibAlumnaMod===m?'#fff':'var(--txt)'};font-size:13px;font-weight:600;cursor:pointer;">${modLabel[m]}</button>`;
+
+  setContent(`<div style="padding-bottom:.5rem;">
+    <div style="font-size:18px;font-weight:700;color:var(--tm);margin-bottom:.5rem;">📚 Ejercicios</div>
+    <p style="font-size:13px;color:var(--sub);margin-bottom:1rem;">Explorá los ejercicios de tu disciplina. Podés buscar por nombre o filtrar por categoría.</p>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem;">${mods.map(modTab).join('')}</div>
+    <div style="display:flex;gap:6px;margin-bottom:.75rem;flex-wrap:wrap;">
+      <input type="search" placeholder="🔍 Buscar..." value="${_bibAlumnaSearch}" oninput="_bibAlumnaSearch=this.value;renderBibAlumnaGrid();"
+        style="flex:1;min-width:160px;padding:.4rem .7rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--white);color:var(--txt);">
+      <select onchange="_bibAlumnaNivel=this.value;renderBibAlumnaGrid();"
+        style="padding:.4rem .7rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--white);color:var(--txt);">
+        <option value="">Todos los niveles</option>
+        <option value="básico">Básico</option>
+        <option value="intermedio">Intermedio</option>
+        <option value="avanzado">Avanzado</option>
+      </select>
+    </div>
+    <div id="bib-alumna-grid"></div>
+  </div>`);
+  renderBibAlumnaGrid();
+}
+
+function renderBibAlumnaGrid(){
+  const grid=document.getElementById('bib-alumna-grid');
+  if(!grid)return;
+  let ejs=(BIB_EJS_ALUMNA[_bibAlumnaMod]||[]);
+  const q=_bibAlumnaSearch.toLowerCase().trim();
+  if(q) ejs=ejs.filter(e=>e.nombre.toLowerCase().includes(q)||(e.vt||'').toLowerCase().includes(q));
+  if(_bibAlumnaNivel) ejs=ejs.filter(e=>e.nivel===_bibAlumnaNivel);
+  if(!ejs.length){grid.innerHTML=`<div style="text-align:center;padding:2rem;color:var(--sub);font-size:14px;">Sin ejercicios para estos filtros.</div>`;return;}
+  grid.innerHTML=ejs.map(e=>{
+    const icon=BIB_CAT_ICON[e.cat]||'📌';
+    const nColor=BIB_NIVEL_COLOR[e.nivel]||'#7c3aed';
+    return`<div class="card" style="margin-bottom:.6rem;border-left:3px solid ${nColor};">
+      <div style="display:flex;align-items:flex-start;gap:8px;">
+        <span style="font-size:20px;flex-shrink:0;">${icon}</span>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:700;margin-bottom:4px;">${e.nombre}</div>
+          <span style="font-size:10px;font-weight:700;background:${nColor}22;color:${nColor};padding:1px 8px;border-radius:99px;text-transform:uppercase;">${e.nivel}</span>
+          ${e.vt?`<div style="font-size:12px;color:var(--sub);margin-top:.4rem;line-height:1.4;">↪ ${e.vt}</div>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ── PERFIL ────────────────────────────────────────────────────────────────────
