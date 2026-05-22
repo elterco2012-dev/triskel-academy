@@ -104,14 +104,15 @@ SELECT 'mat', 'Avanzado II · Cierre Clásico - Claude', '[
   {"nombre":"Roll over · piernas al techo y abrir","vt":"5-6 rep · NO pasar de cervicales · abrir en el techo · bajar y volver"},
   {"nombre":"Corkscrew","vt":"4 rep c/lado · círculo completo de piernas · pelvis sube un lado"},
   {"nombre":"Hip circles en Teaser","vt":"4 círculos c/dirección · equilibrar en cóccix · brazos estables"},
-  {"nombre":"Rocking","vt":"5-6 rep · tomar tobillos · balancear pecho-piernas · extensión total"},
-  {"nombre":"Control balance","vt":"4-5 rep · piernas al techo · equilibrar en hombros · NO en cuello"},
   {"nombre":"Kneeling side kick D","vt":"8 rep · de rodillas · una pierna lateral · cadera estable"},
   {"nombre":"Kneeling side kick I","vt":"8 rep · espejo del lado derecho"},
   {"nombre":"Side bend D (plancha lateral)","vt":"5-6 rep · elevar cadera · arco de costado · cuerpo en línea"},
   {"nombre":"Side bend I","vt":"5-6 rep · espejo"},
-  {"nombre":"Boomerang","vt":"5 rep · cruzar piernas · roll over → teaser → stretch → todo fluido"},
+  {"nombre":"Boomerang","vt":"5 rep · cruzar piernas · roll over → teaser → stretch · todo fluido"},
   {"nombre":"Seal · cerrar clase","vt":"8 rep · aplaudir al rodar · sin forzar · energía suave"},
+  {"nombre":"Crab","vt":"4-5 rep · tomar tobillos desde arriba · rodar sobre vértebras · NO pasar de cervicales"},
+  {"nombre":"Rocking","vt":"5-6 rep · tomar tobillos · balancear pecho-piernas · extensión total"},
+  {"nombre":"Control balance","vt":"4-5 rep · piernas al techo · equilibrar en hombros · NO en cuello"},
   {"nombre":"Push up Pilates","vt":"5-6 rep · plank → bajar 3 tiempos → subir 1 · pies juntos · cuerpo recto"}
 ]'::jsonb, 204
 WHERE NOT EXISTS (SELECT 1 FROM triskel_banco_ejercicios WHERE titulo='Avanzado II · Cierre Clásico - Claude');
