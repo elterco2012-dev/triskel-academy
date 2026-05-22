@@ -1,4 +1,4 @@
--- Migración 027: Corrección de secuencias en planes Claude
+-- Migración 027: Corrección de secuencias en planes Claude + Running faltante
 -- Ejecutar en Supabase SQL Editor
 
 -- ══════════════════════════════════════════════════════════════════
@@ -30,7 +30,6 @@ WHERE titulo = 'Avanzado II · Cierre Clásico - Claude';
 -- ══════════════════════════════════════════════════════════════════
 -- REFORMER: Intermedio III · Brazos y Core - Claude
 -- Problema: Plan terminaba en Short spine sin Running/Semicírculo.
---           En Reformer Running es el cierre obligatorio de la clase.
 -- ══════════════════════════════════════════════════════════════════
 UPDATE triskel_banco_ejercicios
 SET ejs = ejs || '[{"nombre":"Running · semicírculo","vt":"3 res. · running 16 rep · semicírculo 4 rep · cerrar clase"}]'::jsonb
@@ -44,4 +43,14 @@ WHERE titulo = 'Intermedio III · Brazos y Core - Claude'
 UPDATE triskel_banco_ejercicios
 SET ejs = ejs || '[{"nombre":"Running · semicírculo","vt":"3 res. · running 24 rep · semicírculo 4 rep lento · cerrar"}]'::jsonb
 WHERE titulo = 'Avanzado III · Control y Equilibrio - Claude'
+  AND NOT (ejs @> '[{"nombre":"Running · semicírculo"}]'::jsonb);
+
+-- ══════════════════════════════════════════════════════════════════
+-- REFORMER: Avanzado II (plan original de Amira)
+-- Problema: Plan no tenía Running al final (cierre obligatorio).
+-- ══════════════════════════════════════════════════════════════════
+UPDATE triskel_banco_ejercicios
+SET ejs = ejs || '[{"nombre":"Running · semicírculo","vt":"3 res. · running 24 rep · semicírculo 4 rep lento · cerrar"}]'::jsonb
+WHERE titulo = 'Avanzado II'
+  AND categoria = 'reformer'
   AND NOT (ejs @> '[{"nombre":"Running · semicírculo"}]'::jsonb);
