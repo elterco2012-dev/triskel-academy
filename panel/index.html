@@ -232,7 +232,8 @@
       <div class="sep">Clases</div>
       <a href="#" onclick="goTo('horarios')" id="n-horarios">📅 Horarios</a>
       <a href="#" onclick="goTo('clases')" id="n-clases">📝 Planificar</a>
-      <a href="#" onclick="goTo('historial')" id="n-historial">📚 Historial</a>
+      <a href="#" onclick="goTo('historial')" id="n-historial">🗓 Historial</a>
+      <a href="#" onclick="goTo('planes')" id="n-planes">🗂 Planes</a>
       <div class="sep">Gestión</div>
       <a href="#" onclick="goTo('pagos')" id="n-pagos">💰 Pagos<span id="avisos-badge-top" style="display:none;background:var(--rd);color:#fff;font-size:10px;font-weight:700;border-radius:99px;padding:1px 5px;margin-left:3px;vertical-align:middle;"></span></a>
       <a href="#" onclick="goTo('biblioteca')" id="n-biblioteca">📚 Biblioteca</a>
@@ -1986,6 +1987,7 @@ function render(){
   else if(currentPage==='horarios')m.innerHTML=warn+rHorarios();
   else if(currentPage==='clases')m.innerHTML=warn+rClases();
   else if(currentPage==='historial')m.innerHTML=warn+rHistorial();
+  else if(currentPage==='planes'){m.innerHTML=warn+rPlanes();renderBancoStandaloneGrid();}
   else if(currentPage==='pagos')m.innerHTML=warn+rPagos();
   else if(currentPage==='ficha')m.innerHTML=rFicha();
   else if(currentPage==='biblioteca'){m.innerHTML=warn+rBibliotecaAdmin();renderBibAdminGrid();}
@@ -2112,7 +2114,11 @@ function getTarifas(){return DB.config?.tarifas||{};}
 async function persistTarifas(t){
   DB.config.tarifas=t;
   localStorage.setItem(TARIFAS_KEY,JSON.stringify(t));
-  await sb.rpc('triskel_save_configuracion',{p_key:'tarifas',p_value:t});
+  const{error}=await sb.rpc('triskel_save_configuracion',{p_key:'tarifas',p_value:t});
+  if(error){
+    console.error('persistTarifas Supabase error:',error);
+    showMsg('⚠️ Tarifas guardadas localmente. Para sincronizar entre dispositivos, aplicá la migración 020 en Supabase.',5000);
+  }
 }
 function openModalTarifas(){
   const t=getTarifas();
@@ -3068,6 +3074,7 @@ function goToHorarioDetalle(horarioId){
 function rClases(){
   const dias=['lun','mar','mie','jue','vie'];
   const diasFull={lun:'Lunes',mar:'Martes',mie:'Miércoles',jue:'Jueves',vie:'Viernes'};
+  const diasAbrev={lun:'Lun',mar:'Mar',mie:'Mié',jue:'Jue',vie:'Vie'};
   const diaKey=['dom','lun','mar','mie','jue','vie','sab'];
   const hoy=new Date();
   const dow=hoy.getDay()||7;
@@ -3076,32 +3083,52 @@ function rClases(){
   const semStart=lunes.toISOString().split('T')[0];
   const semEnd=viernes.toISOString().split('T')[0];
   const semLabel=lunes.toLocaleDateString('es-AR',{day:'numeric',month:'short'})+' – '+viernes.toLocaleDateString('es-AR',{day:'numeric',month:'short'});
-  const diaHoyKey=diaKey[hoy.getDay()]; // 'lun','mar'...
+  const diaHoyKey=diaKey[hoy.getDay()];
   const esFinDeSemana=hoy.getDay()===0||hoy.getDay()===6;
+
+  // Compute week summary
+  const slotsDeEstaSemana=DB.horarios.filter(h=>dias.includes(h.dia));
+  const totalSlots=slotsDeEstaSemana.length;
+  const planificados=slotsDeEstaSemana.filter(h=>{
+    const c=DB.clases.find(c=>c.horario_id===h.id&&c.fecha>=semStart&&c.fecha<=semEnd);
+    return c&&Array.isArray(c.ejercicios)&&c.ejercicios.length>0;
+  }).length;
+  const pendientes=totalSlots-planificados;
 
   // Sección HOY
   const slotshoy=esFinDeSemana?[]:DB.horarios.filter(h=>h.dia===diaHoyKey).sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
-  const secHoy=slotshoy.length?`<div class="card" style="margin-bottom:1rem;border:2px solid var(--v);">
-    <div class="ctitle" style="color:var(--v);margin-bottom:.75rem;">📌 Hoy — ${diasFull[diaHoyKey]} ${hoy.toLocaleDateString('es-AR',{day:'numeric',month:'long'})}</div>
+  const secHoy=slotshoy.length?`<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid var(--mat);border-radius:var(--r);padding:1rem 1.2rem;margin-bottom:1.25rem;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem;">
+      <span style="font-size:16px;">📌</span>
+      <div style="font-size:14px;font-weight:700;color:var(--mat);">HOY — ${diasFull[diaHoyKey]} ${hoy.toLocaleDateString('es-AR',{day:'numeric',month:'long'})}</div>
+    </div>
     <div style="display:flex;flex-direction:column;gap:8px;">
       ${slotshoy.map(h=>{
         const claseHoy=DB.clases.find(c=>c.horario_id===h.id&&c.fecha>=semStart&&c.fecha<=semEnd);
         const nEjs=claseHoy&&Array.isArray(claseHoy.ejercicios)?claseHoy.ejercicios.length:0;
         const registrada=!!claseHoy;
-        return`<button onclick="openClaseParaHorario(${h.id})" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid ${registrada?'var(--mat)':'var(--b)'};border-radius:var(--rs);background:${registrada?'var(--matl)':'var(--s)'};cursor:pointer;text-align:left;width:100%;">
-          <div>
-            <div style="font-size:14px;font-weight:600;">${h.hora_inicio}–${h.hora_fin}</div>
-            <div style="margin-top:3px;">${modBadge(h.modalidad)}</div>
+        const nAlumnas=DB.inscripciones.filter(i=>i.horario_id===h.id).length;
+        return`<button onclick="openClaseParaHorario(${h.id})" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1.5px solid ${registrada?'var(--mat)':'rgba(0,0,0,.12)'};border-radius:var(--rs);background:${registrada?'#fff':'rgba(255,255,255,.7)'};cursor:pointer;text-align:left;width:100%;gap:10px;">
+          <div style="flex:1;">
+            <div style="font-size:15px;font-weight:700;color:var(--t);">${h.hora_inicio}–${h.hora_fin}</div>
+            <div style="margin-top:3px;display:flex;gap:6px;align-items:center;">${modBadge(h.modalidad)}<span style="font-size:11px;color:var(--tm);">${nAlumnas} alumna${nAlumnas!==1?'s':''}</span></div>
           </div>
-          <div style="text-align:right;">
+          <div style="text-align:right;flex-shrink:0;">
             ${registrada
-              ?`<div style="font-size:12px;color:var(--mat);font-weight:700;">✓ Planificada</div><div style="font-size:11px;color:var(--tm);display:flex;align-items:center;gap:6px;">${nEjs} ejercicio${nEjs!==1?'s':''} · <button onclick="event.stopPropagation();iniciarModoClase(${claseHoy.id})" style="background:var(--mat);color:#fff;border:none;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;cursor:pointer;">▶ Iniciar clase</button></div>`
-              :`<div style="font-size:12px;color:var(--v);font-weight:600;">+ Planificar</div><div style="font-size:11px;color:var(--tm);">Sin ejercicios aún</div>`}
+              ?`<div style="font-size:11px;color:var(--mat);font-weight:700;margin-bottom:4px;">✓ ${nEjs} ejercicio${nEjs!==1?'s':''}</div><button onclick="event.stopPropagation();iniciarModoClase(${claseHoy.id})" style="background:var(--mat);color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;">▶ Iniciar</button>`
+              :`<div style="font-size:12px;color:#6b7280;font-weight:600;">+ Planificar</div>`}
           </div>
         </button>`;
       }).join('')}
     </div>
-  </div>`:(esFinDeSemana?`<div class="card" style="margin-bottom:1rem;"><div style="font-size:13px;color:var(--tm);">🌿 Fin de semana — sin clases hoy.</div></div>`:'');
+  </div>`:(esFinDeSemana?`<div class="card" style="margin-bottom:1.25rem;text-align:center;padding:1.25rem;"><div style="font-size:20px;margin-bottom:.25rem;">🌿</div><div style="font-size:13px;color:var(--tm);">Fin de semana — sin clases hoy.</div></div>`:'');
+
+  function diaFecha(dia){
+    const offset={'lun':0,'mar':1,'mie':2,'jue':3,'vie':4};
+    const d=new Date(lunes);
+    d.setDate(lunes.getDate()+(offset[dia]||0));
+    return d.getDate()+'/'+String(d.getMonth()+1).padStart(2,'0');
+  }
 
   function claseCard(h,semStart,semEnd){
     const n=DB.inscripciones.filter(i=>i.horario_id===h.id).length;
@@ -3109,34 +3136,48 @@ function rClases(){
     const nEjs=claseHoy&&Array.isArray(claseHoy.ejercicios)?claseHoy.ejercicios.length:0;
     const registrada=!!claseHoy;
     const esHoy=h.dia===diaHoyKey&&!esFinDeSemana;
-    return`<button onclick="openClaseParaHorario(${h.id})" style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid ${registrada?'var(--mat)':esHoy?'var(--v)':'var(--b)'};border-radius:var(--rs);background:${registrada?'var(--matl)':'var(--s)'};cursor:pointer;text-align:left;width:100%;">
-      <div>
-        <div style="font-size:13px;font-weight:${esHoy?'700':'500'};">${h.hora_inicio}–${h.hora_fin}</div>
-        <div style="margin-top:2px;">${modBadge(h.modalidad)}</div>
-      </div>
-      <div style="text-align:right;">
-        <div style="font-size:10px;color:var(--tm);">${n} alumna${n!==1?'s':''}</div>
+    return`<button onclick="openClaseParaHorario(${h.id})" style="display:flex;flex-direction:column;padding:8px 10px;border:1.5px solid ${registrada?'var(--mat)':esHoy?'var(--v)':'var(--b)'};border-radius:var(--rs);background:${registrada?'var(--matl)':'var(--s)'};cursor:pointer;text-align:left;width:100%;gap:4px;">
+      <div style="font-size:12px;font-weight:700;color:var(--t);">${h.hora_inicio}–${h.hora_fin}</div>
+      <div>${modBadge(h.modalidad)}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:10px;color:var(--tm);">${n} alumna${n!==1?'s':''}</span>
         ${registrada
-          ?`<div style="font-size:10px;color:var(--mat);font-weight:600;">✓ ${nEjs} ej.</div>`
-          :`<div style="font-size:10px;color:var(--th);">pendiente</div>`}
+          ?`<span style="font-size:10px;color:var(--mat);font-weight:700;">✓ ${nEjs} ej.</span>`
+          :`<span style="font-size:10px;color:#9ca3af;">pendiente</span>`}
       </div>
     </button>`;
   }
 
-  return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+  const summaryColor=pendientes===0?'var(--mat)':'var(--fun)';
+  const summaryIcon=pendientes===0?'✅':'📋';
+
+  return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem;">
     <div class="ptitle" style="margin:0;">Planificar clase</div>
     <button class="btn btn-p" onclick="openModalClase()">+ Nueva clase</button>
   </div>
-  <p style="font-size:13px;color:var(--tm);margin-bottom:1rem;">Cargá ejercicios y notas para cada clase. Las <span style="color:var(--mat);font-weight:600;">verdes</span> ya tienen plan; las <span style="color:var(--th);font-weight:600;">pendientes</span> todavía no. El historial completo está en <strong>Historial</strong>.</p>
   ${secHoy}
-  <div style="font-size:12px;font-weight:600;color:var(--v);margin-bottom:.75rem;">📅 Semana del ${semLabel}</div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;">
+  <div style="background:var(--s);border:1.5px solid var(--b);border-radius:var(--r);padding:.75rem 1rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+    <span style="font-size:18px;">${summaryIcon}</span>
+    <div style="flex:1;">
+      <div style="font-size:13px;font-weight:700;color:${summaryColor};">${planificados} de ${totalSlots} clases planificadas</div>
+      <div style="font-size:11px;color:var(--tm);">Semana del ${semLabel}${pendientes>0?` · <span style="color:var(--fun);font-weight:600;">${pendientes} pendiente${pendientes!==1?'s':''}</span>`:' · ¡Todo listo!'}</div>
+    </div>
+    <button class="btn btn-s" onclick="goTo('historial')" style="font-size:11px;">🗓 Historial</button>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;">
     ${dias.map(dia=>{
       const slots=DB.horarios.filter(h=>h.dia===dia).sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
       if(!slots.length)return'';
       const esHoyCol=dia===diaHoyKey&&!esFinDeSemana;
+      const planifDia=slots.filter(h=>{
+        const c=DB.clases.find(c=>c.horario_id===h.id&&c.fecha>=semStart&&c.fecha<=semEnd);
+        return c&&Array.isArray(c.ejercicios)&&c.ejercicios.length>0;
+      }).length;
       return`<div>
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:${esHoyCol?'var(--v)':'var(--tm)'};padding:4px 0 8px;">${diasFull[dia]}${esHoyCol?' ← hoy':''}</div>
+        <div style="padding:4px 2px 8px;border-bottom:2px solid ${esHoyCol?'var(--v)':'var(--b)'};margin-bottom:8px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:${esHoyCol?'var(--v)':'var(--tm)'};">${diasAbrev[dia]}${esHoyCol?' · HOY':''}</div>
+          <div style="font-size:10px;color:var(--tm);">${diaFecha(dia)} · ${planifDia}/${slots.length}</div>
+        </div>
         <div style="display:flex;flex-direction:column;gap:6px;">
           ${slots.map(h=>claseCard(h,semStart,semEnd)).join('')}
         </div>
@@ -3146,49 +3187,83 @@ function rClases(){
 }
 
 // ─── HISTORIAL ──────────────────────────────────────────
+let _histLimit=8;
+let _histExpanded=new Set();
+
 function rHistorial(){
   const filtMod=document.getElementById('hist-mod')?.value||'';
-  const clases=DB.clases.filter(c=>{
+  let clases=DB.clases.filter(c=>{
     if(!filtMod)return true;
     const h=DB.horarios.find(x=>x.id===c.horario_id);
     return h?.modalidad===filtMod;
-  });
+  }).sort((a,b)=>b.fecha.localeCompare(a.fecha));
 
-  return`<div class="ptitle">Historial de clases</div>
-  <div style="display:flex;gap:8px;margin-bottom:1rem;align-items:center;">
-    <select id="hist-mod" onchange="render()" style="margin:0;width:160px;">
+  const totalClases=clases.length;
+  const shown=clases.slice(0,_histLimit);
+
+  return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem;">
+    <div class="ptitle" style="margin:0;">Historial de clases</div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:1rem;align-items:center;flex-wrap:wrap;">
+    <select id="hist-mod" onchange="_histLimit=8;_histExpanded.clear();render();" style="margin:0;width:150px;font-size:13px;">
       <option value="">Todas</option>
       <option value="mat">Mat</option>
       <option value="reformer">Reformer</option>
       <option value="funcional">Funcional</option>
     </select>
-    <span style="font-size:12px;color:var(--tm);">${clases.length} clase${clases.length!==1?'s':''}</span>
+    <span style="font-size:12px;color:var(--tm);">${totalClases} clase${totalClases!==1?'s':''} registrada${totalClases!==1?'s':''}</span>
   </div>
-  ${clases.length?clases.map(c=>{
+  ${shown.length?shown.map(c=>{
     const h=DB.horarios.find(x=>x.id===c.horario_id);
     const ejs=Array.isArray(c.ejercicios)?c.ejercicios:[];
+    const isExp=_histExpanded.has(c.id);
+    const ejsVis=isExp?ejs:ejs.slice(0,3);
+    const fDate=new Date(c.fecha+'T12:00:00');
+    const fechaLabel=fDate.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
     return`<div class="card" style="margin-bottom:.6rem;">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:.5rem;">
+      <div style="display:flex;align-items:flex-start;gap:10px;">
         <div style="flex:1;">
-          <span style="font-weight:500;font-size:14px;">${c.fecha}</span>
-          ${h?`<span style="margin-left:8px;">${modBadge(h.modalidad)}</span>
-          <span style="margin-left:6px;font-size:12px;color:var(--tm);">${DIA_LABEL[h.dia]||''} ${h.hora_inicio}–${h.hora_fin}</span>`:''}
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:.35rem;">
+            <span style="font-size:13px;font-weight:700;">${fechaLabel}</span>
+            ${h?`${modBadge(h.modalidad)}<span style="font-size:11px;color:var(--tm);">${DIA_LABEL[h.dia]||''} ${h.hora_inicio}–${h.hora_fin}</span>`:''}
+          </div>
+          ${c.notas?`<div style="font-size:12px;color:var(--tm);font-style:italic;margin-bottom:.3rem;">"${esc(c.notas)}"</div>`:''}
+          <div style="font-size:11px;color:var(--tm);margin-bottom:.5rem;">${ejs.length} ejercicio${ejs.length!==1?'s':''}</div>
         </div>
-        <button class="btn btn-s" onclick="openModalClase(${c.id})">Editar</button>
-        <button class="btn btn-s btn-danger" onclick="deleteClase(${c.id})">Borrar</button>
+        <div style="display:flex;gap:4px;flex-shrink:0;">
+          <button class="btn btn-s" title="Copiar esta clase" onclick="copiarClase(${c.id})" style="font-size:11px;">📋 Copiar</button>
+          <button class="btn btn-s" onclick="openModalClase(${c.id})" style="font-size:11px;">✏️</button>
+          <button class="btn btn-s btn-danger" onclick="deleteClase(${c.id})" style="font-size:11px;">🗑</button>
+        </div>
       </div>
-      ${c.notas?`<div style="font-size:12px;color:var(--tm);margin-bottom:.5rem;">${c.notas}</div>`:''}
-      <div style="display:flex;flex-direction:column;gap:4px;">
-        ${ejs.map((e,i)=>`<div class="ej-row" style="padding:4px 0;border-bottom:1px solid var(--b);">
-          <div class="ej-num">${e.orden||i+1}</div>
+      ${ejs.length?`<div style="display:flex;flex-direction:column;gap:2px;">
+        ${ejsVis.map((e,i)=>`<div class="ej-row" style="padding:3px 0;border-bottom:1px solid var(--b);">
+          <div class="ej-num" style="font-size:11px;">${e.orden||i+1}</div>
           <div class="ej-body">
-            <div class="ej-nombre">${e.nombre}</div>
-            ${e.vt?`<div class="ej-vt">↪ VT: ${e.vt}</div>`:''}
+            <div class="ej-nombre" style="font-size:13px;">${esc(e.nombre)}</div>
+            ${e.vt?`<div class="ej-vt" style="font-size:11px;">↪ ${esc(e.vt)}</div>`:''}
           </div>
         </div>`).join('')}
-      </div>
+        ${ejs.length>3?`<button onclick="_histExpanded.${isExp?'delete':'add'}(${c.id});render();" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--tm);padding:4px 0;text-align:left;">${isExp?'▲ Mostrar menos':'▼ Ver todos ('+ejs.length+')'}</button>`:''}
+      </div>`:'<div style="font-size:12px;color:var(--tm);font-style:italic;">Sin ejercicios registrados.</div>'}
     </div>`;
-  }).join(''):`<div class="card"><div style="font-size:13px;color:var(--tm);">Sin clases registradas.</div></div>`}`;
+  }).join(''):`<div class="card"><div style="font-size:13px;color:var(--tm);text-align:center;padding:.5rem;">Sin clases registradas${filtMod?' para esta modalidad':''}.</div></div>`}
+  ${totalClases>_histLimit?`<div style="text-align:center;margin-top:.75rem;"><button class="btn btn-s" onclick="_histLimit+=8;render();" style="font-size:13px;">Cargar más (${totalClases-_histLimit} restantes)</button></div>`:''}`;
+}
+
+function copiarClase(claseId){
+  const c=DB.clases.find(x=>x.id===claseId);
+  if(!c)return;
+  const ejs=Array.isArray(c.ejercicios)?c.ejercicios:[];
+  if(!ejs.length){showMsg('Esta clase no tiene ejercicios para copiar.');return;}
+  openModalClase(null);
+  // After modal opens, set exercises
+  setTimeout(()=>{
+    _claseEjs=ejs.map((e,i)=>({nombre:e.nombre||'',vt:e.vt||'',orden:i+1}));
+    renderEjerciciosModal();
+    if(c.notas){const n=document.getElementById('mcl-notas');if(n)n.value=c.notas;}
+    showMsg(`📋 Copiados ${ejs.length} ejercicios. Elegí el horario y guardá.`);
+  },80);
 }
 
 // ─── PAGOS ──────────────────────────────────────────────
@@ -3574,6 +3649,8 @@ function renderEjerciciosModal(){
 }
 // ─── BIBLIOTECA DE EJERCICIOS ────────────────────────────
 const CAT_LABELS_BIB={core:'Core',columna:'Columna',lateral:'Lateral',piernas:'Piernas',glúteos:'Glúteos',espalda:'Espalda',footwork:'Footwork',cadera:'Cadera',brazos:'Brazos',pecho:'Pecho',hombros:'Hombros',cardio:'Cardio'};
+const CAT_ICON={core:'🎯',columna:'🌿',lateral:'↔️',piernas:'🦵',glúteos:'🍑',espalda:'🏹',footwork:'🦶',cadera:'💫',brazos:'💪',pecho:'🤲',hombros:'🙌',cardio:'❤️‍🔥'};
+const CAT_COLOR={core:'#7c3aed',columna:'#059669',lateral:'#0ea5e9',piernas:'#d97706',glúteos:'#db2777',espalda:'#16a34a',footwork:'#2563eb',cadera:'#7c3aed',brazos:'#ea580c',pecho:'#dc2626',hombros:'#0891b2',cardio:'#e11d48'};
 const NIVEL_COLOR={básico:'var(--mat)',intermedio:'var(--fun)',avanzado:'var(--ref)'};
 const NIVEL_BG={básico:'var(--matl)',intermedio:'var(--funl)',avanzado:'var(--refl)'};
 
@@ -4005,6 +4082,54 @@ function renderBancoList(){
   }
 }
 function closeModalBanco(){document.getElementById('modal-banco').style.display='none';}
+
+// ─── PLANES (sección standalone) ────────────────────────
+let _planesMod='mat';
+function rPlanes(){
+  const mods=['mat','reformer','funcional'];
+  const modTabs=mods.map(m=>`<button class="btn btn-s ${_planesMod===m?'btn-p':''}" onclick="_planesMod='${m}';renderBancoStandaloneGrid();" style="display:flex;flex-direction:column;align-items:center;gap:1px;padding:.4rem 1rem;">
+    <span style="font-size:13px;font-weight:700;">${MOD_LABEL[m]||m}</span>
+    <span style="font-size:10px;opacity:.7;">${(DB.banco[m]||[]).length} planes</span>
+  </button>`).join('');
+  const totalPlanes=mods.reduce((s,m)=>s+(DB.banco[m]||[]).length,0);
+  return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem;">
+    <div class="ptitle" style="margin:0;">🗂 Planes de clase</div>
+    <button class="btn btn-p" onclick="_planesMod=_planesMod;openEditBanco(null);" style="white-space:nowrap;">＋ Nueva tarjeta</button>
+  </div>
+  <p style="font-size:13px;color:var(--tm);margin-bottom:1rem;">Guardá secuencias de ejercicios reutilizables. <strong>${totalPlanes} planes</strong> disponibles.</p>
+  <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1.25rem;">${modTabs}</div>
+  <div id="planes-standalone-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;"></div>`;
+}
+
+function renderBancoStandaloneGrid(){
+  const grid=document.getElementById('planes-standalone-grid');
+  if(!grid)return;
+  const planes=DB.banco[_planesMod]||[];
+  // sync _bancoMod so edit modal uses the right mod
+  _bancoMod=_planesMod;
+  if(!planes.length){
+    grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--tm);font-size:14px;">Sin planes para ${MOD_LABEL[_planesMod]}.<br><span style="font-size:13px;">Usá <strong>+ Nueva tarjeta</strong> para crear el primero.</span></div>`;
+    return;
+  }
+  grid.innerHTML=planes.map(p=>{
+    const preview=(p.ejs||[]).slice(0,4).map(e=>`<div style="font-size:11px;color:var(--tm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">· ${esc(e.nombre)}</div>`).join('');
+    const nEjs=(p.ejs||[]).length;
+    const isClaude=p.titulo.includes('- Claude');
+    return`<div style="background:var(--s);border:1.5px solid var(--b);border-radius:var(--r);padding:1rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer;position:relative;" onclick="openEditBanco(${p.id})">
+      <div style="display:flex;align-items:flex-start;gap:6px;justify-content:space-between;">
+        <div style="font-size:14px;font-weight:700;line-height:1.3;flex:1;">${esc(p.titulo)}</div>
+        <div style="display:flex;gap:2px;flex-shrink:0;" onclick="event.stopPropagation()">
+          <button onclick="openEditBanco(${p.id})" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px;" title="Editar">✏️</button>
+          <button onclick="deleteBancoTarjeta(${p.id})" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px;" title="Eliminar">🗑</button>
+        </div>
+      </div>
+      ${isClaude?`<span style="font-size:10px;background:var(--vl);color:var(--v);padding:1px 7px;border-radius:99px;width:fit-content;">✨ Claude</span>`:''}
+      <div style="flex:1;">${preview}${nEjs>4?`<div style="font-size:11px;color:var(--th);margin-top:2px;">+${nEjs-4} más</div>`:''}</div>
+      <div style="font-size:11px;color:var(--tm);border-top:1px solid var(--b);padding-top:.5rem;margin-top:auto;">${nEjs} ejercicio${nEjs!==1?'s':''}</div>
+    </div>`;
+  }).join('');
+}
+
 function loadPlan(id){
   let plan=null;
   for(const cards of Object.values(DB.banco)){
@@ -4083,6 +4208,7 @@ async function saveEditBanco(){
   await loadBanco();
   _bancoMod=cat;
   renderBancoList();
+  if(currentPage==='planes'){_planesMod=cat;renderBancoStandaloneGrid();}
   showMsg('✓ Tarjeta guardada');
 }
 async function deleteBancoTarjeta(id){
@@ -4091,6 +4217,7 @@ async function deleteBancoTarjeta(id){
   if(error||data?.ok===false){showMsg('❌ Error al eliminar');return;}
   await loadBanco();
   renderBancoList();
+  if(currentPage==='planes') renderBancoStandaloneGrid();
   showMsg('✓ Tarjeta eliminada');
 }
 
@@ -4170,20 +4297,25 @@ function renderBibAdminGrid(){
 
   grid.innerHTML=ejs.map((e,i)=>{
     const isCustom=!!e.id&&customIds.has(e.id);
-    const leftBorder=isCustom?'var(--fun)':'var(--b)';
-    return`<div style="background:var(--s);border:1.5px solid var(--b);border-left:3px solid ${leftBorder};border-radius:var(--r);padding:1rem;display:flex;flex-direction:column;gap:.5rem;">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
-        <div style="font-size:14px;font-weight:700;line-height:1.3;flex:1;">${esc(e.nombre)}</div>
-        <span style="font-size:10px;font-weight:700;background:${NIVEL_BG[e.nivel]||'var(--s2)'};color:${NIVEL_COLOR[e.nivel]||'var(--tm)'};padding:2px 8px;border-radius:99px;text-transform:uppercase;white-space:nowrap;flex-shrink:0;">${e.nivel||''}</span>
+    const catColor=CAT_COLOR[e.cat]||'#7c3aed';
+    const catIcon=CAT_ICON[e.cat]||'📌';
+    const bgHex=catColor.replace('#','');
+    return`<div style="background:var(--s);border:1px solid var(--b);border-top:3px solid ${catColor};border-radius:var(--r);padding:.9rem;display:flex;flex-direction:column;gap:.5rem;transition:box-shadow .15s;" onmouseenter="this.style.boxShadow='0 4px 12px rgba(0,0,0,.1)'" onmouseleave="this.style.boxShadow='none'">
+      <div style="display:flex;align-items:flex-start;gap:8px;">
+        <span style="font-size:18px;flex-shrink:0;margin-top:1px;">${catIcon}</span>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;line-height:1.35;color:var(--t);">${esc(e.nombre)}</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;align-items:center;">
+            <span style="font-size:10px;font-weight:700;background:${catColor}22;color:${catColor};padding:1px 7px;border-radius:99px;">${CAT_LABELS_BIB[e.cat]||e.cat||''}</span>
+            <span style="font-size:10px;font-weight:700;background:${NIVEL_BG[e.nivel]||'var(--s2)'};color:${NIVEL_COLOR[e.nivel]||'var(--tm)'};padding:1px 7px;border-radius:99px;text-transform:uppercase;">${e.nivel||''}</span>
+            ${isCustom?`<span style="font-size:10px;font-weight:700;background:var(--funl);color:var(--fun);padding:1px 7px;border-radius:99px;">Propio</span>`:''}
+          </div>
+        </div>
       </div>
-      <div style="display:flex;gap:5px;flex-wrap:wrap;">
-        <span style="font-size:11px;background:var(--vl);color:var(--v);padding:1px 8px;border-radius:99px;">${CAT_LABELS_BIB[e.cat]||e.cat||''}</span>
-        ${isCustom?`<span style="font-size:11px;background:var(--funl);color:var(--fun);padding:1px 8px;border-radius:99px;">Propio</span>`:''}
-      </div>
-      ${e.vt?`<div style="font-size:12px;color:var(--tm);line-height:1.4;">${esc(e.vt)}</div>`:''}
-      <div style="display:flex;gap:6px;margin-top:auto;padding-top:.65rem;border-top:1px solid var(--b);">
-        <button onclick="bibAdminEdit(${i})" style="flex:1;padding:.35rem;font-size:12px;background:none;border:1px solid var(--b);border-radius:var(--rs);cursor:pointer;color:var(--t);">✏️ Editar</button>
-        <button onclick="bibAdminDelete(${i})" style="flex:1;padding:.35rem;font-size:12px;background:none;border:1px solid #fecaca;border-radius:var(--rs);cursor:pointer;color:var(--rd);">🗑️ Eliminar</button>
+      ${e.vt?`<div style="font-size:11px;color:var(--tm);line-height:1.5;padding:.3rem .5rem;background:var(--s2);border-radius:var(--rs);">↪ ${esc(e.vt)}</div>`:''}
+      <div style="display:flex;gap:5px;margin-top:auto;padding-top:.6rem;border-top:1px solid var(--b);">
+        <button onclick="bibAdminEdit(${i})" style="flex:1;padding:.3rem;font-size:11px;background:none;border:1px solid var(--b);border-radius:var(--rs);cursor:pointer;color:var(--t);">✏️ Editar</button>
+        <button onclick="bibAdminDelete(${i})" style="flex:1;padding:.3rem;font-size:11px;background:none;border:1px solid #fecaca;border-radius:var(--rs);cursor:pointer;color:var(--rd);">🗑 Eliminar</button>
       </div>
     </div>`;
   }).join('');
