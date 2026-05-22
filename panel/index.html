@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex">
   <title>Triskel Academy — Panel</title>
-  <link rel="icon" type="image/jpeg" href="../logo.jpeg">
+  <link rel="icon" type="image/png" href="logo-triskel.png">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#7C5CBF">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Triskel">
-  <link rel="apple-touch-icon" href="../logo.jpeg">
+  <link rel="apple-touch-icon" href="logo-triskel.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -568,6 +568,7 @@
 <nav class="bnav" id="bnav">
   <a href="#" onclick="goTo('inicio');return false;" id="bn-inicio"><span class="bi">🏠</span><span>Inicio</span></a>
   <a href="#" onclick="goTo('clases');return false;" id="bn-clases"><span class="bi">📝</span><span>Planificar</span></a>
+  <a href="#" onclick="goTo('planes');return false;" id="bn-planes"><span class="bi">🗂</span><span>Planes</span></a>
   <a href="#" onclick="goTo('alumnas');return false;" id="bn-alumnas"><span class="bi">👤</span><span>Alumnas</span></a>
   <a href="#" onclick="goTo('pagos');return false;" id="bn-pagos"><span class="bi">💰</span><span>Pagos</span><span id="avisos-badge" style="display:none;background:var(--rd);color:#fff;font-size:10px;font-weight:700;border-radius:99px;padding:1px 5px;margin-left:3px;vertical-align:middle;"></span></a>
 </nav>
@@ -936,7 +937,7 @@ const BANCO={
       {nombre:'Aro entre manos al frente · press frontal de pie',vt:'10 rep · no elevar hombros'},
       {nombre:'Stomage con aro bajo el pecho',vt:'8 rep · apretar aro al extender'},
     ]},
-    {titulo:'Core Intensivo',ejs:[
+    {titulo:'Core Intensivo - Claude',ejs:[
       {nombre:'Cien · piernas bajas a 10 cm del suelo',vt:'100 bombeos · lumbar pegada todo el tiempo'},
       {nombre:'Roll up · sin ayuda',vt:'6-8 rep · exhalar al subir'},
       {nombre:'Double leg stretch',vt:'10 rep · exahlar al extender'},
@@ -948,7 +949,7 @@ const BANCO={
       {nombre:'Rolling like a ball',vt:'8 rep · sin tocar pies'},
       {nombre:'Plancha en cuadrupedia · brazo y pierna opuesta',vt:'10 rep c/lado · lento y controlado'},
     ]},
-    {titulo:'Cadera y Movilidad',ejs:[
+    {titulo:'Cadera y Movilidad - Claude',ejs:[
       {nombre:'Boca arriba, respiración costal con activación de transverso',vt:'8 respiraciones · mano en panza'},
       {nombre:'Pelvis en neutro e impronta · toma de conciencia',vt:'8 rep · sin apuro'},
       {nombre:'Puente de hombros · lento',vt:'8 rep · articular vértebra a vértebra'},
@@ -985,7 +986,7 @@ const BANCO={
       {nombre:'Swimming con pelota entre tobillos',vt:'20 alternados · pelota da resistencia'},
       {nombre:'Stomage con pelota bajo el esternón',vt:'8 rep · pelota estabiliza el pecho'},
     ]},
-    {titulo:'Básico III · Suelo Pélvico',ejs:[
+    {titulo:'Básico III · Suelo Pélvico - Claude',ejs:[
       {nombre:'Respiración con activación de suelo pélvico',vt:'5-8 rep · exhalar y apretar · soltar al inhalar'},
       {nombre:'Imprinting · pelvis neutra y basculada',vt:'8 rep · lento · sentir la columna'},
       {nombre:'Puente de hombros · énfasis en suelo pélvico',vt:'8 rep · apretar suelo al subir'},
@@ -997,7 +998,7 @@ const BANCO={
       {nombre:'Child pose con elongación lateral',vt:'30 seg c/lado · exhalar profundo'},
       {nombre:'Rolling like a ball lento',vt:'6-8 rep · rodar sin tirón'},
     ]},
-    {titulo:'Movilidad y Elongación',ejs:[
+    {titulo:'Movilidad y Elongación - Claude',ejs:[
       {nombre:'Mermaid stretch bilateral',vt:'5 rep c/lado · sentada · respirar al elongar'},
       {nombre:'Spine twist lento',vt:'5 rep c/lado · desde el torso · no forzar'},
       {nombre:'Spine stretch forward profundo',vt:'6 rep · alcanzar más en cada rep'},
@@ -1009,7 +1010,7 @@ const BANCO={
       {nombre:'Leg circles amplios',vt:'5 círculos c/dirección · amplitud máxima'},
       {nombre:'Banana stretch bilateral',vt:'30 seg c/lado · elongar costado completo'},
     ]},
-    {titulo:'Embarazo / Postparto',ejs:[
+    {titulo:'Embarazo / Postparto - Claude',ejs:[
       {nombre:'Respiración diafragmática con suelo pélvico',vt:'8 rep · inhalar · exhalar y apretar'},
       {nombre:'Imprinting lumbar',vt:'8 rep · sin esfuerzo · sentir la columna'},
       {nombre:'Puente básico suave',vt:'6-8 rep · sin tensión · sostener 2 seg'},
@@ -1021,7 +1022,7 @@ const BANCO={
       {nombre:'Leg circles con pierna baja',vt:'4 círculos c/dirección · muy suave'},
       {nombre:'Estiramiento de psoas de pie',vt:'30 seg c/lado · una rodilla en suelo'},
     ]},
-    {titulo:'Básico IV · Columna',ejs:[
+    {titulo:'Básico IV · Columna - Claude',ejs:[
       {nombre:'Imprinting y basculación pélvica',vt:'8 rep · activar transverso'},
       {nombre:'Curl up · variación lenta',vt:'10 rep · 4 tiempos subir · 4 bajar'},
       {nombre:'Single leg stretch · cabeza apoyada',vt:'8 rep c/lado · core activo'},
@@ -1032,6 +1033,93 @@ const BANCO={
       {nombre:'Rodilla al pecho alterna',vt:'8 rep c/lado · estirar lumbar'},
       {nombre:'Puente lento con respiración',vt:'6 rep · 4 tiempos subir · 4 bajar'},
       {nombre:'Cuadrupedia equilibrio brazo-pierna',vt:'6 rep c/lado · sostener 3 seg'},
+    ]},
+    {titulo:'Mat Completo 45min · Secuencia Clásica - Claude',ejs:[
+      {nombre:'Respiración diafragmática · activar transverso',vt:'8 rep · mano en panza · inhalar 4 · exhalar 4'},
+      {nombre:'Cien · piernas a 45°',vt:'100 bombeos · lumbar pegada · exhalar en 5 bombeos'},
+      {nombre:'Roll up',vt:'6-8 rep · sin ayuda · articular vértebra a vértebra'},
+      {nombre:'Leg circles D · amplio',vt:'5 círculos c/dirección · pelvis estable en todo momento'},
+      {nombre:'Leg circles I · amplio',vt:'5 círculos c/dirección · pelvis estable'},
+      {nombre:'Rolling like a ball',vt:'8 rep · sin tocar pies · inhalar al rodar · exhalar al subir'},
+      {nombre:'Single leg stretch',vt:'8 rep c/lado · fluir sin pausa al cambiar pierna'},
+      {nombre:'Double leg stretch',vt:'8 rep · exhalar al extender · piernas bajas sin compensar lumbar'},
+      {nombre:'Scissors',vt:'8 rep c/lado · pierna baja no toca el suelo'},
+      {nombre:'Lower lift',vt:'8 rep · lumbar pegada todo el tiempo · sin balancear'},
+      {nombre:'Criss cross',vt:'8 rep c/lado · codo a rodilla opuesta · no jalar cuello'},
+      {nombre:'Spine stretch forward',vt:'6 rep · exhalar profundo al elongar · cada rep llegar más lejos'},
+      {nombre:'Open leg rocker',vt:'6-8 rep · equilibrar en cóccix · NO tocar piso con pies'},
+      {nombre:'Saw',vt:'5 rep c/lado · rotar desde la cintura · no mover cadera'},
+      {nombre:'Swan básico',vt:'6 rep · codos pegados · extensión torácica · no llevar cuello atrás'},
+      {nombre:'Single leg kick',vt:'8 rep c/lado · cadera en suelo · extender al máximo'},
+      {nombre:'De lateral D · serie (elevación + círculos + patada)',vt:'8-10 rep c/ejercicio · completar toda la serie antes de girar'},
+      {nombre:'De lateral I · serie (elevación + círculos + patada)',vt:'8-10 rep c/ejercicio · espejo del lado derecho'},
+      {nombre:'Swimming',vt:'20-30 alternados · no balancear el tronco · ritmo sostenido'},
+      {nombre:'Teaser · piernas en mesa',vt:'6 rep · bajar 4 tiempos · no dejar caer la espalda'},
+      {nombre:'Stomage · cierre',vt:'8 rep · manos bajo la frente · elongar columna'},
+    ]},
+    {titulo:'Cadena Posterior Mat - Claude',ejs:[
+      {nombre:'Puente de hombros · 4 tiempos subir · 4 bajar',vt:'8 rep · activar glúteo y core antes de cada rep'},
+      {nombre:'Puente a una pierna D · extendida al frente',vt:'8 rep · pelvis estable · sin rotar cadera'},
+      {nombre:'Puente a una pierna I · extendida al frente',vt:'8 rep · espejo del lado derecho'},
+      {nombre:'Shoulder bridge avanzado',vt:'6 rep c/lado · pierna extendida arriba · bajar lento 4 tiempos'},
+      {nombre:'Sphinx hold',vt:'30 seg · antebrazos en suelo · elongar columna · respirar'},
+      {nombre:'Swan prep · codos doblados',vt:'8 rep · extensión torácica · codos pegados · sin llevar cuello'},
+      {nombre:'Swan pleno · brazos extendidos',vt:'6 rep · máxima extensión controlada · no forzar lumbar'},
+      {nombre:'Single leg kick',vt:'8 rep c/lado · cadera en suelo · patear glúteo · extender y patear'},
+      {nombre:'Double leg kick',vt:'6 rep c/lado · extender al máximo · sostener 1 seg en extensión'},
+      {nombre:'Locust · elevar pecho y piernas a la vez',vt:'6 rep · sostener 2 seg · exhalar al bajar'},
+      {nombre:'Swimming · ritmo sostenido',vt:'30 alternados · no balancear tronco · brazos y piernas largos'},
+      {nombre:'Leg pull back',vt:'6 rep c/lado · sin hundir cadera · apoyada en manos'},
+      {nombre:'Child pose · estiramiento final',vt:'40 seg · rodillas separadas · respirar profundo · soltar tensión'},
+    ]},
+    {titulo:'Apertura de Cadera y Lateral - Claude',ejs:[
+      {nombre:'Frog · boca arriba',vt:'10 rep · talones juntos · rodillas abren · pelvis en neutro'},
+      {nombre:'Clam D · con banda en muslos',vt:'10 rep · rango sin compensar pelvis · solo la cadera rota'},
+      {nombre:'Clam I · con banda',vt:'10 rep · espejo del lado derecho'},
+      {nombre:'Leg circles D · boca arriba',vt:'5 círculos c/dirección · pelvis estable · círculos amplios'},
+      {nombre:'Leg circles I · boca arriba',vt:'5 círculos c/dirección'},
+      {nombre:'Puente de hombros',vt:'8 rep · apretar glúteo al subir · sostener 2 seg'},
+      {nombre:'De lateral D · elevación de pierna · lenta',vt:'10 rep · pierna activa · no rotar el tronco'},
+      {nombre:'Círculos D',vt:'5 círculos c/dirección · pierna activa · amplitud controlada'},
+      {nombre:'Patada adelante y atrás D',vt:'8 rep · rango de movimiento completo sin compensar'},
+      {nombre:'Inner thigh lift D · pierna inferior',vt:'12 rep · pierna de abajo sube · lento y controlado'},
+      {nombre:'De lateral I · idem 4 ejercicios · lado izquierdo',vt:'misma cantidad de rep · completar todo antes de cambiar'},
+      {nombre:'Donkey kicks D',vt:'12 rep · cadera neutra · pierna al techo sin rotar'},
+      {nombre:'Fire hydrant D',vt:'12 rep · codo abierto · no mover el tronco'},
+      {nombre:'Idem · lado izquierdo ambos ejercicios',vt:'12 rep c/ejercicio'},
+      {nombre:'Cat/cow con respiración · cierre',vt:'8 rep · exhalar en gato · inhalar en vaca · liberar tensión'},
+    ]},
+    {titulo:'Core Completo · Series Clásicas - Claude',ejs:[
+      {nombre:'Imprinting · activar transverso',vt:'8 rep · sin apuro · sentir la columna en neutro'},
+      {nombre:'Curl up básico · solo cabeza y hombros',vt:'10 rep · 4 tiempos subir · exhalar al subir'},
+      {nombre:'Cien · piernas en mesa',vt:'100 bombeos · brazo arriba-abajo 2cm · exhalar en 5'},
+      {nombre:'Cien avanzado · piernas a 45°',vt:'50 bombeos adicionales · piernas más bajas si tolera lumbar'},
+      {nombre:'Roll up',vt:'6-8 rep · sin impulso · articular toda la columna'},
+      {nombre:'Single leg stretch',vt:'8 rep c/lado · manos en tibia y tobillo · alternar fluido'},
+      {nombre:'Double leg stretch',vt:'8 rep · brazos al techo al extender piernas · exhalar'},
+      {nombre:'Scissors',vt:'8 rep c/lado · pierna baja NO toca suelo · lumbar pegada'},
+      {nombre:'Lower lift',vt:'8 rep · piernas a 90° bajan a 45° · lumbar siempre pegada'},
+      {nombre:'Criss cross',vt:'8 rep c/lado · codo a rodilla opuesta · no jalar cuello'},
+      {nombre:'Hollow body hold',vt:'20-30 seg · brazos y piernas a 45° · lumbar en suelo'},
+      {nombre:'Teaser básico · piernas en mesa',vt:'6 rep · bajar 4 tiempos · sin caer'},
+      {nombre:'Teaser completo · piernas extendidas',vt:'5-6 rep · sostener 2 seg arriba · sin apoyar espalda'},
+      {nombre:'Rolling like a ball · cierre',vt:'8 rep · liberar tensión lumbar · rodar suave'},
+    ]},
+    {titulo:'Avanzado II · Cierre Clásico - Claude',ejs:[
+      {nombre:'Cien · piernas a 5cm del suelo',vt:'100 bombeos · nivel máximo · lumbar pegada en todo momento'},
+      {nombre:'Roll over · piernas al techo y abrir',vt:'5-6 rep · NO pasar de cervicales · abrir en el techo · bajar y volver'},
+      {nombre:'Corkscrew',vt:'4 rep c/lado · círculo completo de piernas · pelvis sube un lado'},
+      {nombre:'Hip circles en Teaser',vt:'4 círculos c/dirección · equilibrar en cóccix · brazos estables'},
+      {nombre:'Kneeling side kick D',vt:'8 rep · de rodillas · una pierna lateral · cadera estable'},
+      {nombre:'Kneeling side kick I',vt:'8 rep · espejo del lado derecho'},
+      {nombre:'Side bend D (plancha lateral)',vt:'5-6 rep · elevar cadera · arco de costado · cuerpo en línea'},
+      {nombre:'Side bend I',vt:'5-6 rep · espejo'},
+      {nombre:'Boomerang',vt:'5 rep · cruzar piernas · roll over → teaser → stretch · todo fluido'},
+      {nombre:'Seal · cerrar clase',vt:'8 rep · aplaudir al rodar · sin forzar · energía suave'},
+      {nombre:'Crab',vt:'4-5 rep · tomar tobillos desde arriba · rodar sobre vértebras · NO pasar de cervicales'},
+      {nombre:'Rocking',vt:'5-6 rep · tomar tobillos · balancear pecho-piernas · extensión total'},
+      {nombre:'Control balance',vt:'4-5 rep · piernas al techo · equilibrar en hombros · NO en cuello'},
+      {nombre:'Push up Pilates',vt:'5-6 rep · plank → bajar 3 tiempos → subir 1 · pies juntos · cuerpo recto'},
     ]},
   ],
   funcional:[
@@ -1241,7 +1329,7 @@ const BANCO={
       {nombre:'GLÚTEOS · Clam con banda en muslos · 40seg',vt:'30 desc'},
       {nombre:'CARDIO · Saltos con sentadilla · 40seg',vt:'30 desc'},
     ]},
-    {titulo:'Core Intensivo',ejs:[
+    {titulo:'Core Intensivo - Claude',ejs:[
       {nombre:'CORE · Dead bug · 40seg',vt:'Supine toe taps · 20 desc'},
       {nombre:'CORE · Plancha toca hombros · 40seg',vt:'Plancha iso · 20 desc'},
       {nombre:'CORE · Tijeras · 40seg',vt:'Cortitos · 20 desc'},
@@ -1253,7 +1341,7 @@ const BANCO={
       {nombre:'CORE · Sit ups con giro · 40seg',vt:'Cortitos · 20 desc'},
       {nombre:'CORE · Plancha oruga · 40seg',vt:'Salto · 20 desc'},
     ]},
-    {titulo:'HIIT Avanzado',ejs:[
+    {titulo:'HIIT Avanzado - Claude',ejs:[
       {nombre:'CARDIO · Saltos con sentadilla · 40seg',vt:'Sentadilla ISO · 20 desc'},
       {nombre:'PIERNAS · Sentadilla búlgara D · 40seg',vt:'Rodilla al pecho · 20 desc'},
       {nombre:'PIERNAS · Sentadilla búlgara I · 40seg',vt:'Rodilla al pecho · 20 desc'},
@@ -1267,7 +1355,7 @@ const BANCO={
       {nombre:'PIERNAS · Thrusters con mancuernas · 40seg',vt:'Sentadilla · 30 desc'},
       {nombre:'CORE · Plancha toca hombros · 40seg',vt:'Plancha iso · 30 desc'},
     ]},
-    {titulo:'Movilidad y Cooldown',ejs:[
+    {titulo:'Movilidad y Cooldown - Claude',ejs:[
       {nombre:'Respiración profunda de pie · 10 respiraciones',vt:'Inhalar 4 tiempos · exhalar 4 tiempos'},
       {nombre:'Movilidad de cuello · semi-círculos laterales',vt:'5 rep c/lado · lento'},
       {nombre:'Círculos de hombros · hacia adelante y atrás',vt:'8 c/dirección'},
@@ -1279,7 +1367,7 @@ const BANCO={
       {nombre:'Pigeon pose modificado · a nivel del suelo',vt:'45 seg c/lado'},
       {nombre:'Child\'s pose · elongación completa',vt:'1 min · respiración abdominal'},
     ]},
-    {titulo:'Full Body Express',ejs:[
+    {titulo:'Full Body Express - Claude',ejs:[
       {nombre:'CORE · Plancha iso · 40seg',vt:'Mountain Climbers · 20 desc'},
       {nombre:'PIERNAS · Sentadilla goblet · 40seg',vt:'Wall sit · 20 desc'},
       {nombre:'GLÚTEOS · Puente a una pierna · 40seg',vt:'Clam con banda · 20 desc'},
@@ -1291,7 +1379,7 @@ const BANCO={
       {nombre:'PIERNAS · Estocada adelante · 40seg',vt:'Desplante reverso · 20 desc'},
       {nombre:'CARDIO · Step lateral · 40seg',vt:'Vuelta lenta · recuperación'},
     ]},
-    {titulo:'Glúteos y Piernas II',ejs:[
+    {titulo:'Glúteos y Piernas II - Claude',ejs:[
       {nombre:'GLÚTEOS · Hip thrust con banco · 40seg',vt:'Glute bridge march · 20 desc'},
       {nombre:'GLÚTEOS · Frog pump · 40seg',vt:'Monster walk · 20 desc'},
       {nombre:'PIERNAS · Sentadilla búlgara D · 40seg',vt:'Sentadilla ISO · 20 desc'},
@@ -1303,7 +1391,7 @@ const BANCO={
       {nombre:'PIERNAS · Peso muerto romano · 40seg',vt:'Hip thrust a una pierna · 20 desc'},
       {nombre:'CARDIO · Saltos con sentadilla · 40seg',vt:'Recuperación lateral shuffle · 20 desc'},
     ]},
-    {titulo:'Tren Superior II',ejs:[
+    {titulo:'Tren Superior II - Claude',ejs:[
       {nombre:'PECHO · Press de pecho en suelo · 40seg',vt:'Aperturas con discos · 20 desc'},
       {nombre:'PECHO · Push up con rotación · 40seg',vt:'Plancha iso · 20 desc'},
       {nombre:'ESPALDA · Remo a 90° con discos · 40seg',vt:'Vuelo lateral tronco a 45° · 20 desc'},
@@ -1315,7 +1403,7 @@ const BANCO={
       {nombre:'PECHO · Fondos entre sillas · 40seg',vt:'Flexiones con rodillas · 20 desc'},
       {nombre:'CORE · Pallof press D-I · 40seg',vt:'Barquito · 20 desc'},
     ]},
-    {titulo:'Core Profundo',ejs:[
+    {titulo:'Core Profundo - Claude',ejs:[
       {nombre:'CORE · Dead bug · 40seg',vt:'Hoja caída · 20 desc'},
       {nombre:'CORE · Hollow body hold · 40seg',vt:'Cortitos · 20 desc'},
       {nombre:'CORE · Plancha lateral D · 40seg',vt:'Plancha iso · 20 desc'},
@@ -1326,6 +1414,73 @@ const BANCO={
       {nombre:'CORE · Ab wheel rollout · 40seg',vt:'Plancha oruga · 20 desc'},
       {nombre:'CORE · Windshield wipers · 40seg',vt:'Dead bug · 20 desc'},
       {nombre:'CORE · Sit ups · 40seg',vt:'Curl up · recuperación'},
+    ]},
+    {titulo:'Calentamiento Dinámico - Claude',ejs:[
+      {nombre:'Marcha activa con rodillas altas · 90seg',vt:'progresivo · elevar FC suavemente · brazos activos'},
+      {nombre:'Movilidad de cadera · rotaciones de pie · 8 c/lado',vt:'manos en cadera · círculos amplios · de pie'},
+      {nombre:'Hip hinge básico · bisagra de cadera · 15 rep',vt:'sin peso · empujar cadera atrás · columna neutra'},
+      {nombre:'Sentadilla con peso corporal · 15 rep',vt:'descender controlado · rodillas siguen pies'},
+      {nombre:'Lunge estático D · 10 rep',vt:'rodilla atrás casi toca el suelo · torso erguido'},
+      {nombre:'Lunge estático I · 10 rep',vt:'espejo del lado derecho'},
+      {nombre:'Apertura de pecho · entrelazar manos detrás · 3 rep',vt:'sostener 5 seg · no llevar la cabeza · pecho abierto'},
+      {nombre:'Band pull apart · 15 rep',vt:'activar escápulas · codos rectos · sin encoger hombros'},
+      {nombre:'Dead bug básico · 8 rep',vt:'activar core · brazo-pierna opuestos · lumbar en suelo'},
+      {nombre:'Puente de glúteos · 12 rep',vt:'activar glúteos para la clase · sostener 1 seg arriba'},
+      {nombre:'Jumping jacks suaves · 30 seg',vt:'elevar FC final · ya listos para trabajar'},
+    ]},
+    {titulo:'Circuito Fuerza Compuesta - Claude',ejs:[
+      {nombre:'PIERNAS · Sentadilla profunda con disco · 40seg',vt:'12 rep lentas · descender 3 tiempos · subir 1 · pausa 25'},
+      {nombre:'ESPALDA · Peso muerto convencional con disco · 40seg',vt:'10 rep · bisagra de cadera · columna neutra · pausa 25'},
+      {nombre:'PECHO · Flexiones completas · 40seg',vt:'máximo controlado · bajar 3 tiempos · sin hundir lumbar · pausa 25'},
+      {nombre:'ESPALDA · Remo cerrado con barra · 40seg',vt:'10-12 rep · codos pegados · escápulas juntas · pausa 25'},
+      {nombre:'PIERNAS · Estocada caminando con discos · 40seg',vt:'8 pasos c/lado · rodilla casi toca suelo · pausa 25'},
+      {nombre:'HOMBROS · Press militar de pie · 40seg',vt:'10 rep · no arquear lumbar · bajar lento 2 tiempos · pausa 25'},
+      {nombre:'PIERNAS · Sentadilla búlgara D · 40seg',vt:'10 rep · pie atrás en banco · torso recto · pausa 25'},
+      {nombre:'PIERNAS · Sentadilla búlgara I · 40seg',vt:'10 rep · espejo · pausa 25'},
+      {nombre:'CORE · Plancha iso · 40seg',vt:'cuerpo en línea · activar todo · no dejar caer cadera · pausa 20'},
+      {nombre:'CORE · Dead bug lento · cierre · 40seg',vt:'8 rep · sin apuro · vuelta suave · pausa 20'},
+    ]},
+    {titulo:'Cardio Escalado · Intensidad Progresiva - Claude',ejs:[
+      {nombre:'ACTIVACIÓN · Paso lateral con toque · 40seg',vt:'FC baja · cuerpo despierto · pausa 20'},
+      {nombre:'MOVILIDAD · Sentadilla suave · 40seg',vt:'FC moderada · calentamiento de piernas · pausa 20'},
+      {nombre:'CARDIO I · Mountain Climbers lento · 40seg',vt:'FC sube gradual · core activo · pausa 20'},
+      {nombre:'PIERNAS I · Estocada adelante · 40seg',vt:'controlado · FC moderada · pausa 20'},
+      {nombre:'CARDIO II · Jumping jacks · 40seg',vt:'ritmo constante · FC subiendo · pausa 20'},
+      {nombre:'PIERNAS II · Sentadilla sumo explosiva al subir · 40seg',vt:'bajar lento · subir rápido · FC en alza · pausa 20'},
+      {nombre:'CARDIO III · Saltos con sentadilla · 40seg',vt:'alta intensidad · absorber con piernas · pausa 25'},
+      {nombre:'PECHO · Flexiones completas · 40seg',vt:'mantener calidad · pausa 20'},
+      {nombre:'CARDIO IV · Burpees sin salto · 40seg',vt:'máxima demanda · técnica no negociable · pausa 30'},
+      {nombre:'VUELTA · Marcha activa suave · 90seg',vt:'bajar FC progresivamente · respiración controlada'},
+    ]},
+    {titulo:'Tren Inferior Completo - Claude',ejs:[
+      {nombre:'ACTIVACIÓN · Puente de glúteos · 40seg',vt:'12 rep lentas · activar glúteos antes del trabajo de pie · pausa 20'},
+      {nombre:'GLÚTEOS · Clam con banda en muslos · 40seg',vt:'10 rep c/lado · activar glúteo medio antes de cargar · pausa 20'},
+      {nombre:'PIERNAS · Sentadilla sumo con disco · 40seg',vt:'12 rep · apretar glúteo al subir · pausa 20'},
+      {nombre:'GLÚTEOS · Hip thrust con banco · 40seg',vt:'12 rep · sostener 1 seg arriba · apretar glúteo al máximo · pausa 20'},
+      {nombre:'PIERNAS · Estocada reversa D · 40seg',vt:'10 rep · rodilla atrás · torso recto · pausa 20'},
+      {nombre:'PIERNAS · Estocada reversa I · 40seg',vt:'10 rep · espejo · pausa 20'},
+      {nombre:'GLÚTEOS · Patada en cuadrupedia D · 40seg',vt:'12 rep · cadera neutra · extender pierna recta al máximo · pausa 20'},
+      {nombre:'GLÚTEOS · Patada en cuadrupedia I · 40seg',vt:'12 rep · pausa 20'},
+      {nombre:'PIERNAS · Peso muerto a una pierna D · 40seg',vt:'10 rep · equilibrio · columna neutra · pausa 20'},
+      {nombre:'PIERNAS · Peso muerto a una pierna I · 40seg',vt:'10 rep · pausa 20'},
+      {nombre:'CORE · Plancha iso · cierre · 40seg',vt:'sostener · trabajo de core después de piernas · pausa 20'},
+      {nombre:'VUELTA · Estiramiento isquios + glúteo · 2min',vt:'30 seg c/ejercicio c/lado · pigeon + isquio · bajar FC'},
+    ]},
+    {titulo:'Clase Completa Full Body 60min - Claude',ejs:[
+      {nombre:'── CALENTAMIENTO 8min ──',vt:'marcha activa · movilidad cadera · hip hinge · sentadilla peso cuerpo'},
+      {nombre:'CORE · Dead bug · 40seg',vt:'activar core · pausa 20 · inicio del trabajo'},
+      {nombre:'PIERNAS · Sentadilla goblet · 40seg',vt:'pausa 20'},
+      {nombre:'GLÚTEOS · Hip thrust · 40seg',vt:'pausa 20'},
+      {nombre:'ESPALDA · Remo cerrado · 40seg',vt:'pausa 20'},
+      {nombre:'PECHO · Flexiones · 40seg',vt:'pausa 20'},
+      {nombre:'HOMBROS · Press Arnold · 40seg',vt:'pausa 20'},
+      {nombre:'── SEGUNDA VUELTA más intensa ──',vt:'mismos grupos musculares · subir peso o rep'},
+      {nombre:'PIERNAS · Sentadilla búlgara D · 40seg',vt:'pausa 20'},
+      {nombre:'PIERNAS · Sentadilla búlgara I · 40seg',vt:'pausa 20'},
+      {nombre:'CARDIO · Mountain Climbers · 40seg',vt:'pausa 20'},
+      {nombre:'CARDIO · Saltos con sentadilla · 40seg',vt:'pausa 25'},
+      {nombre:'── FINALIZADOR DE CORE 8min ──',vt:'planchas · bicicleta · hollow hold · dead bug'},
+      {nombre:'── CIERRE 5min ──',vt:'estiramiento cuádriceps · isquios · glúteo · cat-cow · respiración final'},
     ]},
   ],
   reformer:[
@@ -1445,6 +1600,7 @@ const BANCO={
       {nombre:'Mermaid (Sirena) en el reformer',vt:'1 res. · lateral, arco de costado, volver controlado'},
       {nombre:'Side splits · con salto controlado',vt:'1 res. · aterrizar suave, absorber con rodillas'},
       {nombre:'Control balance / Tendon stretch avanzado',vt:'2 res. · de pie, columna en flexión total'},
+      {nombre:'Running · semicírculo',vt:'3 res. · running 24 rep · semicírculo 4 rep lento · cerrar'},
     ]},
     {titulo:'Espalda y Postura',ejs:[
       {nombre:'Footwork · énfasis elongación de columna',vt:'3 res. · imaginar crecer hacia el techo al empujar'},
@@ -1472,7 +1628,7 @@ const BANCO={
       {nombre:'Respiración y activación de suelo pélvico',vt:'0 res. · carro quieto · 8 respiraciones conscientes'},
       {nombre:'Running muy suave',vt:'2 res. · talones alternados, rango reducido, sin extensión'},
     ]},
-    {titulo:'Express 30 min',ejs:[
+    {titulo:'Express 30 min - Claude',ejs:[
       {nombre:'Footwork completo · punta / flex / talón / arco',vt:'2 res. · 8 rep cada posición'},
       {nombre:'Frog · leg circles',vt:'2 res. · 6 rep frog, 4 círculos c/dirección'},
       {nombre:'Cien',vt:'1 res. · piernas a 45°'},
@@ -1482,7 +1638,7 @@ const BANCO={
       {nombre:'Side splits',vt:'1-2 res. · 6 rep · abrir y cerrar controlado'},
       {nombre:'Running · semicírculo',vt:'2 res. · running 12 rep, semicírculo 3 rep'},
     ]},
-    {titulo:'Cadera y Suelo Pélvico',ejs:[
+    {titulo:'Cadera y Suelo Pélvico - Claude',ejs:[
       {nombre:'Footwork suave · punta y flex',vt:'2 res. · activar transverso en cada rep'},
       {nombre:'Frog · énfasis en suelo pélvico',vt:'2 res. · exhalar al extender piernas · activar SP'},
       {nombre:'Leg circles amplios',vt:'2 res. · 5 círculos c/dirección · pelvis neutra'},
@@ -1494,7 +1650,7 @@ const BANCO={
       {nombre:'Estocada · pie en carro',vt:'2 res. · 6 rep · cadera baja, columna recta'},
       {nombre:'Respiración y activación de suelo pélvico',vt:'carro quieto · 8 respiraciones conscientes'},
     ]},
-    {titulo:'Intermedio III · Brazos y Core',ejs:[
+    {titulo:'Intermedio III · Brazos y Core - Claude',ejs:[
       {nombre:'Footwork completo · 4 posiciones',vt:'3 res. · fluir sin pausa entre posiciones'},
       {nombre:'Cien',vt:'1 res. · piernas a 45° · sostener'},
       {nombre:'Coordinación',vt:'1 res. · exhalar al extender'},
@@ -1507,8 +1663,9 @@ const BANCO={
       {nombre:'Elefante',vt:'1 res. · desde el core · columna redondeada'},
       {nombre:'Knee stretch redondo',vt:'2 res. · sin llegar al tope'},
       {nombre:'Short spine',vt:'2 res. · articular vértebra a vértebra'},
+      {nombre:'Running · semicírculo',vt:'3 res. · running 16 rep · semicírculo 4 rep · cerrar clase'},
     ]},
-    {titulo:'Avanzado III · Control y Equilibrio',ejs:[
+    {titulo:'Avanzado III · Control y Equilibrio - Claude',ejs:[
       {nombre:'Footwork una pierna',vt:'2 res. · 8 rep c/pierna · sin compensar cadera'},
       {nombre:'Teaser en reformer',vt:'2 res. · equilibrio sostenido · sin agarrarse'},
       {nombre:'Long back stretch',vt:'2 res. · control total · push desde el core'},
@@ -1521,8 +1678,9 @@ const BANCO={
       {nombre:'Twist lateral',vt:'1 res. · rotación máxima · de pie'},
       {nombre:'Egyptian',vt:'1 res. · correas · rotación y apertura'},
       {nombre:'Swan avanzado',vt:'2 res. · balancear pecho-piernas'},
+      {nombre:'Running · semicírculo',vt:'3 res. · running 24 rep · semicírculo 4 rep lento · cerrar'},
     ]},
-    {titulo:'Embarazo / Postparto Reformer',ejs:[
+    {titulo:'Embarazo / Postparto Reformer - Claude',ejs:[
       {nombre:'Footwork suave · punta y flex',vt:'2 res. · muy suave · activar transverso'},
       {nombre:'Footwork talones · lento',vt:'2 res. · sin esfuerzo'},
       {nombre:'Frog suave',vt:'2 res. · rango cómodo · pelvis neutra'},
@@ -1533,6 +1691,82 @@ const BANCO={
       {nombre:'Hug a tree · suave',vt:'1 res. · arcos lentos · hombros bajos'},
       {nombre:'Side stretch bilateral',vt:'carro quieto · elongar costado · respirar'},
       {nombre:'Respiración y relajación',vt:'carro quieto · 10 respiraciones · soltar todo'},
+    ]},
+    {titulo:'Hip Work · Serie Completa - Claude',ejs:[
+      {nombre:'Footwork punta · calentamiento',vt:'3 res. · 10 rep · activar cuádriceps y core'},
+      {nombre:'Footwork flex',vt:'3 res. · 10 rep · empujar desde el talón'},
+      {nombre:'Footwork talones',vt:'2 res. · estirar isquiotibiales al extender'},
+      {nombre:'Frog básico',vt:'2 res. · 8 rep · talones juntos · rodillas abren · pelvis quieta'},
+      {nombre:'Frog con suelo pélvico',vt:'2 res. · 8 rep · exhalar y activar SP al extender'},
+      {nombre:'Leg circles en Frog D',vt:'2 res. · 5 círculos c/dirección · abrir con control · pelvis estable'},
+      {nombre:'Leg circles en Frog I',vt:'2 res. · 5 círculos c/dirección'},
+      {nombre:'Up-down D · pierna al techo y baja controlado',vt:'2 res. · 8 rep · pelvis NO sube al elevar'},
+      {nombre:'Up-down I',vt:'2 res. · 8 rep'},
+      {nombre:'Hip openings D · apertura hacia afuera',vt:'2 res. · 6 rep lento · pelvis quieta · rango sin compensar'},
+      {nombre:'Hip openings I',vt:'2 res. · 6 rep'},
+      {nombre:'Short spine · articulación post hip-work',vt:'2 res. · articular vértebra a vértebra · no pasar de cervicales'},
+      {nombre:'Cien · core activado',vt:'1 res. · 100 bombeos · piernas a 45°'},
+      {nombre:'Running · cierre calma',vt:'3 res. · talones alternados · 16 rep · carro quieto al final'},
+    ]},
+    {titulo:'Long Stretch · Serie Completa - Claude',ejs:[
+      {nombre:'Footwork completo · 4 posiciones',vt:'3 res. · fluir entre punta-flex-talón-arco sin parar'},
+      {nombre:'Cien',vt:'1 res. · piernas a 45° · preparar core para planchas'},
+      {nombre:'Coordinación',vt:'1 res. · exhalar al extender piernas · preparar respiración'},
+      {nombre:'Long stretch · plancha completa',vt:'2 res. · manos en barra · cuerpo en línea · empujar carro con pies'},
+      {nombre:'Down stretch · caderas adelante',vt:'2 res. · cadera hacia barra · extensión torácica máxima · codos pegados'},
+      {nombre:'Up stretch · V invertida',vt:'2 res. · acercar pies a manos · elevar caderas · columna larga'},
+      {nombre:'Elefante · columna redondeada',vt:'2 res. · push desde el core · NO usar cadera'},
+      {nombre:'Knee stretch redondo · curva C',vt:'2 res. · columna en C profunda · sin llegar al tope'},
+      {nombre:'Knee stretch plano · columna recta',vt:'2 res. · espalda paralela al suelo'},
+      {nombre:'Knee stretch oblicuo D',vt:'2 res. · rotar tronco al extender'},
+      {nombre:'Knee stretch oblicuo I',vt:'2 res. · espejo del lado derecho'},
+      {nombre:'Short spine · contramovimiento',vt:'2 res. · articular después de todas las planchas · contraer columna'},
+      {nombre:'Running · recuperación',vt:'3 res. · talones alternados · recuperar movilidad de tobillos'},
+    ]},
+    {titulo:'Short Box · Serie Completa - Claude',ejs:[
+      {nombre:'Footwork completo · todas las posiciones',vt:'3 res. · calentamiento · fluir sin pausa'},
+      {nombre:'Stomach massage redondo',vt:'3 res. · calentar flexión/extensión columna · preparar para short box'},
+      {nombre:'Caja corta · redondo',vt:'carro quieto · 1 res. · 6 rep · curva C · rodar desde lumbar'},
+      {nombre:'Caja corta · plano con extensión torácica',vt:'carro quieto · 1 res. · 6 rep · arquear desde torácica · NO lumbar'},
+      {nombre:'Caja corta · oblicuo D',vt:'carro quieto · 1 res. · 5 rep · torsión máxima desde torso'},
+      {nombre:'Caja corta · oblicuo I',vt:'carro quieto · 1 res. · 5 rep · espejo'},
+      {nombre:'Caja corta · stretch lateral D',vt:'carro quieto · 1 res. · 5 rep · elongar costado'},
+      {nombre:'Caja corta · stretch lateral I',vt:'carro quieto · 1 res. · 5 rep'},
+      {nombre:'Árbol D · pierna al techo',vt:'carro quieto · 1 res. · 5 rep · bajar pierna MUY despacio 4 tiempos'},
+      {nombre:'Árbol I',vt:'carro quieto · 1 res. · 5 rep'},
+      {nombre:'Running · cierre',vt:'3 res. · 16 rep · recuperar movilidad · carro quieto al final'},
+    ]},
+    {titulo:'Avanzado · Rotación y Control - Claude',ejs:[
+      {nombre:'Footwork rápido · series completas',vt:'3 res. · todas las posiciones sin pausa · ritmo sostenido'},
+      {nombre:'Hip work completo',vt:'2 res. · frog / circles / up-down / openings · 6 rep c/u'},
+      {nombre:'Cien · piernas a 10cm del suelo',vt:'1 res. · máxima demanda · lumbar pegada'},
+      {nombre:'Coordinación avanzada',vt:'1 res. · piernas muy bajas · velocidad mayor'},
+      {nombre:'Stomach massage twist D',vt:'2 res. · 5 rep · rotación máxima · codo al frente · no perder longitud'},
+      {nombre:'Stomach massage twist I',vt:'2 res. · 5 rep'},
+      {nombre:'Stomach massage reaching',vt:'1 res. · elongar al máximo · columna larga'},
+      {nombre:'Caja corta oblicuo D profundo',vt:'1 res. · 5 rep · llevar codo a rodilla opuesta'},
+      {nombre:'Caja corta oblicuo I profundo',vt:'1 res. · 5 rep'},
+      {nombre:'Serpiente D',vt:'2 res. · 4 rep · cadera al techo · entrada lenta'},
+      {nombre:'Serpiente I',vt:'2 res. · 4 rep'},
+      {nombre:'Torsión D',vt:'2 res. · 4 rep · rotación completa · sin perder el eje'},
+      {nombre:'Torsión I',vt:'2 res. · 4 rep'},
+      {nombre:'Mermaid (Sirena) D · arco lateral',vt:'1 res. · arco de costado completo · volver controlado'},
+      {nombre:'Mermaid I',vt:'1 res.'},
+      {nombre:'Running lento · recuperación',vt:'3 res. · cerrar con conciencia corporal'},
+    ]},
+    {titulo:'Básico III · Long Box Primera Vez - Claude',ejs:[
+      {nombre:'Footwork punta y flex',vt:'3 res. · calentamiento · activar piernas'},
+      {nombre:'Footwork talones',vt:'2 res. · luego arco · estirar isquios'},
+      {nombre:'Frog · rango cómodo',vt:'2 res. · 8 rep · calentar cadera'},
+      {nombre:'Cien',vt:'1 res. · piernas a 45° · 100 bombeos · preparar core'},
+      {nombre:'Coordinación',vt:'1 res. · lenta · coordinar respiración con movimiento'},
+      {nombre:'Remo desde el pecho · palmas arriba',vt:'1 res. liviano · codos pegados · extender y cerrar'},
+      {nombre:'Caja larga · posición base · explicar',vt:'2 res. · manos en barra · NO empujar carro aún · sentir la posición'},
+      {nombre:'Pulling straps · primera presentación',vt:'2 res. · 6 rep · brazos atrás · extensión dorsal · suave'},
+      {nombre:'T-press · primera presentación',vt:'2 res. · 6 rep · brazos en T · escápulas juntas · no elevar hombros'},
+      {nombre:'Swan básico en long box',vt:'2 res. · 5 rep · codos pegados · extensión torácica · sin forzar cuello'},
+      {nombre:'Stomach massage redondo · vuelta a flexión',vt:'2 res. · contraer después de toda la extensión'},
+      {nombre:'Running + semicírculo · cierre',vt:'3 res. · running 12 rep · semicírculo 3 rep · cierre consciente'},
     ]},
   ],
 };
@@ -2717,6 +2951,23 @@ function rFicha(){
   const regularidad=Math.round((pagosEnPeriodo/mesesCheck)*100);
   const regColor=regularidad>=80?'var(--mat)':regularidad>=50?'var(--fun)':'var(--rd)';
   const regLabel=regularidad>=80?'Regular ✓':regularidad>=50?'Irregular':'En deuda';
+  // Asistencia: cruza clases de sus horarios con registros de asistencia
+  const horarioIdsSet=new Set(inscs.map(i=>i.horario_id));
+  const tresMesesAtras=new Date();tresMesesAtras.setMonth(tresMesesAtras.getMonth()-3);
+  const tresMesesStr=tresMesesAtras.toISOString().split('T')[0];
+  const clasesEnRango=DB.clases
+    .filter(c=>horarioIdsSet.has(c.horario_id)&&c.fecha>=tresMesesStr&&c.fecha<=hoy)
+    .sort((x,y)=>y.fecha.localeCompare(x.fecha));
+  const asistIds=new Set((DB.asistencia||[]).filter(x=>x.alumna_id===a.id).map(x=>x.clase_id));
+  const totalAsist=clasesEnRango.length;
+  const presentesCount=clasesEnRango.filter(c=>asistIds.has(c.id)).length;
+  const pctAsist=totalAsist>0?Math.round((presentesCount/totalAsist)*100):null;
+  const asistColor=pctAsist===null?'var(--tm)':pctAsist>=80?'var(--mat)':pctAsist>=60?'var(--fun)':'var(--rd)';
+  const asistLabel=pctAsist===null?'Sin datos':pctAsist>=80?'Regular ✓':pctAsist>=60?'Irregular':'Poco regular';
+  const asistDots=clasesEnRango.slice(0,24).map(c=>{
+    const ok=asistIds.has(c.id);
+    return`<span title="${c.fecha}" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${ok?'var(--mat)':'#e5e7eb'};flex-shrink:0;"></span>`;
+  }).join('');
   return`
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.5rem;">
     <button class="btn" onclick="goTo('alumnas')">← Alumnas</button>
@@ -2757,6 +3008,21 @@ function rFicha(){
     <div class="metric"><div class="mlabel">Racha actual</div><div class="mval" style="color:${racha>=3?'var(--mat)':racha>0?'var(--fun)':'var(--rd)'};">${racha} ${racha===1?'mes':'meses'}</div></div>
     <div class="metric"><div class="mlabel">Clases</div><div class="mval">${clasesAlumna.length}</div></div>
   </div>
+
+  ${totalAsist>0?`<div class="card" style="margin-bottom:1rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+      <div class="ctitle" style="margin:0;">Asistencia — últimos 3 meses</div>
+      <span style="font-size:14px;font-weight:700;color:${asistColor};">${pctAsist}%</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:.6rem;">
+      <div style="flex:1;height:7px;border-radius:99px;background:var(--s2);overflow:hidden;">
+        <div style="height:100%;width:${pctAsist}%;background:${asistColor};border-radius:99px;transition:width .4s;"></div>
+      </div>
+      <span style="font-size:11px;color:var(--tm);white-space:nowrap;">${presentesCount} de ${totalAsist} · ${asistLabel}</span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;">${asistDots}</div>
+    <div style="font-size:10px;color:var(--tm);margin-top:.4rem;">● verde = presente &nbsp;● gris = ausente &nbsp;· más reciente a la izquierda</div>
+  </div>`:''}
 
   ${inscs.length?`<div class="card" style="margin-bottom:1rem;">
     <div class="ctitle">Inscripciones activas</div>
@@ -4344,7 +4610,10 @@ function renderBancoStandaloneGrid(){
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;padding-top:.4rem;border-top:1px solid var(--b);">
         <span style="font-size:11px;font-weight:700;color:${modColorHex};background:${modColorHex}15;padding:2px 9px;border-radius:99px;">${nEjs} ejercicio${nEjs!==1?'s':''}</span>
-        <span style="font-size:11px;color:var(--tm);">→ Editar</span>
+        <button onclick="event.stopPropagation();compartirPlan(${p.id},'${_planesMod}')" title="Compartir por WhatsApp"
+          style="background:#25D366;color:#fff;border:none;border-radius:7px;padding:3px 11px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;">
+          <span>📲</span><span>Compartir</span>
+        </button>
       </div>
     </div>`;
   }).join('');
@@ -4794,6 +5063,34 @@ function compartirClase(){
       const wa=`https://wa.me/?text=${encodeURIComponent(texto)}`;
       window.open(wa,'_blank');
     });
+  }
+}
+
+function compartirPlan(planId, mod){
+  const planes=(DB.banco[mod]||[]).concat(
+    mod?[]:(Object.values(DB.banco||{}).flat())
+  );
+  const p=planes.find(x=>x.id===planId)
+    || Object.values(DB.banco||{}).flat().find(x=>x.id===planId);
+  if(!p)return;
+  const ejs=p.ejs||[];
+  const displayTitle=p.titulo.replace(' - Claude','');
+  const modLabel=MOD_LABEL[mod||_planesMod]||mod||'';
+  const icon={'mat':'🧘','reformer':'🛠️','funcional':'💪'}[mod||_planesMod]||'🗂';
+  let txt=`${icon} *${displayTitle}*\n`;
+  if(modLabel)txt+=`_${modLabel} · ${ejs.length} ejercicio${ejs.length!==1?'s':''}_\n`;
+  txt+='\n';
+  ejs.forEach((e,i)=>{
+    txt+=`${i+1}. *${e.nombre}*\n`;
+    if(e.vt)txt+=`   → ${e.vt}\n`;
+  });
+  txt+='\n_Triskel Academy_';
+  if(navigator.share){
+    navigator.share({title:displayTitle,text:txt}).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(txt)
+      .then(()=>showMsg('✓ Plan copiado al portapapeles'))
+      .catch(()=>window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`,'_blank'));
   }
 }
 
