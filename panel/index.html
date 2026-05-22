@@ -3011,7 +3011,10 @@ function rFicha(){
 
   ${totalAsist>0?`<div class="card" style="margin-bottom:1rem;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
-      <div class="ctitle" style="margin:0;">Asistencia — últimos 3 meses</div>
+      <div>
+        <div class="ctitle" style="margin:0;">Asistencia — últimos 3 meses</div>
+        <div style="font-size:10px;color:var(--tm);margin-top:1px;">registrada por Amira en clase</div>
+      </div>
       <span style="font-size:14px;font-weight:700;color:${asistColor};">${pctAsist}%</span>
     </div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:.6rem;">
@@ -3023,6 +3026,42 @@ function rFicha(){
     <div style="display:flex;flex-wrap:wrap;gap:4px;">${asistDots}</div>
     <div style="font-size:10px;color:var(--tm);margin-top:.4rem;">● verde = presente &nbsp;● gris = ausente &nbsp;· más reciente a la izquierda</div>
   </div>`:''}
+
+  ${(()=>{
+    const ausAlumna=(DB.ausencias||[])
+      .filter(x=>x.alumna_id===a.id)
+      .sort((x,y)=>y.fecha.localeCompare(x.fecha));
+    if(!ausAlumna.length)return'';
+    const hoyStr=new Date().toISOString().split('T')[0];
+    return`<div class="card" style="margin-bottom:1rem;border-left:3px solid var(--fun);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+        <div>
+          <div class="ctitle" style="margin:0;color:var(--fun);">Ausencias avisadas</div>
+          <div style="font-size:10px;color:var(--tm);margin-top:1px;">reportadas por la alumna desde su app</div>
+        </div>
+        <span style="font-size:13px;font-weight:700;color:var(--fun);">${ausAlumna.length}</span>
+      </div>
+      ${ausAlumna.slice(0,6).map(x=>{
+        const esHoy=x.fecha===hoyStr;
+        const esFuturo=x.fecha>hoyStr;
+        const fLabel=new Date(x.fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short'});
+        const clase=x.modalidad?`${MOD_LABEL[x.modalidad]||x.modalidad}${x.dia?' · '+DIA_LABEL[x.dia]:''}${x.hora_inicio?' '+x.hora_inicio:''}`:null;
+        return`<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid var(--b);">
+          <span style="font-size:16px;flex-shrink:0;">${esFuturo?'📅':'🙁'}</span>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:600;">
+              ${fLabel}
+              ${esHoy?`<span style="font-size:10px;background:var(--funl);color:var(--fun);padding:1px 5px;border-radius:99px;margin-left:4px;">HOY</span>`:''}
+              ${esFuturo?`<span style="font-size:10px;background:var(--vl);color:var(--v);padding:1px 5px;border-radius:99px;margin-left:4px;">próxima</span>`:''}
+            </div>
+            ${clase?`<div style="font-size:11px;color:var(--tm);">${clase}</div>`:''}
+            ${x.motivo?`<div style="font-size:11px;color:var(--tm);font-style:italic;">"${esc(x.motivo)}"</div>`:''}
+          </div>
+        </div>`;
+      }).join('')}
+      ${ausAlumna.length>6?`<div style="font-size:11px;color:var(--tm);text-align:center;padding-top:.4rem;">+ ${ausAlumna.length-6} anteriores</div>`:''}
+    </div>`;
+  })()}
 
   ${inscs.length?`<div class="card" style="margin-bottom:1rem;">
     <div class="ctitle">Inscripciones activas</div>
@@ -3344,7 +3383,11 @@ function rHorarios(){
   }).join('');
 
   return`<div class="ptitle">Horarios</div>
-  <p style="font-size:13px;color:var(--tm);margin-bottom:1rem;">Vista de turnos configurados — alumnas inscriptas y capacidad disponible. Para planificar ejercicios de una clase, usá <strong>Planificar</strong>.</p>
+  <p style="font-size:13px;color:var(--tm);margin-bottom:.75rem;">Vista de turnos configurados — alumnas inscriptas y capacidad disponible. Para planificar ejercicios de una clase, usá <strong>Planificar</strong>.</p>
+  <div style="background:#fff8e1;border:1px solid #f0c040;border-radius:var(--rs);padding:.6rem .85rem;margin-bottom:1rem;font-size:12px;color:#7a5c00;display:flex;align-items:flex-start;gap:7px;">
+    <span style="flex-shrink:0;font-size:15px;">⚠️</span>
+    <span><strong>No borres horarios desde el panel de Supabase.</strong> Cada horario tiene clases e inscripciones asociadas — borrarlo arrastraría el historial de cobros. Si necesitás dar de baja un turno, primero desinscribí las alumnas y después pedínoslo.</span>
+  </div>
   <div class="card">
     <div class="hgrid">${cols}</div>
   </div>
