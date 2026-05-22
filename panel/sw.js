@@ -1,4 +1,4 @@
-const CACHE = 'triskel-v3';
+const CACHE = 'triskel-v4';
 const SHELL = ['/panel/', '/panel/index.html', '/panel/alumna.html', '/panel/logo-triskel.png'];
 
 self.addEventListener('install', e => {

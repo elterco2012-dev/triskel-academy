@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex">
   <title>Triskel Academy — Panel</title>
-  <link rel="icon" type="image/jpeg" href="../logo.jpeg">
+  <link rel="icon" type="image/png" href="logo-triskel.png">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#7C5CBF">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Triskel">
-  <link rel="apple-touch-icon" href="../logo.jpeg">
+  <link rel="apple-touch-icon" href="logo-triskel.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -568,6 +568,7 @@
 <nav class="bnav" id="bnav">
   <a href="#" onclick="goTo('inicio');return false;" id="bn-inicio"><span class="bi">🏠</span><span>Inicio</span></a>
   <a href="#" onclick="goTo('clases');return false;" id="bn-clases"><span class="bi">📝</span><span>Planificar</span></a>
+  <a href="#" onclick="goTo('planes');return false;" id="bn-planes"><span class="bi">🗂</span><span>Planes</span></a>
   <a href="#" onclick="goTo('alumnas');return false;" id="bn-alumnas"><span class="bi">👤</span><span>Alumnas</span></a>
   <a href="#" onclick="goTo('pagos');return false;" id="bn-pagos"><span class="bi">💰</span><span>Pagos</span><span id="avisos-badge" style="display:none;background:var(--rd);color:#fff;font-size:10px;font-weight:700;border-radius:99px;padding:1px 5px;margin-left:3px;vertical-align:middle;"></span></a>
 </nav>
@@ -2950,6 +2951,23 @@ function rFicha(){
   const regularidad=Math.round((pagosEnPeriodo/mesesCheck)*100);
   const regColor=regularidad>=80?'var(--mat)':regularidad>=50?'var(--fun)':'var(--rd)';
   const regLabel=regularidad>=80?'Regular ✓':regularidad>=50?'Irregular':'En deuda';
+  // Asistencia: cruza clases de sus horarios con registros de asistencia
+  const horarioIdsSet=new Set(inscs.map(i=>i.horario_id));
+  const tresMesesAtras=new Date();tresMesesAtras.setMonth(tresMesesAtras.getMonth()-3);
+  const tresMesesStr=tresMesesAtras.toISOString().split('T')[0];
+  const clasesEnRango=DB.clases
+    .filter(c=>horarioIdsSet.has(c.horario_id)&&c.fecha>=tresMesesStr&&c.fecha<=hoy)
+    .sort((x,y)=>y.fecha.localeCompare(x.fecha));
+  const asistIds=new Set((DB.asistencia||[]).filter(x=>x.alumna_id===a.id).map(x=>x.clase_id));
+  const totalAsist=clasesEnRango.length;
+  const presentesCount=clasesEnRango.filter(c=>asistIds.has(c.id)).length;
+  const pctAsist=totalAsist>0?Math.round((presentesCount/totalAsist)*100):null;
+  const asistColor=pctAsist===null?'var(--tm)':pctAsist>=80?'var(--mat)':pctAsist>=60?'var(--fun)':'var(--rd)';
+  const asistLabel=pctAsist===null?'Sin datos':pctAsist>=80?'Regular ✓':pctAsist>=60?'Irregular':'Poco regular';
+  const asistDots=clasesEnRango.slice(0,24).map(c=>{
+    const ok=asistIds.has(c.id);
+    return`<span title="${c.fecha}" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${ok?'var(--mat)':'#e5e7eb'};flex-shrink:0;"></span>`;
+  }).join('');
   return`
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.5rem;">
     <button class="btn" onclick="goTo('alumnas')">← Alumnas</button>
@@ -2990,6 +3008,21 @@ function rFicha(){
     <div class="metric"><div class="mlabel">Racha actual</div><div class="mval" style="color:${racha>=3?'var(--mat)':racha>0?'var(--fun)':'var(--rd)'};">${racha} ${racha===1?'mes':'meses'}</div></div>
     <div class="metric"><div class="mlabel">Clases</div><div class="mval">${clasesAlumna.length}</div></div>
   </div>
+
+  ${totalAsist>0?`<div class="card" style="margin-bottom:1rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+      <div class="ctitle" style="margin:0;">Asistencia — últimos 3 meses</div>
+      <span style="font-size:14px;font-weight:700;color:${asistColor};">${pctAsist}%</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:.6rem;">
+      <div style="flex:1;height:7px;border-radius:99px;background:var(--s2);overflow:hidden;">
+        <div style="height:100%;width:${pctAsist}%;background:${asistColor};border-radius:99px;transition:width .4s;"></div>
+      </div>
+      <span style="font-size:11px;color:var(--tm);white-space:nowrap;">${presentesCount} de ${totalAsist} · ${asistLabel}</span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;">${asistDots}</div>
+    <div style="font-size:10px;color:var(--tm);margin-top:.4rem;">● verde = presente &nbsp;● gris = ausente &nbsp;· más reciente a la izquierda</div>
+  </div>`:''}
 
   ${inscs.length?`<div class="card" style="margin-bottom:1rem;">
     <div class="ctitle">Inscripciones activas</div>
@@ -4577,7 +4610,10 @@ function renderBancoStandaloneGrid(){
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;padding-top:.4rem;border-top:1px solid var(--b);">
         <span style="font-size:11px;font-weight:700;color:${modColorHex};background:${modColorHex}15;padding:2px 9px;border-radius:99px;">${nEjs} ejercicio${nEjs!==1?'s':''}</span>
-        <span style="font-size:11px;color:var(--tm);">→ Editar</span>
+        <button onclick="event.stopPropagation();compartirPlan(${p.id},'${_planesMod}')" title="Compartir por WhatsApp"
+          style="background:#25D366;color:#fff;border:none;border-radius:7px;padding:3px 11px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;">
+          <span>📲</span><span>Compartir</span>
+        </button>
       </div>
     </div>`;
   }).join('');
@@ -5027,6 +5063,34 @@ function compartirClase(){
       const wa=`https://wa.me/?text=${encodeURIComponent(texto)}`;
       window.open(wa,'_blank');
     });
+  }
+}
+
+function compartirPlan(planId, mod){
+  const planes=(DB.banco[mod]||[]).concat(
+    mod?[]:(Object.values(DB.banco||{}).flat())
+  );
+  const p=planes.find(x=>x.id===planId)
+    || Object.values(DB.banco||{}).flat().find(x=>x.id===planId);
+  if(!p)return;
+  const ejs=p.ejs||[];
+  const displayTitle=p.titulo.replace(' - Claude','');
+  const modLabel=MOD_LABEL[mod||_planesMod]||mod||'';
+  const icon={'mat':'🧘','reformer':'🛠️','funcional':'💪'}[mod||_planesMod]||'🗂';
+  let txt=`${icon} *${displayTitle}*\n`;
+  if(modLabel)txt+=`_${modLabel} · ${ejs.length} ejercicio${ejs.length!==1?'s':''}_\n`;
+  txt+='\n';
+  ejs.forEach((e,i)=>{
+    txt+=`${i+1}. *${e.nombre}*\n`;
+    if(e.vt)txt+=`   → ${e.vt}\n`;
+  });
+  txt+='\n_Triskel Academy_';
+  if(navigator.share){
+    navigator.share({title:displayTitle,text:txt}).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(txt)
+      .then(()=>showMsg('✓ Plan copiado al portapapeles'))
+      .catch(()=>window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`,'_blank'));
   }
 }
 
