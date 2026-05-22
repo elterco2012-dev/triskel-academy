@@ -158,7 +158,7 @@
     @media(max-width:680px){.sticky-cta{bottom:calc(72px + .5rem);}}
 
     /* Msg */
-    #msg{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--t);color:var(--bg);padding:.65rem 1.1rem;border-radius:var(--rs);font-size:13px;display:none;z-index:200;max-width:320px;}
+    #msg{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--t);color:var(--bg);padding:.65rem 1.1rem;border-radius:var(--rs);font-size:13px;display:none;z-index:500;max-width:320px;}
 
     /* ── Bottom nav (mobile) ── */
     .bnav{display:none;position:fixed;bottom:0;left:0;right:0;width:100%;background:var(--s);border-top:1px solid var(--b);z-index:50;padding-bottom:env(safe-area-inset-bottom,0);transform:translateZ(0);-webkit-transform:translateZ(0);will-change:transform;backface-visibility:hidden;-webkit-backface-visibility:hidden;}
@@ -4246,7 +4246,7 @@ function rPlanes(){
     const mc=PLANES_MOD_COLOR[m];
     const ml=PLANES_MOD_LIGHT[m];
     const icon=PLANES_MOD_ICON[m];
-    return`<button onclick="_planesMod='${m}';_planesSearch='';renderBancoStandaloneGrid();"
+    return`<button id="planes-tab-${m}" onclick="_planesMod='${m}';_planesSearch='';renderBancoStandaloneGrid();"
       style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:.6rem 1.4rem;border-radius:12px;border:2px solid ${active?mc:'var(--b)'};background:${active?mc:'var(--s)'};color:${active?'#fff':'var(--t)'};cursor:pointer;transition:all .2s;min-width:100px;">
       <span style="font-size:20px;line-height:1;">${icon}</span>
       <span style="font-size:13px;font-weight:700;">${MOD_LABEL[m]||m}</span>
@@ -4255,7 +4255,7 @@ function rPlanes(){
   }).join('');
 
   return`
-  <div style="background:linear-gradient(135deg,${modColor}18,${modColor}08);border-bottom:1px solid var(--b);padding:1.25rem 1.5rem 1rem;margin:-1rem -1rem .5rem;border-radius:var(--r) var(--r) 0 0;">
+  <div id="planes-header-grad" style="background:linear-gradient(135deg,${modColor}18,${modColor}08);border-bottom:1px solid var(--b);padding:1.25rem 1.5rem 1rem;margin:-1rem -1rem .5rem;border-radius:var(--r) var(--r) 0 0;">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;flex-wrap:wrap;">
       <div>
         <div style="font-size:22px;font-weight:800;color:var(--t);margin-bottom:.2rem;">🗂 Planes de clase</div>
@@ -4280,6 +4280,19 @@ function renderBancoStandaloneGrid(){
   const grid=document.getElementById('planes-standalone-grid');
   if(!grid)return;
   _bancoMod=_planesMod;
+  // Update header gradient and tab active states without full re-render
+  const hdr=document.getElementById('planes-header-grad');
+  if(hdr){const mc=PLANES_MOD_COLOR[_planesMod]||'var(--v)';hdr.style.background=`linear-gradient(135deg,${mc}18,${mc}08)`;}
+  ['mat','reformer','funcional'].forEach(m=>{
+    const btn=document.getElementById(`planes-tab-${m}`);
+    if(!btn)return;
+    const active=m===_planesMod;
+    const mc=PLANES_MOD_COLOR[m];
+    btn.style.border=`2px solid ${active?mc:'var(--b)'}`;
+    btn.style.background=active?mc:'var(--s)';
+    btn.style.color=active?'#fff':'var(--t)';
+    btn.querySelector('span:last-child').style.opacity=active?'.85':'.55';
+  });
   let planes=DB.banco[_planesMod]||[];
   const q=(_planesSearch||'').toLowerCase().trim();
   if(q) planes=planes.filter(p=>p.titulo.toLowerCase().includes(q)||(p.ejs||[]).some(e=>e.nombre.toLowerCase().includes(q)));
