@@ -163,6 +163,7 @@
     #main{transition:opacity .12s ease;}
     /* Badge pulse (3 bounces when badge appears) */
     @keyframes badge-pulse{0%,100%{transform:scale(1)}40%{transform:scale(1.25)}}
+    @keyframes spin{to{transform:rotate(360deg)}}
     .badge-pulse{animation:badge-pulse 1.8s ease-in-out 1;}
     /* Focus ring for keyboard nav */
     .btn:focus-visible{outline:2px solid var(--v);outline-offset:2px;}
@@ -204,7 +205,8 @@
 <body>
 
 <!-- LOGIN -->
-<div id="LS" class="ls">
+<div id="auth-loading" style="min-height:100vh;display:flex;align-items:center;justify-content:center;"><div style="width:28px;height:28px;border:3px solid var(--b);border-top-color:var(--v);border-radius:50%;animation:spin .7s linear infinite;"></div></div>
+<div id="LS" class="ls" style="display:none;">
   <div class="lb">
     <div class="ll"><img src="../logo.jpeg" alt="Triskel Academy"></div>
     <h2>Triskel Academy</h2>
@@ -2101,12 +2103,14 @@ async function login(){
 
 async function logout(){
   await sb.auth.signOut();
-  document.getElementById('LS').style.display='flex';
   document.getElementById('PS').style.display='none';
+  document.getElementById('auth-loading').style.display='none';
+  document.getElementById('LS').style.display='flex';
 }
 
 async function initAuth(){
   const{data:{session}}=await sb.auth.getSession();
+  document.getElementById('auth-loading').style.display='none';
   if(!session){document.getElementById('LS').style.display='flex';return;}
   // Also block alumnas who already have an active session
   const{data:alumnaId}=await sb.rpc('triskel_get_mi_alumna_id');
