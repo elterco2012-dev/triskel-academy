@@ -829,7 +829,8 @@ async function activarNotif(){
   try{
     const perm=await Notification.requestPermission();
     if(perm!=='granted'){showToast('Permiso denegado. Habilitá las notificaciones en la configuración del navegador.');navTo(curPage);return;}
-    const reg=await navigator.serviceWorker.ready;
+    const reg=_swReg||(await navigator.serviceWorker.getRegistration('/panel/sw-alumna.js'));
+    if(!reg){showToast('Service worker no disponible');return;}
     const sub=await reg.pushManager.subscribe({
       userVisibleOnly:true,
       applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC)
@@ -1120,8 +1121,9 @@ async function confirmarAusencia(){
 
 // ── SERVICE WORKER ────────────────────────────────────────────────────────────
 
+let _swReg=null;
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('/panel/sw.js').catch(()=>{});
+  navigator.serviceWorker.register('/panel/sw-alumna.js').then(r=>{_swReg=r;}).catch(()=>{});
 }
 
 // ── BOOT ─────────────────────────────────────────────────────────────────────
