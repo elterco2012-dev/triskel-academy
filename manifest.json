@@ -1,6 +1,6 @@
 {
   "id": "/panel/",
-  "name": "Triskel Academy — Profe",
+  "name": "Triskel Profe",
   "short_name": "Triskel Profe",
   "description": "Panel de gestión Triskel Academy",
   "start_url": "/panel/",
@@ -10,7 +10,7 @@
   "background_color": "#f8f8f6",
   "theme_color": "#7C5CBF",
   "icons": [
-    { "src": "/panel/logo-triskel.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/panel/logo-triskel.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "/panel/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/panel/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }
