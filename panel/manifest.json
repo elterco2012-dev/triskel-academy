@@ -1,8 +1,10 @@
 {
-  "name": "Triskel · Mi Cuenta",
-  "short_name": "Triskel",
+  "id": "/panel/alumna.html",
+  "name": "Triskel Academy — Alumna",
+  "short_name": "Triskel Alumna",
   "description": "Panel de alumnas de Triskel Academy",
   "start_url": "/panel/alumna.html",
+  "scope": "/panel/alumna.html",
   "display": "standalone",
   "background_color": "#fff8f5",
   "theme_color": "#6c5b7b",
@@ -18,7 +20,7 @@
       "src": "/panel/logo-triskel.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     }
   ]
 }
