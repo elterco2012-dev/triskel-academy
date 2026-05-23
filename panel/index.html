@@ -4908,9 +4908,13 @@ function renderBancoPlanEjs(){
     cont.innerHTML=`<div style="font-size:12px;color:var(--th);padding:.5rem;text-align:center;">Sin ejercicios. Agregá desde biblioteca o manualmente.</div>`;
     return;
   }
+  const n=_bancoPlanEjs.length;
   cont.innerHTML=_bancoPlanEjs.map((e,i)=>`
     <div style="display:flex;align-items:flex-start;gap:6px;padding:6px 2px;border-bottom:1px solid var(--b);">
-      <span style="color:var(--tm);cursor:grab;font-size:14px;padding-top:7px;flex-shrink:0;user-select:none;">⠿</span>
+      <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;padding-top:2px;">
+        <button onclick="moveBancoPlanEj(${i},-1)" ${i===0?'disabled':''} style="background:none;border:1px solid var(--b);border-radius:4px;cursor:${i===0?'default':'pointer'};font-size:11px;padding:1px 5px;color:${i===0?'var(--b)':'var(--tm)'};line-height:1;" title="Subir">▲</button>
+        <button onclick="moveBancoPlanEj(${i},1)" ${i===n-1?'disabled':''} style="background:none;border:1px solid var(--b);border-radius:4px;cursor:${i===n-1?'default':'pointer'};font-size:11px;padding:1px 5px;color:${i===n-1?'var(--b)':'var(--tm)'};line-height:1;" title="Bajar">▼</button>
+      </div>
       <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
         <input value="${e.nombre.replace(/"/g,'&quot;')}" placeholder="Nombre del ejercicio" oninput="_bancoPlanEjs[${i}].nombre=this.value" style="margin:0;font-size:13px;font-weight:500;padding:5px 8px;">
         <input value="${(e.vt||'').replace(/"/g,'&quot;')}" placeholder="Indicaciones / variante" oninput="_bancoPlanEjs[${i}].vt=this.value" style="margin:0;font-size:12px;padding:4px 8px;color:var(--tm);">
@@ -4930,6 +4934,13 @@ function addBancoPlanEj(){
 
 function deleteBancoPlanEj(i){
   _bancoPlanEjs.splice(i,1);
+  renderBancoPlanEjs();
+}
+
+function moveBancoPlanEj(i,dir){
+  const j=i+dir;
+  if(j<0||j>=_bancoPlanEjs.length)return;
+  [_bancoPlanEjs[i],_bancoPlanEjs[j]]=[_bancoPlanEjs[j],_bancoPlanEjs[i]];
   renderBancoPlanEjs();
 }
 
