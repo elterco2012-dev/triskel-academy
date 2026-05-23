@@ -1,6 +1,7 @@
 {
-  "name": "Triskel Academy",
-  "short_name": "Triskel",
+  "id": "/panel/",
+  "name": "Triskel Academy — Profe",
+  "short_name": "Triskel Profe",
   "description": "Panel de gestión Triskel Academy",
   "start_url": "/panel/",
   "scope": "/panel/",
