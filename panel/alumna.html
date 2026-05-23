@@ -201,9 +201,6 @@ input,select,textarea,button{font-family:'DM Sans',-apple-system,BlinkMacSystemF
     <button class="nav-item" onclick="navTo('pagos')" id="nav-pagos">
       <span class="nav-icon" id="nav-pagos-icon">💳</span>Pagos
     </button>
-    <button class="nav-item" onclick="navTo('biblioteca')" id="nav-biblioteca">
-      <span class="nav-icon">📚</span>Ejercicios
-    </button>
     <button class="nav-item" onclick="navTo('perfil')" id="nav-perfil">
       <span class="nav-icon">👤</span>Perfil
     </button>
@@ -371,7 +368,6 @@ function navTo(page){
   switch(page){
     case 'inicio':      renderInicio();break;
     case 'pagos':       renderPagos();break;
-    case 'biblioteca':  renderBibliotecaAlumna();break;
     case 'perfil':      renderPerfil();break;
   }
 }
