@@ -4312,7 +4312,7 @@ let _bibNivelFiltro=null;
 
 function getBibEjs(mod){
   const hidden=new Set((DB.config.biblioteca_hidden||{})[mod]||[]);
-  const defaults=(BIBLIOTECA_EJS[mod]||[]).filter(e=>!hidden.has(e.nombre));
+  const defaults=(BIBLIOTECA_EJS[mod]||[]).filter(e=>!hidden.has(e.nombre)).map(e=>({...e,_default:true}));
   const custom=(DB.config.biblioteca_custom||{})[mod]||[];
   return [...defaults,...custom];
 }
@@ -5018,7 +5018,7 @@ function renderBibAdminGrid(){
   const customIds=new Set(customMod.map(e=>e.id));
   let ejs=getBibEjs(_bibAdminMod);
   const q=_bibAdminSearch.toLowerCase().trim();
-  if(q) ejs=ejs.filter(e=>e.nombre.toLowerCase().includes(q)||(e.vt||'').toLowerCase().includes(q)||(e.cat||'').toLowerCase().includes(q));
+  if(q) ejs=ejs.filter(e=>e.nombre.toLowerCase().includes(q)||(e.vt||'').toLowerCase().includes(q)||(e.cat||'').toLowerCase().includes(q)||(e._default&&'claude'.startsWith(q)));
   if(_bibAdminCatFil) ejs=ejs.filter(e=>e.cat===_bibAdminCatFil);
   if(_bibAdminNivelFil) ejs=ejs.filter(e=>e.nivel===_bibAdminNivelFil);
 
@@ -5032,6 +5032,7 @@ function renderBibAdminGrid(){
 
   grid.innerHTML=ejs.map((e,i)=>{
     const isCustom=!!e.id&&customIds.has(e.id);
+    const isDefault=!!e._default;
     const catColor=CAT_COLOR[e.cat]||'#7c3aed';
     const catIcon=CAT_ICON[e.cat]||'📌';
     const bgHex=catColor.replace('#','');
@@ -5043,7 +5044,7 @@ function renderBibAdminGrid(){
           <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;align-items:center;">
             <span style="font-size:10px;font-weight:700;background:${catColor}22;color:${catColor};padding:1px 7px;border-radius:99px;">${CAT_LABELS_BIB[e.cat]||e.cat||''}</span>
             <span style="font-size:10px;font-weight:700;background:${NIVEL_BG[e.nivel]||'var(--s2)'};color:${NIVEL_COLOR[e.nivel]||'var(--tm)'};padding:1px 7px;border-radius:99px;text-transform:uppercase;">${e.nivel||''}</span>
-            ${isCustom?`<span style="font-size:10px;font-weight:700;background:var(--funl);color:var(--fun);padding:1px 7px;border-radius:99px;">Propio</span>`:`<span style="font-size:10px;font-weight:700;background:#ede9fe;color:#7c3aed;padding:1px 7px;border-radius:99px;">Claude</span>`}
+            ${isCustom?`<span style="font-size:10px;font-weight:700;background:var(--funl);color:var(--fun);padding:1px 7px;border-radius:99px;">Propio</span>`:isDefault?`<span style="font-size:10px;font-weight:700;background:#ede9fe;color:#7c3aed;padding:1px 7px;border-radius:99px;">Claude</span>`:''}
           </div>
         </div>
       </div>
@@ -5106,7 +5107,7 @@ function openBibAdminPredeterminado(nombre){
   if(!ej)return;
   _bibAdminEditId=null;
   _bibAdminOrigNombre=nombre;
-  document.getElementById('ba-title').textContent='Editar ejercicio predeterminado';
+  document.getElementById('ba-title').innerHTML='Editar ejercicio predeterminado <span style="font-size:11px;font-weight:700;background:#ede9fe;color:#7c3aed;padding:1px 8px;border-radius:99px;vertical-align:middle;">Claude</span>';
   document.getElementById('ba-mod').value=_bibAdminMod;
   document.getElementById('ba-nivel').value=ej.nivel||'básico';
   document.getElementById('ba-cat').value=ej.cat||'core';
