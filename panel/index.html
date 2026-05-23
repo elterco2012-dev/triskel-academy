@@ -661,7 +661,7 @@
 <script>
 const SB_URL='https://dplzkrdgnynyyunmrawr.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwbHprcmRnbnlueXl1bm1yYXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwMjg2OTMsImV4cCI6MjA5NDYwNDY5M30.B-J4yJf1lnyR0isMeaCIKHeCCRd7mJe1Do-_6yxbVow';
-const sb=supabase.createClient(SB_URL,SB_KEY);
+const sb=supabase.createClient(SB_URL,SB_KEY,{auth:{storageKey:'tk-profe-auth'}});
 
 const DIA_LABEL={lun:'Lunes',mar:'Martes',mie:'Miércoles',jue:'Jueves',vie:'Viernes'};
 const DIA_ORDER={lun:0,mar:1,mie:2,jue:3,vie:4};
