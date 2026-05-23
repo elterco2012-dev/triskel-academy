@@ -2727,9 +2727,9 @@ function rCumpleanos(){
   const proximos=bd.filter(a=>a.diasFaltan>0);
   let html='';
   if(hoy.length){
-    html+=`<div class="card" style="border:2px solid #f59e0b;background:linear-gradient(135deg,#fffbeb,#fef3c7);margin-bottom:1rem;text-align:center;">
+    html+=`<div class="card" style="border:2px solid var(--fun);background:var(--funl);margin-bottom:1rem;text-align:center;">
       <div style="font-size:24px;margin-bottom:.25rem;">🎂🎉</div>
-      <div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:.75rem;">¡Hoy cumple${hoy.length>1?'n':''}!</div>
+      <div style="font-size:14px;font-weight:700;color:var(--fun);margin-bottom:.75rem;">¡Hoy cumple${hoy.length>1?'n':''}!</div>
       ${hoy.map(a=>{
         const wa=a.tel?`https://wa.me/${a.tel.replace(/\D/g,'')}?text=${encodeURIComponent(`¡Hola ${a.nombre}! 🌿🎂 ¡Felices ${a.turningAge} años! Desde Triskel Academy te deseamos un hermoso día. ¡Un abrazo grande! 🎉`)}`:null;
         return`<div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:${hoy.length>1?'8px':'0'};">
@@ -2905,7 +2905,7 @@ function generarResumen(){
     :`<span style="font-size:12px;color:var(--th);">Ninguna aún</span>`;
 
   const pendientesHtml=alumnasPendientes.length
-    ?alumnasPendientes.map(a=>`<span style="display:inline-block;font-size:12px;background:#fee2e2;color:#dc2626;border-radius:99px;padding:2px 10px;margin:2px;">${a.nombre} ${a.apellido||''}</span>`).join('')
+    ?alumnasPendientes.map(a=>`<span style="display:inline-block;font-size:12px;background:var(--rl);color:var(--rd);border-radius:99px;padding:2px 10px;margin:2px;">${a.nombre} ${a.apellido||''}</span>`).join('')
     :`<span style="font-size:12px;color:var(--mat);">✓ Todas pagaron</span>`;
 
   const actividadHtml=`
@@ -4102,16 +4102,16 @@ function showMsgAcceso(nombre,email,pass,tel){
   const msg=`Hola ${nombre}! 🌿 Ya tenés acceso a tu panel de Triskel Academy.\n📧 Email: ${email}\n🔑 Contraseña: ${pass}\n🔗 ${panelUrl}`;
   const div=document.createElement('div');
   div.id='msg-acceso-toast';
-  div.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:300;background:#fff;border:1px solid #c3dafe;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.15);padding:14px 16px;width:min(92vw,360px);';
-  div.innerHTML=`<div style="font-size:13px;font-weight:700;color:#1a1a2e;margin-bottom:6px;">🔑 Acceso creado para ${nombre}</div>
-    <div style="background:#f4f0f8;border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:10px;line-height:1.8;">
+  div.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:300;background:var(--s);border:1px solid var(--bm);border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.15);padding:14px 16px;width:min(92vw,360px);';
+  div.innerHTML=`<div style="font-size:13px;font-weight:700;color:var(--t);margin-bottom:6px;">🔑 Acceso creado para ${nombre}</div>
+    <div style="background:var(--s2);border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:10px;line-height:1.8;">
       <div>📧 <b>${email}</b></div>
       <div>🔑 <b>${pass}</b></div>
-      <div style="font-size:11px;color:#888;margin-top:2px;">Panel: ${panelUrl}</div>
+      <div style="font-size:11px;color:var(--tm);margin-top:2px;">Panel: ${panelUrl}</div>
     </div>
     <div style="display:flex;gap:8px;">
       <a href="https://wa.me/${tel.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}" target="_blank" style="flex:1;background:#25D366;color:#fff;text-align:center;padding:7px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700;">📲 Enviar por WA</a>
-      <button onclick="document.getElementById('msg-acceso-toast').remove()" style="flex:1;background:#f0ebf5;border:none;border-radius:8px;padding:7px;font-size:13px;cursor:pointer;">Cerrar</button>
+      <button onclick="document.getElementById('msg-acceso-toast').remove()" style="flex:1;background:var(--s2);border:none;border-radius:8px;padding:7px;font-size:13px;cursor:pointer;color:var(--t);">Cerrar</button>
     </div>`;
   document.body.appendChild(div);
 }
@@ -4601,21 +4601,21 @@ function rTeacherNotifBanner(){
   const perm=Notification.permission;
 
   if(perm==='granted'){
-    return`<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:.75rem 1rem;display:flex;align-items:center;gap:.6rem;margin-top:.5rem;">
+    return`<div style="background:var(--matl);border:1px solid var(--mat);border-radius:12px;padding:.75rem 1rem;display:flex;align-items:center;gap:.6rem;margin-top:.5rem;">
       <span style="font-size:20px;">✅</span>
       <div style="flex:1;">
-        <div style="font-size:13px;font-weight:700;color:#15803d;">Notificaciones activas</div>
-        <div style="font-size:11px;color:#166534;">Vas a recibir avisos cuando una alumna reporte un pago</div>
+        <div style="font-size:13px;font-weight:700;color:var(--mat);">Notificaciones activas</div>
+        <div style="font-size:11px;color:var(--mat);opacity:.8;">Vas a recibir avisos cuando una alumna reporte un pago</div>
       </div>
     </div>`;
   }
 
   if(perm==='denied'){
-    return`<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:.75rem 1rem;display:flex;align-items:center;gap:.6rem;margin-top:.5rem;">
+    return`<div style="background:var(--funl);border:1px solid var(--fun);border-radius:12px;padding:.75rem 1rem;display:flex;align-items:center;gap:.6rem;margin-top:.5rem;">
       <span style="font-size:20px;">🔕</span>
       <div style="flex:1;">
-        <div style="font-size:13px;font-weight:700;color:#9a3412;">Notificaciones bloqueadas</div>
-        <div style="font-size:11px;color:#7c2d12;">Habilitá los permisos en Configuración del navegador para recibirlas</div>
+        <div style="font-size:13px;font-weight:700;color:var(--fun);">Notificaciones bloqueadas</div>
+        <div style="font-size:11px;color:var(--fun);opacity:.8;">Habilitá los permisos en Configuración del navegador para recibirlas</div>
       </div>
     </div>`;
   }
@@ -5203,11 +5203,11 @@ function iniciarModoClase(claseId) {
   document.getElementById('mc-overlay-fecha').textContent = c.fecha;
   const ejs = Array.isArray(c.ejercicios) ? c.ejercicios : [];
   document.getElementById('mc-overlay-ejercicios').innerHTML = ejs.length
-    ? ejs.map((e, i) => `<div style="display:flex;gap:16px;align-items:flex-start;padding:14px 0;border-bottom:1px solid #f0f0f0;">
+    ? ejs.map((e, i) => `<div style="display:flex;gap:16px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--b);">
         <div style="width:36px;height:36px;border-radius:50%;background:#7C5CBF;color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;">${i + 1}</div>
         <div>
-          <div style="font-size:22px;font-weight:600;color:#1a1a2e;line-height:1.3;">${e.nombre}</div>
-          ${e.vt ? `<div style="font-size:16px;color:#888;margin-top:4px;">${e.vt}</div>` : ''}
+          <div style="font-size:22px;font-weight:600;color:var(--t);line-height:1.3;">${e.nombre}</div>
+          ${e.vt ? `<div style="font-size:16px;color:var(--tm);margin-top:4px;">${e.vt}</div>` : ''}
         </div>
       </div>`).join('')
     : '<div style="font-size:18px;color:#aaa;">Sin ejercicios cargados.</div>';
@@ -5226,18 +5226,18 @@ function iniciarModoClase(claseId) {
       <label style="display:flex;align-items:center;gap:0;cursor:pointer;flex-shrink:0;">
         <input type="checkbox" id="chk-asist-${a.id}" ${checked?'checked':''} onchange="toggleAsistencia(${a.id})" style="width:20px;height:20px;accent-color:#1D9E75;cursor:pointer;margin:0;">
       </label>
-      <div style="width:32px;height:32px;border-radius:50%;background:${destacada?'#ede9f7':'#f3f4f6'};color:${destacada?'#7C5CBF':'#555'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${alumnaInits(a.nombre,a.apellido)}</div>
+      <div style="width:32px;height:32px;border-radius:50%;background:${destacada?'var(--vl)':'var(--s2)'};color:${destacada?'var(--v)':'var(--tm)'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${alumnaInits(a.nombre,a.apellido)}</div>
       <div style="flex:1;">
-        <div style="font-size:14px;font-weight:${destacada?'600':'400'};color:#1a1a2e;">${a.nombre} ${a.apellido||''}${destacada?'':' <span style="font-size:11px;color:#aaa;">(otra clase)</span>'}</div>
-        ${a.contraindicaciones?`<div style="font-size:11px;color:#c0392b;font-weight:600;margin-top:2px;">🏥 ${esc(a.contraindicaciones)}</div>`:''}
+        <div style="font-size:14px;font-weight:${destacada?'600':'400'};color:var(--t);">${a.nombre} ${a.apellido||''}${destacada?'':' <span style="font-size:11px;color:var(--th);">(otra clase)</span>'}</div>
+        ${a.contraindicaciones?`<div style="font-size:11px;color:var(--rd);font-weight:600;margin-top:2px;">🏥 ${esc(a.contraindicaciones)}</div>`:''}
       </div>
-      <button onclick="abrirNotaRapida(${a.id},this)" style="background:#f3f4f6;border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:#555;flex-shrink:0;">+ Nota</button>
+      <button onclick="abrirNotaRapida(${a.id},this)" style="background:var(--s2);border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:var(--tm);flex-shrink:0;">+ Nota</button>
     </div>
     <div id="nota-rapida-${a.id}" style="display:none;padding:8px 0 12px 42px;">
-      <textarea id="nota-txt-${a.id}" placeholder="Ej: rodilla — evitar flexión profunda" style="width:100%;height:60px;font-size:13px;border:1px solid #ddd;border-radius:6px;padding:8px;resize:none;font-family:inherit;color:#1a1a2e;background:#fafafa;box-sizing:border-box;"></textarea>
+      <textarea id="nota-txt-${a.id}" placeholder="Ej: rodilla — evitar flexión profunda" style="width:100%;height:60px;font-size:13px;border:1px solid var(--bm);border-radius:6px;padding:8px;resize:none;font-family:inherit;color:var(--t);background:var(--s2);box-sizing:border-box;"></textarea>
       <div style="display:flex;gap:6px;margin-top:4px;">
         <button onclick="guardarNotaRapida(${a.id})" style="background:#7C5CBF;color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;">Guardar</button>
-        <button onclick="document.getElementById('nota-rapida-${a.id}').style.display='none'" style="background:#f3f4f6;border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;">Cancelar</button>
+        <button onclick="document.getElementById('nota-rapida-${a.id}').style.display='none'" style="background:var(--s2);border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:var(--tm);">Cancelar</button>
       </div>
     </div>`;
   }
