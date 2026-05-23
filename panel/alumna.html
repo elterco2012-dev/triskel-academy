@@ -1006,18 +1006,22 @@ let _ausenciaInscId=null;
 let _ausenciaFecha=null;
 let _ausenciaMotivo='';
 
+function localDateStr(d=new Date()){
+  return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
 function proximaFechaInscripcion(diaKey){
-  const dayNum={lun:1,mar:2,mie:3,jue:4,vie:5};
+  const dayNum={lun:1,mar:2,mie:3,jue:4,vie:5,sab:6,dom:7};
   const target=dayNum[diaKey];
-  if(target===undefined) return new Date().toISOString().split('T')[0];
+  if(target===undefined) return localDateStr();
   const hoy=new Date();
-  const dow=hoy.getDay()===0?7:hoy.getDay(); // 1=Lun…7=Dom
+  const dow=hoy.getDay()===0?7:hoy.getDay(); // 1=Lun…7=Dom (local)
   let diff=target-dow;
   if(diff<0) diff+=7; // pasó esta semana → próxima semana
   // diff===0 significa hoy → se usa hoy
   const fecha=new Date(hoy);
   fecha.setDate(hoy.getDate()+diff);
-  return fecha.toISOString().split('T')[0];
+  return localDateStr(fecha); // local date, not UTC
 }
 
 function fechaLegible(isoDate){

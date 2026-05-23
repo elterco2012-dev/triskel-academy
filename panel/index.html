@@ -2371,6 +2371,9 @@ function render(){
 }
 
 // ─── HELPERS ────────────────────────────────────────────
+function localDateStr(d=new Date()){
+  return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 function modBadge(mod){
   const cls=MOD_CLASS[mod]||'';
   return`<span class="badge-mod badge-${cls}">${MOD_LABEL[mod]||mod}</span>`;
@@ -3349,7 +3352,7 @@ function openModalPagoParaAlumna(alumnaId){
 // ─── INICIO ─────────────────────────────────────────────
 function rAusencias(){
   if(!DB.ausencias||!DB.ausencias.length)return'';
-  const hoy=new Date().toISOString().split('T')[0];
+  const hoy=localDateStr();
   const sorted=[...DB.ausencias].sort((a,b)=>a.fecha.localeCompare(b.fecha));
   return`<div class="card" style="border-left:4px solid var(--fun);margin-bottom:1rem;">
     <div class="ctitle" style="color:var(--fun);">🙁 Avisos de ausencia (${sorted.length})</div>
