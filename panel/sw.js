@@ -1,5 +1,5 @@
-const CACHE = 'triskel-v4';
-const SHELL = ['/panel/', '/panel/index.html', '/panel/alumna.html', '/panel/logo-triskel.png'];
+const CACHE = 'triskel-v5';
+const SHELL = ['/panel/', '/panel/index.html', '/panel/alumna.html', '/panel/logo-triskel.png', '/panel/icon-192.png', '/panel/icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)));
@@ -11,8 +11,8 @@ self.addEventListener('activate', e => {
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
     )
+    // No clients.claim() — evita que el SW reclame ventanas de la otra app
   );
-  self.clients.claim();
 });
 
 // ── PUSH NOTIFICATIONS ───────────────────────────────────────────────────────
@@ -23,8 +23,8 @@ self.addEventListener('push', e => {
   const title = data.title || 'Triskel Academy';
   const options = {
     body: data.body || '',
-    icon: '/panel/logo-triskel.png',
-    badge: '/panel/logo-triskel.png',
+    icon: '/panel/icon-192.png',
+    badge: '/panel/icon-192.png',
     data: data.data || {},
     vibrate: [200, 100, 200],
   };
@@ -36,7 +36,7 @@ self.addEventListener('notificationclick', e => {
   const url = e.notification.data?.url || '/panel/';
   e.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-      const existing = list.find(c => c.url.includes('/panel/'));
+      const existing = list.find(c => c.url === url || c.url.startsWith(url));
       if (existing) return existing.focus();
       return clients.openWindow(url);
     })
