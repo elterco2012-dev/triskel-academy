@@ -597,7 +597,23 @@
   <a href="#" onclick="goTo('planes');return false;" id="bn-planes"><span class="bi">🗂</span><span>Planes</span></a>
   <a href="#" onclick="goTo('alumnas');return false;" id="bn-alumnas"><span class="bi">👤</span><span>Alumnas</span></a>
   <a href="#" onclick="goTo('pagos');return false;" id="bn-pagos"><span class="bi">💰</span><span>Pagos</span><span id="avisos-badge" style="display:none;background:var(--rd);color:#fff;font-size:10px;font-weight:700;border-radius:99px;padding:1px 5px;margin-left:3px;vertical-align:middle;"></span></a>
+  <a href="#" onclick="openMobileSettings();return false;" id="bn-settings"><span class="bi">⚙️</span><span>Más</span></a>
 </nav>
+
+<!-- Mobile settings sheet -->
+<div id="mobile-settings-bg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;" onclick="closeMobileSettings()">
+  <div id="mobile-settings-sheet" style="position:absolute;bottom:0;left:0;right:0;background:var(--s);border-radius:16px 16px 0 0;padding:1.25rem 1rem calc(env(safe-area-inset-bottom,0px) + 1.25rem);box-shadow:0 -4px 24px rgba(0,0,0,.15);" onclick="event.stopPropagation()">
+    <div style="width:36px;height:4px;background:var(--b);border-radius:99px;margin:0 auto .75rem;"></div>
+    <button onclick="toggleDark();closeMobileSettings()" style="width:100%;display:flex;align-items:center;gap:12px;padding:.75rem 1rem;border:none;background:var(--s2);border-radius:var(--rs);font-size:14px;font-weight:500;color:var(--t);cursor:pointer;margin-bottom:.5rem;">
+      <span id="tic-mobile" style="font-size:18px;">🌙</span>
+      <span id="tic-mobile-label">Modo oscuro</span>
+    </button>
+    <button onclick="logout()" style="width:100%;display:flex;align-items:center;gap:12px;padding:.75rem 1rem;border:none;background:var(--s2);border-radius:var(--rs);font-size:14px;font-weight:500;color:var(--rd);cursor:pointer;">
+      <span style="font-size:18px;">↩</span>
+      <span>Cerrar sesión</span>
+    </button>
+  </div>
+</div>
 
 <div id="msg"></div>
 
@@ -2285,6 +2301,19 @@ function openConfirm(title,body,okLabel='Confirmar',danger=true){
     document.getElementById('modal-confirm').style.display='flex';
     document.body.style.overflow='hidden';
   });
+}
+
+// ─── MOBILE SETTINGS SHEET ──────────────────────────────
+function openMobileSettings(){
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  document.getElementById('tic-mobile').textContent=isDark?'☀️':'🌙';
+  document.getElementById('tic-mobile-label').textContent=isDark?'Modo claro':'Modo oscuro';
+  document.getElementById('mobile-settings-bg').style.display='block';
+  document.body.style.overflow='hidden';
+}
+function closeMobileSettings(){
+  document.getElementById('mobile-settings-bg').style.display='none';
+  document.body.style.overflow='';
 }
 
 // ─── BÚSQUEDA DE ALUMNAS ────────────────────────────────
