@@ -166,6 +166,8 @@
     .badge-pulse{animation:badge-pulse 1.8s ease-in-out 1;}
     /* Focus ring for keyboard nav */
     .btn:focus-visible{outline:2px solid var(--v);outline-offset:2px;}
+    /* Visually hidden but accessible to screen readers */
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 
     /* ── Bottom nav (mobile) ── */
     .bnav{display:none;position:fixed;bottom:0;left:0;right:0;width:100%;background:var(--s);border-top:1px solid var(--b);z-index:50;padding-bottom:env(safe-area-inset-bottom,0);transform:translateZ(0);-webkit-transform:translateZ(0);will-change:transform;backface-visibility:hidden;-webkit-backface-visibility:hidden;}
@@ -207,7 +209,9 @@
     <div class="ll"><img src="../logo.jpeg" alt="Triskel Academy"></div>
     <h2>Triskel Academy</h2>
     <p>Panel de gestión</p>
+    <label for="email" class="sr-only">Email</label>
     <input class="li" type="email" id="email" placeholder="tu@email.com" onkeydown="if(event.key==='Enter')login()">
+    <label for="pwd" class="sr-only">Contraseña</label>
     <input class="li" type="password" id="pwd" placeholder="Contraseña" onkeydown="if(event.key==='Enter')login()">
     <button class="lbtn" onclick="login()">Ingresar</button>
     <div class="lerr" id="lerr">Email o contraseña incorrectos</div>
@@ -226,13 +230,15 @@
     </div>
     <div style="padding:12px 16px;border-bottom:1px solid var(--b);">
       <div style="position:relative;">
+        <label for="global-search" class="sr-only">Buscar alumna</label>
         <input id="global-search" type="text" placeholder="🔍 Buscar alumna..."
           oninput="buscarAlumna(this.value)"
+          aria-label="Buscar alumna"
           style="margin:0;font-size:13px;padding:7px 10px;width:100%;box-sizing:border-box;">
         <div id="global-search-results" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--s);border:1px solid var(--b);border-radius:var(--rs);z-index:60;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.12);"></div>
       </div>
     </div>
-    <nav class="snav" id="nav">
+    <nav class="snav" id="nav" aria-label="Navegación principal">
       <div class="sep">Principal</div>
       <a href="#" onclick="goTo('inicio')" id="n-inicio">🏠 Inicio</a>
       <a href="#" onclick="goTo('alumnas')" id="n-alumnas">👤 Alumnas</a>
@@ -256,33 +262,33 @@
 </div>
 
 <!-- MODALES -->
-<div class="modal-bg" id="modal-alumna" style="display:none" onclick="if(event.target===this)closeModalAlumna()">
+<div class="modal-bg" id="modal-alumna" style="display:none" onclick="if(event.target===this)closeModalAlumna()" role="dialog" aria-modal="true" aria-labelledby="mal-title">
   <div class="modal">
     <h3 id="mal-title">Nueva alumna</h3>
     <div class="frow">
-      <div><label>Nombre *</label><input id="mal-nombre" placeholder="Ej: María"></div>
-      <div><label>Apellido</label><input id="mal-apellido" placeholder="Ej: González"></div>
+      <div><label for="mal-nombre">Nombre *</label><input id="mal-nombre" placeholder="Ej: María"></div>
+      <div><label for="mal-apellido">Apellido</label><input id="mal-apellido" placeholder="Ej: González"></div>
     </div>
     <div class="frow">
-      <div><label>Teléfono (WhatsApp)</label><input id="mal-tel" placeholder="5491112345678"></div>
-      <div><label>Email</label><input id="mal-email" placeholder="maria@gmail.com"></div>
+      <div><label for="mal-tel">Teléfono (WhatsApp)</label><input id="mal-tel" placeholder="5491112345678"></div>
+      <div><label for="mal-email">Email</label><input id="mal-email" placeholder="maria@gmail.com"></div>
     </div>
-    <label>Notas</label>
+    <label for="mal-notas">Notas</label>
     <textarea id="mal-notas" placeholder="Preferencias, observaciones generales..."></textarea>
-    <label style="color:var(--rd);font-weight:600;">🏥 Contraindicaciones / Lesiones</label>
+    <label for="mal-contra" style="color:var(--rd);font-weight:600;">🏥 Contraindicaciones / Lesiones</label>
     <textarea id="mal-contra" placeholder="Ej: Rodilla derecha — sin flexión profunda · Hernia lumbar L4-L5" style="height:52px;border-color:var(--rd);"></textarea>
     <div class="frow" style="margin-top:4px;">
       <div>
-        <label>Día de pago (1–31)</label>
+        <label for="mal-diapago">Día de pago (1–31)</label>
         <input id="mal-diapago" type="number" min="1" max="31" placeholder="Ej: 10">
       </div>
       <div>
-        <label>Fecha de nacimiento</label>
+        <label for="mal-nacimiento">Fecha de nacimiento</label>
         <input id="mal-nacimiento" type="date">
       </div>
     </div>
     <div style="margin-top:.75rem;">
-      <label>Horarios — seleccioná los días que asiste</label>
+      <label id="lbl-horarios">Horarios — seleccioná los días que asiste</label>
       <div id="mal-horarios-lista" style="margin-top:6px;max-height:40vh;overflow-y:auto;-webkit-overflow-scrolling:touch;"></div>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:.75rem;">
@@ -294,9 +300,9 @@
 </div>
 
 <!-- Confirm dialog (replaces window.confirm) -->
-<div class="modal-bg" id="modal-confirm" style="display:none">
+<div class="modal-bg" id="modal-confirm" style="display:none" role="dialog" aria-modal="true" aria-labelledby="mc-title">
   <div class="modal" style="max-width:340px;">
-    <h3 id="mc-title" style="margin-bottom:.5rem;font-size:1rem;"></h3>
+    <h3 id="mc-title" style="margin-bottom:.5rem;font-size:1rem;" aria-live="polite">Confirmar acción</h3>
     <p id="mc-body" style="font-size:13px;color:var(--tm);margin-bottom:1.25rem;line-height:1.5;"></p>
     <div style="display:flex;gap:8px;justify-content:flex-end;">
       <button class="btn" onclick="_confirmResolve&&_confirmResolve(false)">Cancelar</button>
@@ -305,14 +311,14 @@
   </div>
 </div>
 
-<div class="modal-bg" id="modal-inscripcion" style="display:none" onclick="if(event.target===this)closeModalInsc()">
+<div class="modal-bg" id="modal-inscripcion" style="display:none" onclick="if(event.target===this)closeModalInsc()" role="dialog" aria-modal="true" aria-labelledby="mi-title">
   <div class="modal">
-    <h3>Inscribir en horario</h3>
-    <label>Alumna</label>
+    <h3 id="mi-title">Inscribir en horario</h3>
+    <label for="mi-alumna">Alumna</label>
     <select id="mi-alumna"></select>
-    <label>Horario</label>
+    <label for="mi-horario">Horario</label>
     <select id="mi-horario"></select>
-    <label>Precio mensual ($)</label>
+    <label for="mi-precio">Precio mensual ($)</label>
     <input id="mi-precio" type="number" placeholder="0">
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:.5rem;">
       <button class="btn" onclick="closeModalInsc()">Cancelar</button>
@@ -322,7 +328,7 @@
   </div>
 </div>
 
-<div class="modal-bg" id="modal-clase" style="display:none" onclick="if(event.target===this)closeModalClase()">
+<div class="modal-bg" id="modal-clase" style="display:none" onclick="if(event.target===this)closeModalClase()" role="dialog" aria-modal="true" aria-labelledby="mcl-title">
   <div class="modal" style="max-width:640px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;gap:8px;">
       <h3 id="mcl-title" style="margin:0;">Nueva clase</h3>
@@ -335,11 +341,11 @@
       <div style="font-size:13px;font-weight:600;margin-bottom:.6rem;color:var(--v);">📋 Clonar a otro horario</div>
       <div class="frow" style="margin-bottom:.6rem;">
         <div>
-          <label style="font-size:11px;">Horario destino</label>
+          <label for="mcl-clone-horario" style="font-size:11px;">Horario destino</label>
           <select id="mcl-clone-horario" onchange="actualizarFechaClone()" style="margin:0;font-size:13px;"></select>
         </div>
         <div>
-          <label style="font-size:11px;">Fecha</label>
+          <label for="mcl-clone-fecha" style="font-size:11px;">Fecha</label>
           <input id="mcl-clone-fecha" type="date" style="margin:0;font-size:13px;">
         </div>
       </div>
@@ -358,15 +364,15 @@
 
     <div class="frow">
       <div>
-        <label>Horario</label>
+        <label for="mcl-horario">Horario</label>
         <select id="mcl-horario"></select>
       </div>
       <div>
-        <label>Fecha</label>
+        <label for="mcl-fecha">Fecha</label>
         <input id="mcl-fecha" type="date">
       </div>
     </div>
-    <label>Notas de la clase</label>
+    <label for="mcl-notas">Notas de la clase</label>
     <textarea id="mcl-notas" placeholder="Observaciones generales..."></textarea>
 
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;margin-top:.25rem;">
@@ -387,16 +393,16 @@
   </div>
 </div>
 
-<div class="modal-bg" id="modal-pago" style="display:none" onclick="if(event.target===this)closeModalPago()">
+<div class="modal-bg" id="modal-pago" style="display:none" onclick="if(event.target===this)closeModalPago()" role="dialog" aria-modal="true" aria-labelledby="mp-title">
   <div class="modal">
-    <h3>Registrar pago</h3>
-    <label>Alumna</label>
+    <h3 id="mp-title">Registrar pago</h3>
+    <label for="mp-alumna">Alumna</label>
     <select id="mp-alumna" onchange="renderPagoHorarios()"></select>
-    <label>Horario / Modalidad</label>
+    <label for="mp-insc">Horario / Modalidad</label>
     <select id="mp-insc"></select>
     <div class="frow">
-      <div><label>Mes</label><input id="mp-mes" type="month"></div>
-      <div><label>Monto ($)</label><input id="mp-monto" type="number" placeholder="0"></div>
+      <div><label for="mp-mes">Mes</label><input id="mp-mes" type="month"></div>
+      <div><label for="mp-monto">Monto ($)</label><input id="mp-monto" type="number" placeholder="0"></div>
     </div>
     <label>Medio de pago</label>
     <div style="display:flex;gap:8px;margin-bottom:10px;">
@@ -435,7 +441,7 @@
     <p style="font-size:12px;color:var(--tm);margin-bottom:.75rem;">Aplica un incremento porcentual a todas las inscripciones activas de una modalidad.</p>
     <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
       <div style="flex:1;min-width:120px;">
-        <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px;">Modalidad</label>
+        <label for="pm-modalidad" style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px;">Modalidad</label>
         <select id="pm-modalidad" style="width:100%;font-size:13px;padding:5px 8px;">
           <option value="reformer">Reformer</option>
           <option value="mat">Mat</option>
@@ -443,7 +449,7 @@
         </select>
       </div>
       <div style="width:90px;">
-        <label style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px;">% aumento</label>
+        <label for="pm-pct" style="font-size:11px;color:var(--tm);display:block;margin-bottom:3px;">% aumento</label>
         <input id="pm-pct" type="number" min="1" max="200" placeholder="Ej: 10" style="width:100%;font-size:13px;padding:5px 8px;text-align:right;">
       </div>
       <button class="btn btn-p" onclick="actualizarPreciosMasivo()" style="white-space:nowrap;">Aplicar</button>
@@ -473,7 +479,7 @@
     <h3 id="mbe-title">Nueva tarjeta</h3>
     <div style="display:flex;flex-direction:column;gap:.75rem;">
       <div>
-        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Categoría</label>
+        <label for="mbe-cat" style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Categoría</label>
         <select id="mbe-cat" style="width:100%;padding:6px 8px;border-radius:var(--rs);border:1px solid var(--b);background:var(--s1);color:var(--t);">
           <option value="mat">Mat</option>
           <option value="reformer">Reformer</option>
@@ -481,7 +487,7 @@
         </select>
       </div>
       <div>
-        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Título de la tarjeta</label>
+        <label for="mbe-titulo" style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Título de la tarjeta</label>
         <input id="mbe-titulo" type="text" placeholder="Ej: Banda elástica I" style="width:100%;box-sizing:border-box;">
       </div>
       <div>
@@ -507,25 +513,25 @@
     <h3 id="ba-title">Nuevo ejercicio</h3>
     <div style="display:flex;flex-direction:column;gap:.6rem;">
       <div style="display:flex;gap:.5rem;">
-        <div style="flex:1;"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Modalidad</label>
+        <div style="flex:1;"><label for="ba-mod" style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Modalidad</label>
           <select id="ba-mod" style="width:100%;padding:6px 8px;border-radius:var(--rs);border:1px solid var(--b);background:var(--s1);color:var(--t);">
             <option value="mat">Mat</option><option value="reformer">Reformer</option><option value="funcional">Funcional</option>
           </select></div>
-        <div style="flex:1;"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Nivel</label>
+        <div style="flex:1;"><label for="ba-nivel" style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Nivel</label>
           <select id="ba-nivel" style="width:100%;padding:6px 8px;border-radius:var(--rs);border:1px solid var(--b);background:var(--s1);color:var(--t);">
             <option value="básico">Básico</option><option value="intermedio">Intermedio</option><option value="avanzado">Avanzado</option>
           </select></div>
       </div>
-      <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Categoría</label>
+      <div><label for="ba-cat" style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Categoría</label>
         <select id="ba-cat" style="width:100%;padding:6px 8px;border-radius:var(--rs);border:1px solid var(--b);background:var(--s1);color:var(--t);">
           <option value="core">Core</option><option value="columna">Columna</option><option value="lateral">Lateral</option>
           <option value="glúteos">Glúteos</option><option value="piernas">Piernas</option><option value="espalda">Espalda</option>
           <option value="footwork">Footwork</option><option value="cadera">Cadera</option><option value="brazos">Brazos</option>
           <option value="pecho">Pecho</option><option value="hombros">Hombros</option><option value="cardio">Cardio</option>
         </select></div>
-      <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Nombre del ejercicio</label>
+      <div><label for="ba-nombre" style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Nombre del ejercicio</label>
         <input id="ba-nombre" type="text" placeholder="Ej: Roll up con toalla" style="width:100%;box-sizing:border-box;"></div>
-      <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Indicaciones / variante</label>
+      <div><label for="ba-vt" style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Indicaciones / variante</label>
         <input id="ba-vt" type="text" placeholder="Ej: 6-8 rep · sin forzar cuello" style="width:100%;box-sizing:border-box;"></div>
     </div>
     <div id="ba-err" style="font-size:12px;color:var(--rd);margin-top:.5rem;"></div>
@@ -567,7 +573,8 @@
     <!-- Header con navegación de mes -->
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:1.25rem;">
       <button onclick="navMesInforme(-1)" class="btn btn-s" style="padding:4px 10px;font-size:16px;">‹</button>
-      <input type="month" id="res-mes" onchange="generarResumen()" style="margin:0;flex:1;text-align:center;font-weight:600;font-size:14px;">
+      <label for="res-mes" class="sr-only">Mes del informe</label>
+      <input type="month" id="res-mes" onchange="generarResumen()" aria-label="Mes del informe" style="margin:0;flex:1;text-align:center;font-weight:600;font-size:14px;">
       <button onclick="navMesInforme(1)" class="btn btn-s" style="padding:4px 10px;font-size:16px;">›</button>
     </div>
 
@@ -584,7 +591,7 @@
 </div>
 
 <!-- BARRA INFERIOR MOBILE -->
-<nav class="bnav" id="bnav">
+<nav class="bnav" id="bnav" aria-label="Navegación rápida">
   <a href="#" onclick="goTo('inicio');return false;" id="bn-inicio"><span class="bi">🏠</span><span>Inicio</span></a>
   <a href="#" onclick="goTo('clases');return false;" id="bn-clases"><span class="bi">📝</span><span>Planificar</span></a>
   <a href="#" onclick="goTo('planes');return false;" id="bn-planes"><span class="bi">🗂</span><span>Planes</span></a>
@@ -5366,11 +5373,11 @@ initAuth();
   <div class="modal" style="max-width:540px;">
     <h3 style="margin-bottom:.25rem;">✏️ Mensajes de WhatsApp</h3>
     <p style="font-size:12px;color:var(--tm);margin-bottom:1rem;">Variables: <code>{nombre}</code> <code>{monto}</code> <code>{mes}</code></p>
-    <label style="font-size:12px;font-weight:600;">Vence HOY</label>
+    <label for="msg-hoy" style="font-size:12px;font-weight:600;">Vence HOY</label>
     <textarea id="msg-hoy" style="height:72px;font-size:12px;"></textarea>
-    <label style="font-size:12px;font-weight:600;">Vence próximamente</label>
+    <label for="msg-proxima" style="font-size:12px;font-weight:600;">Vence próximamente</label>
     <textarea id="msg-proxima" style="height:72px;font-size:12px;"></textarea>
-    <label style="font-size:12px;font-weight:600;">Cuota atrasada / pendiente</label>
+    <label for="msg-atrasada" style="font-size:12px;font-weight:600;">Cuota atrasada / pendiente</label>
     <textarea id="msg-atrasada" style="height:72px;font-size:12px;"></textarea>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:.75rem;">
       <button class="btn btn-s" onclick="saveMsgTemplates(MSG_DEFAULTS).then(()=>{openModalMensajes();showMsg('✓ Restaurado');})">Restaurar default</button>
