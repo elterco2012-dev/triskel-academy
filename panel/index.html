@@ -5043,7 +5043,7 @@ function renderBibAdminGrid(){
           <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;align-items:center;">
             <span style="font-size:10px;font-weight:700;background:${catColor}22;color:${catColor};padding:1px 7px;border-radius:99px;">${CAT_LABELS_BIB[e.cat]||e.cat||''}</span>
             <span style="font-size:10px;font-weight:700;background:${NIVEL_BG[e.nivel]||'var(--s2)'};color:${NIVEL_COLOR[e.nivel]||'var(--tm)'};padding:1px 7px;border-radius:99px;text-transform:uppercase;">${e.nivel||''}</span>
-            ${isCustom?`<span style="font-size:10px;font-weight:700;background:var(--funl);color:var(--fun);padding:1px 7px;border-radius:99px;">Propio</span>`:''}
+            ${isCustom?`<span style="font-size:10px;font-weight:700;background:var(--funl);color:var(--fun);padding:1px 7px;border-radius:99px;">Propio</span>`:`<span style="font-size:10px;font-weight:700;background:#ede9fe;color:#7c3aed;padding:1px 7px;border-radius:99px;">Claude</span>`}
           </div>
         </div>
       </div>
