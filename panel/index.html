@@ -159,6 +159,13 @@
 
     /* Msg */
     #msg{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--t);color:var(--bg);padding:.65rem 1.1rem;border-radius:var(--rs);font-size:13px;display:none;z-index:500;max-width:320px;}
+    /* Fade between views */
+    #main{transition:opacity .12s ease;}
+    /* Badge pulse (3 bounces when badge appears) */
+    @keyframes badge-pulse{0%,100%{transform:scale(1)}40%{transform:scale(1.25)}}
+    .badge-pulse{animation:badge-pulse 1.8s ease-in-out 1;}
+    /* Focus ring for keyboard nav */
+    .btn:focus-visible{outline:2px solid var(--v);outline-offset:2px;}
 
     /* ── Bottom nav (mobile) ── */
     .bnav{display:none;position:fixed;bottom:0;left:0;right:0;width:100%;background:var(--s);border-top:1px solid var(--b);z-index:50;padding-bottom:env(safe-area-inset-bottom,0);transform:translateZ(0);-webkit-transform:translateZ(0);will-change:transform;backface-visibility:hidden;-webkit-backface-visibility:hidden;}
@@ -286,6 +293,18 @@
   </div>
 </div>
 
+<!-- Confirm dialog (replaces window.confirm) -->
+<div class="modal-bg" id="modal-confirm" style="display:none">
+  <div class="modal" style="max-width:340px;">
+    <h3 id="mc-title" style="margin-bottom:.5rem;font-size:1rem;"></h3>
+    <p id="mc-body" style="font-size:13px;color:var(--tm);margin-bottom:1.25rem;line-height:1.5;"></p>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn" onclick="_confirmResolve&&_confirmResolve(false)">Cancelar</button>
+      <button class="btn btn-danger" id="mc-ok">Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="modal-inscripcion" style="display:none" onclick="if(event.target===this)closeModalInsc()">
   <div class="modal">
     <h3>Inscribir en horario</h3>
@@ -307,8 +326,8 @@
   <div class="modal" style="max-width:640px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;gap:8px;">
       <h3 id="mcl-title" style="margin:0;">Nueva clase</h3>
-      <button id="mcl-btn-clonar" class="btn btn-s" onclick="abrirCloneSection()" style="display:none;white-space:nowrap;">📋 Clonar</button>
-      <button id="mcl-btn-iniciar" class="btn btn-s" onclick="iniciarModoClase()" style="display:none;white-space:nowrap;background:var(--mat);color:#fff;border-color:var(--mat);">▶ Iniciar</button>
+      <button id="mcl-btn-clonar" class="btn btn-s" onclick="abrirCloneSection()" aria-label="Clonar clase en otro horario" style="display:none;white-space:nowrap;">📋 Clonar</button>
+      <button id="mcl-btn-iniciar" class="btn btn-s" onclick="iniciarModoClase()" aria-label="Iniciar modo clase en tiempo real" style="display:none;white-space:nowrap;background:var(--mat);color:#fff;border-color:var(--mat);">▶ Iniciar</button>
     </div>
 
     <!-- Sección clonar: aparece justo debajo del título -->
@@ -589,24 +608,24 @@
 </div>
 
 <!-- MODO CLASE OVERLAY -->
-<div id="modo-clase-overlay" style="display:none;position:fixed;inset:0;background:#fff;z-index:200;overflow-y:auto;padding:2rem 1.5rem 4rem;">
+<div id="modo-clase-overlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;padding:2rem 1.5rem 4rem;">
   <div style="max-width:700px;margin:0 auto;">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:2rem;gap:12px;">
       <div>
-        <div id="mc-overlay-titulo" style="font-size:18px;font-weight:700;color:#1a1a2e;"></div>
-        <div id="mc-overlay-fecha" style="font-size:14px;color:#666;margin-top:4px;"></div>
+        <div id="mc-overlay-titulo" style="font-size:18px;font-weight:700;color:var(--t);"></div>
+        <div id="mc-overlay-fecha" style="font-size:14px;color:var(--tm);margin-top:4px;"></div>
       </div>
       <div style="display:flex;gap:8px;flex-shrink:0;">
-        <button onclick="compartirClase()" style="background:#e8f5e9;border:1px solid #4caf50;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;color:#2e7d32;">📤 Compartir</button>
-        <button onclick="cerrarModoClase()" style="background:#f3f4f6;border:none;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;color:#333;">✕ Salir</button>
+        <button onclick="compartirClase()" style="background:var(--matl);border:1px solid var(--mat);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;color:var(--mat);">📤 Compartir</button>
+        <button onclick="cerrarModoClase()" style="background:var(--s2);border:none;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;color:var(--t);">✕ Salir</button>
       </div>
     </div>
     <div id="mc-overlay-ejercicios"></div>
-    <div id="mc-overlay-notas" style="margin-top:2rem;font-size:15px;color:#888;font-style:italic;border-top:1px solid #eee;padding-top:1rem;"></div>
+    <div id="mc-overlay-notas" style="margin-top:2rem;font-size:15px;color:var(--tm);font-style:italic;border-top:1px solid var(--b);padding-top:1rem;"></div>
     <!-- Asistencia + Notas rápidas -->
-    <div id="mc-overlay-alumnas" style="margin-top:2rem;border-top:2px solid #eee;padding-top:1.5rem;display:none;">
+    <div id="mc-overlay-alumnas" style="margin-top:2rem;border-top:2px solid var(--b);padding-top:1.5rem;display:none;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;gap:10px;flex-wrap:wrap;">
-        <div style="font-size:14px;font-weight:700;color:#555;">✅ Asistencia</div>
+        <div style="font-size:14px;font-weight:700;color:var(--tm);">✅ Asistencia</div>
         <button onclick="guardarAsistencia()" style="background:#1D9E75;color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;">Guardar asistencia</button>
       </div>
       <div id="mc-overlay-alumnas-list"></div>
@@ -2103,15 +2122,46 @@ async function diagnoseDB(){
 }
 
 // ─── LOAD ALL ───────────────────────────────────────────
+const DB_CACHE_KEY='tk-db-cache';
+let _cacheDate=null;
+function _saveDbCache(){
+  try{
+    localStorage.setItem(DB_CACHE_KEY,JSON.stringify({
+      ts:Date.now(),
+      horarios:DB.horarios,alumnas:DB.alumnas,inscripciones:DB.inscripciones,
+      clases:DB.clases,pagos:DB.pagos,espera:DB.espera,observaciones:DB.observaciones,
+      avisos:DB.avisos,ausencias:DB.ausencias,asistencia:DB.asistencia,
+      banco:DB.banco,config:DB.config
+    }));
+  }catch(e){console.warn('Cache save failed:',e);}
+}
+function _loadDbCache(){
+  try{
+    const raw=localStorage.getItem(DB_CACHE_KEY);
+    if(!raw)return false;
+    const c=JSON.parse(raw);
+    DB.horarios=c.horarios||[];DB.alumnas=c.alumnas||[];DB.inscripciones=c.inscripciones||[];
+    DB.clases=c.clases||[];DB.pagos=c.pagos||[];DB.espera=c.espera||[];
+    DB.observaciones=c.observaciones||[];DB.avisos=c.avisos||[];
+    DB.ausencias=c.ausencias||[];DB.asistencia=c.asistencia||[];
+    DB.banco=c.banco||{};if(c.config)DB.config=c.config;
+    _cacheDate=new Date(c.ts).toLocaleDateString('es-AR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    return true;
+  }catch(e){return false;}
+}
+
 async function loadAll(){
   const{data,error}=await sb.rpc('triskel_load_all');
   if(error){
     console.error('loadAll:',error);
-    _loadError=true;
+    const fromCache=_loadDbCache();
+    _loadError=!fromCache;
     render();
+    if(fromCache)showMsg(`📦 Sin red — mostrando datos del ${_cacheDate}`);
     return;
   }
   _loadError=false;
+  _cacheDate=null;
   DB.horarios=data?.horarios||[];
   DB.alumnas=data?.alumnas||[];
   DB.inscripciones=data?.inscripciones||[];
@@ -2122,6 +2172,7 @@ async function loadAll(){
   console.log('DB cargado — horarios:',DB.horarios.length,'alumnas:',DB.alumnas.length);
   await loadAvisos();
   await Promise.all([loadConfig(), loadBanco(), loadAusencias(), loadAsistencia()]);
+  _saveDbCache();
   render();
 }
 
@@ -2198,21 +2249,62 @@ async function loadAvisos(){
     const n=DB.avisos.length;
     const badge=document.getElementById('avisos-badge');
     const badgeTop=document.getElementById('avisos-badge-top');
-    if(badge){badge.textContent=n||'';badge.style.display=n?'inline-block':'none';}
+    if(badge){
+      const prev=badge.textContent;
+      badge.textContent=n||'';badge.style.display=n?'inline-block':'none';
+      if(n&&String(n)!==prev){badge.classList.remove('badge-pulse');void badge.offsetWidth;badge.classList.add('badge-pulse');}
+    }
     if(badgeTop){badgeTop.textContent=n||'';badgeTop.style.display=n?'inline-block':'none';}
   }catch(e){DB.avisos=[];}
 }
 
+// ─── CONFIRM DIALOG ─────────────────────────────────────
+let _confirmResolve=null;
+function openConfirm(title,body,okLabel='Confirmar',danger=true){
+  return new Promise(resolve=>{
+    if(_confirmResolve)_confirmResolve(false);
+    _confirmResolve=v=>{
+      document.getElementById('modal-confirm').style.display='none';
+      document.body.style.overflow='';
+      _confirmResolve=null;
+      resolve(v);
+    };
+    document.getElementById('mc-title').textContent=title;
+    document.getElementById('mc-body').textContent=body;
+    const ok=document.getElementById('mc-ok');
+    ok.textContent=okLabel;
+    ok.className='btn'+(danger?' btn-danger':'');
+    ok.onclick=()=>_confirmResolve&&_confirmResolve(true);
+    document.getElementById('modal-confirm').style.display='flex';
+    document.body.style.overflow='hidden';
+  });
+}
+
+// ─── BÚSQUEDA DE ALUMNAS ────────────────────────────────
+function filtrarAlumnas(val){
+  const q=val.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  document.querySelectorAll('.arow[data-nombre]').forEach(row=>{
+    const name=(row.dataset.nombre||'').normalize('NFD').replace(/[̀-ͯ]/g,'');
+    row.style.display=name.includes(q)?'':'none';
+  });
+}
+
 // ─── ROUTING ────────────────────────────────────────────
+// Pages without their own bnav item inherit from a parent
+const _BN_PARENT={ficha:'alumnas',historial:'clases',horarios:'clases',biblioteca:'planes'};
 function goTo(page,param){
   if(page==='ficha')_fichaAlumnaId=param||null;
   currentPage=page;
   document.querySelectorAll('.snav a,.bnav a').forEach(a=>a.classList.remove('active'));
   const n=document.getElementById('n-'+page);
   if(n)n.classList.add('active');
-  const bn=document.getElementById('bn-'+page);
+  const bnKey=_BN_PARENT[page]||page;
+  const bn=document.getElementById('bn-'+bnKey);
   if(bn)bn.classList.add('active');
+  const main=document.getElementById('main');
+  main.style.opacity='0';
   render();
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{main.style.opacity='1';}));
   window.scrollTo(0,0);
 }
 
@@ -2498,10 +2590,12 @@ function inscByAlumna(aid){return DB.inscripciones.filter(i=>i.alumna_id===aid);
 
 // ─── PAUSA / ESTADO ─────────────────────────────────────
 async function pausarAlumna(id){
-  if(!confirm('¿Pausar a esta alumna? No recibirá recordatorios de pago.'))return;
+  const a=DB.alumnas.find(x=>x.id===id);
+  const ok=await openConfirm('⏸ Pausar alumna',`¿Pausar a ${a?.nombre||'esta alumna'}? No recibirá recordatorios de pago. Podés reactivarla después.`,'Pausar',true);
+  if(!ok)return;
   const{data,error}=await rpc('triskel_set_estado_alumna',{p_id:id,p_estado:'pausada'});
   if(error||data?.ok===false){showMsg('❌ Error al pausar: '+(data?.msg||error?.message||'error'));return;}
-  showMsg('Alumna pausada');await loadAll();
+  showMsg('✓ Alumna pausada');await loadAll();
 }
 async function reactivarAlumna(id){
   const{data,error}=await rpc('triskel_set_estado_alumna',{p_id:id,p_estado:'activa'});
@@ -2509,10 +2603,12 @@ async function reactivarAlumna(id){
   showMsg('✓ Alumna reactivada');await loadAll();
 }
 async function darDeBajaAlumna(id){
-  if(!confirm('¿Dar de baja definitiva a esta alumna?'))return;
+  const a=DB.alumnas.find(x=>x.id===id);
+  const ok=await openConfirm('⚠️ Dar de baja',`¿Dar de baja definitiva a ${a?.nombre||'esta alumna'}? Esta acción no se puede deshacer fácilmente.`,'Dar de baja',true);
+  if(!ok)return;
   const{data,error}=await rpc('triskel_set_estado_alumna',{p_id:id,p_estado:'baja'});
   if(error||data?.ok===false){showMsg('❌ Error al dar de baja: '+(data?.msg||error?.message||'error'));return;}
-  showMsg('Alumna dada de baja');await loadAll();
+  showMsg('✓ Alumna dada de baja');await loadAll();
 }
 
 // ─── LISTA DE ESPERA ────────────────────────────────────
@@ -2665,7 +2761,7 @@ function rAlertasInteligentes(){
           <div style="width:28px;height:28px;border-radius:50%;background:var(--rd);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">${alumnaInits(a.nombre,a.apellido)}</div>
           <div style="flex:1;">
             <div style="font-size:13px;font-weight:600;color:var(--t);">${a.nombre} ${a.apellido||''}</div>
-            <div style="font-size:11px;color:var(--rd);">No pagó ${mes1} ni ${mes0}${mods.length?' · '+mods.map(m=>MOD_LABEL[m]).join(', '):''}</div>
+            <div style="font-size:11px;color:var(--rd);">No pagó ${esInicioMes?mes2:mes1} ni ${esInicioMes?mes1:mes0}${mods.length?' · '+mods.map(m=>MOD_LABEL[m]).join(', '):''}</div>
           </div>
           <button onclick="goTo('pagos')" class="btn btn-s" style="font-size:11px;background:var(--rd);color:#fff;border-color:var(--rd);white-space:nowrap;">Ver pagos</button>
         </div>`;
@@ -2873,10 +2969,12 @@ function rProyeccionMes(){
   </div>`;
 }
 
+let _graficoMeses=6;
 function rGraficoIngresos(){
   const now=new Date();
+  const n=_graficoMeses;
   const months=[];
-  for(let i=5;i>=0;i--){
+  for(let i=n-1;i>=0;i--){
     const d=new Date(now.getFullYear(),now.getMonth()-i,1);
     months.push(d.toISOString().slice(0,7));
   }
@@ -2885,45 +2983,71 @@ function rGraficoIngresos(){
     const pagosMes=DB.pagos.filter(p=>p.mes===mes&&p.pagado);
     const total=pagosMes.reduce((s,p)=>s+(p.monto||0),0);
     const pagaron=new Set(pagosMes.map(p=>p.alumna_id)).size;
-    const [y,m]=mes.split('-');
+    const[y,m]=mes.split('-');
     const label=MESES[parseInt(m)]+` '${y.slice(2)}`;
     return{mes,total,pagaron,label};
   });
+  if(data.every(d=>d.total===0))return'';
   const max=Math.max(...data.map(d=>d.total),1);
-  // Tendencia mes actual vs anterior
   const cur=data[data.length-1].total;
   const prev=data[data.length-2].total;
   const tendencia=prev>0?Math.round(((cur-prev)/prev)*100):null;
   const tendHtml=tendencia!==null
     ?`<span style="font-size:11px;font-weight:600;color:${tendencia>=0?'var(--mat)':'var(--rd)'};">${tendencia>=0?'↑':'↓'}${Math.abs(tendencia)}% vs mes ant.</span>`:'';
+  const totalPeriodo=data.reduce((s,d)=>s+d.total,0);
+  const activos=data.filter(d=>d.total>0);
+  const promedioMensual=activos.length?Math.round(activos.reduce((s,d)=>s+d.total,0)/activos.length):0;
 
+  // SVG sparkline de tendencia sobre las barras
+  const W=300,H=60;
+  const pts=data.map((d,i)=>{
+    const x=Math.round((i/(data.length-1||1))*W);
+    const y=d.total>0?Math.round(H-(d.total/max)*H*0.85)-4:H;
+    return`${x},${y}`;
+  }).join(' ');
+  const sparkline=`<svg viewBox="0 0 ${W} ${H}" style="position:absolute;top:14px;left:0;width:100%;height:60px;pointer-events:none;overflow:visible;">
+    <polyline points="${pts}" fill="none" stroke="var(--v)" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.35"/>
+    ${data.map((d,i)=>{
+      if(d.total===0)return'';
+      const x=Math.round((i/(data.length-1||1))*W);
+      const y=Math.round(H-(d.total/max)*H*0.85)-4;
+      return`<circle cx="${x}" cy="${y}" r="2.5" fill="var(--v)" opacity="0.5"/>`;
+    }).join('')}
+  </svg>`;
+
+  const barGap=n>6?4:6;
   const bars=data.map((d,idx)=>{
     const pct=d.total>0?Math.max(Math.round((d.total/max)*85)+8,10):3;
     const isCurrent=idx===data.length-1;
     const amt=d.total>=1000?`$${(d.total/1000).toFixed(d.total%1000===0?0:1)}k`:d.total>0?`$${d.total}`:'—';
     return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:default;" title="${d.label}: $${d.total.toLocaleString('es-AR')} · ${d.pagaron} pagaron">
-      <div style="font-size:9px;font-weight:700;color:${isCurrent?'var(--v)':'var(--tm)'};height:14px;display:flex;align-items:center;">${amt}</div>
-      <div style="flex:1;width:100%;display:flex;align-items:flex-end;padding:0 2px;">
-        <div style="width:100%;height:${pct}%;min-height:${d.total>0?'8px':'3px'};background:${isCurrent?'var(--v)':'var(--vm)'};border-radius:4px 4px 0 0;opacity:${d.total===0?'0.2':'1'};transition:height .3s;"></div>
+      <div style="font-size:${n>6?'8px':'9px'};font-weight:700;color:${isCurrent?'var(--v)':'var(--tm)'};height:14px;display:flex;align-items:center;">${isCurrent?amt:amt}</div>
+      <div style="flex:1;width:100%;display:flex;align-items:flex-end;padding:0 ${barGap>4?'2px':'1px'};">
+        <div style="width:100%;height:${pct}%;min-height:${d.total>0?'6px':'2px'};background:${isCurrent?'var(--v)':'var(--vm)'};border-radius:3px 3px 0 0;opacity:${d.total===0?'0.15':'1'};transition:height .4s;"></div>
       </div>
-      <div style="font-size:9px;color:${isCurrent?'var(--v)':'var(--tm)'};font-weight:${isCurrent?'700':'400'};text-align:center;">${d.label}</div>
-      <div style="font-size:8px;color:var(--th);text-align:center;">${d.pagaron>0?d.pagaron+'p':''}</div>
+      <div style="font-size:${n>6?'8px':'9px'};color:${isCurrent?'var(--v)':'var(--tm)'};font-weight:${isCurrent?'700':'400'};text-align:center;line-height:1.2;">${d.label}</div>
     </div>`;
   }).join('');
 
-  const totalPeriodo=data.reduce((s,d)=>s+d.total,0);
-  const promedioMensual=Math.round(data.filter(d=>d.total>0).reduce((s,d)=>s+d.total,0)/Math.max(data.filter(d=>d.total>0).length,1));
-
-  return`<div class="card">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.25rem;">
-      <div class="ctitle" style="margin:0;">📈 Ingresos últimos 6 meses</div>
-      <div style="text-align:right;">
-        <div style="font-size:12px;font-weight:700;color:var(--v);">$${totalPeriodo.toLocaleString('es-AR')} total</div>
+  return`<div class="card" style="margin-bottom:1rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.25rem;flex-wrap:wrap;gap:6px;">
+      <div class="ctitle" style="margin:0;">📈 Recaudación histórica</div>
+      <div style="display:flex;align-items:center;gap:8px;">
         ${tendHtml}
+        <div style="display:flex;border:1px solid var(--b);border-radius:var(--rs);overflow:hidden;font-size:11px;">
+          <button onclick="_graficoMeses=6;render()" style="padding:3px 8px;border:none;cursor:pointer;background:${n===6?'var(--v)':'var(--s2)'};color:${n===6?'#fff':'var(--tm)'};font-size:11px;transition:background .15s;">6m</button>
+          <button onclick="_graficoMeses=12;render()" style="padding:3px 8px;border:none;cursor:pointer;background:${n===12?'var(--v)':'var(--s2)'};color:${n===12?'#fff':'var(--tm)'};font-size:11px;transition:background .15s;">12m</button>
+        </div>
       </div>
     </div>
-    <div style="font-size:11px;color:var(--tm);margin-bottom:.75rem;">Promedio mensual: $${promedioMensual.toLocaleString('es-AR')} · <span style="font-size:9px;">p = alumnas que pagaron</span></div>
-    <div style="display:flex;gap:6px;height:130px;">${bars}</div>
+    <div style="display:flex;gap:12px;font-size:11px;color:var(--tm);margin-bottom:.75rem;flex-wrap:wrap;">
+      <span>Total período: <strong style="color:var(--t);">$${totalPeriodo.toLocaleString('es-AR')}</strong></span>
+      <span>Promedio: <strong style="color:var(--t);">$${promedioMensual.toLocaleString('es-AR')}/mes</strong></span>
+    </div>
+    <div style="position:relative;">
+      ${sparkline}
+      <div style="display:flex;gap:${barGap}px;height:150px;position:relative;z-index:1;">${bars}</div>
+    </div>
   </div>`;
 }
 
@@ -3333,9 +3457,9 @@ function rAlumnas(){
     const pago=todoPago
       ?`<span style="font-size:10px;background:var(--matl);color:var(--mat);padding:1px 7px;border-radius:99px;">✓ Pagó</span>`
       :vencio
-        ?`<span style="font-size:10px;background:#fee2e2;color:#dc2626;padding:1px 7px;border-radius:99px;">Pendiente de pago</span>`
-        :`<span style="font-size:10px;background:var(--funl);color:var(--fun);padding:1px 7px;border-radius:99px;">Vence día ${a.dia_pago}</span>`;
-    return`<div class="arow">
+        ?`<span style="font-size:10px;background:var(--rl);color:var(--rd);padding:1px 7px;border-radius:99px;">Pendiente de pago</span>`
+        :`<span style="font-size:10px;background:var(--fun);color:#fff;padding:1px 7px;border-radius:99px;">Vence día ${a.dia_pago}</span>`;
+    return`<div class="arow" data-nombre="${(a.nombre+' '+(a.apellido||'')).toLowerCase()}">
       <div class="avatar">${alumnaInits(a.nombre,a.apellido)}</div>
       <div class="arow-info" style="flex:1;min-width:0;">
         <div class="aname" style="cursor:pointer;text-decoration:underline;text-underline-offset:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" onclick="goTo('ficha',${a.id})">${a.nombre} ${a.apellido||''}</div>
@@ -3354,13 +3478,19 @@ function rAlumnas(){
     </div>`;
   }
 
-  return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+  const totalAlumnas=DB.alumnas.length;
+  return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;">
     <div class="ptitle" style="margin:0;">Alumnas (${activas.length})</div>
     <button class="btn btn-p" onclick="openModalAlumna()">+ Nueva alumna</button>
   </div>
+  ${totalAlumnas>4?`<div style="margin-bottom:1rem;position:relative;">
+    <input id="alumna-search" type="search" placeholder="🔍 Buscar alumna…" value=""
+      style="padding-left:14px;margin:0;background:var(--s2);border:1px solid var(--b);"
+      oninput="filtrarAlumnas(this.value)" autocomplete="off">
+  </div>`:''}
   <div class="card">
     <div class="ctitle">Activas</div>
-    ${activas.length?activas.map(alumnaCard).join(''):`<div style="font-size:13px;color:var(--tm);">Sin alumnas activas.</div>`}
+    ${activas.length?activas.map(alumnaCard).join(''):`<div style="text-align:center;padding:1.5rem 1rem;color:var(--tm);"><div style="font-size:32px;margin-bottom:.4rem;">📭</div><strong style="font-size:13px;color:var(--t);">Sin alumnas activas</strong><div style="font-size:12px;margin-top:.25rem;">Usá "+ Nueva alumna" para agregar la primera.</div></div>`}
   </div>
   ${pausadas.length?`<div class="card">
     <div class="ctitle" style="color:var(--fun);">⏸ Pausadas (${pausadas.length})</div>
@@ -3379,6 +3509,7 @@ function rHorarios(){
     const slots=DB.horarios.filter(h=>h.dia===dia).sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
     return`<div>
       <div class="hday">${DIA_LABEL[dia]}</div>
+      ${!slots.length?`<div style="font-size:11px;color:var(--th);padding:8px 4px;text-align:center;font-style:italic;">Sin clases</div>`:''}
       ${slots.map(s=>{
         const inscs=DB.inscripciones.filter(i=>i.horario_id===s.id);
         const cc=capColor(inscs.length,s.capacidad);
@@ -3863,9 +3994,11 @@ function openModalAlumna(id){
   document.body.style.overflow='hidden';
 }
 function closeModalAlumna(){document.getElementById('modal-alumna').style.display='none';document.body.style.overflow='';}
+let _saving=false;
 async function saveAlumna(){
+  if(_saving)return; _saving=true;
   const nombre=document.getElementById('mal-nombre').value.trim();
-  if(!nombre){document.getElementById('mal-err').textContent='El nombre es obligatorio.';return;}
+  if(!nombre){document.getElementById('mal-err').textContent='El nombre es obligatorio.';_saving=false;return;}
   const email=document.getElementById('mal-email').value.trim()||null;
   const nacimiento=document.getElementById('mal-nacimiento').value||null;
   const esNueva=!_editAlumnaId;
@@ -3882,7 +4015,7 @@ async function saveAlumna(){
   if(_editAlumnaId)params.p_id=_editAlumnaId;
   else params.p_estado='activa';
   const{data:alumnaId,error}=await rpc('triskel_save_alumna',params);
-  if(error){document.getElementById('mal-err').textContent='Error al guardar.';return;}
+  if(error){document.getElementById('mal-err').textContent='Error: '+(error?.message||'intentá de nuevo');_saving=false;return;}
   // Crear inscripciones para los horarios seleccionados (solo los no existentes)
   const checks=document.querySelectorAll('#mal-horarios-lista input[type=checkbox]:checked:not(:disabled)');
   for(const cb of checks){
@@ -3910,6 +4043,7 @@ async function saveAlumna(){
   }else{
     showMsg(esNueva?'✓ Alumna creada':'✓ Alumna actualizada');
   }
+  _saving=false;
 }
 
 // Convierte YYYY-MM-DD a ddmmaa  (ej: 1990-03-15 → 150390)
@@ -3940,6 +4074,14 @@ function showMsgAcceso(nombre,email,pass,tel){
 }
 
 // ─── MODAL INSCRIPCION ──────────────────────────────────
+function _miPrellenaPrice(){
+  const hId=parseInt(document.getElementById('mi-horario').value);
+  const tf=getTarifas();
+  // Try tarifa for 1 class of that modalidad, fall back to existing inscription price
+  const h=DB.horarios.find(x=>x.id===hId);
+  const sugerido=h?(tf[`${h.modalidad}_1`]||0):0;
+  if(sugerido)document.getElementById('mi-precio').value=sugerido;
+}
 function openModalInsc(alumnaId){
   document.getElementById('mi-err').textContent='';
   const selA=document.getElementById('mi-alumna');
@@ -3947,24 +4089,28 @@ function openModalInsc(alumnaId){
   selA.innerHTML=DB.alumnas.map(a=>`<option value="${a.id}"${a.id===alumnaId?' selected':''}>${a.nombre} ${a.apellido||''}</option>`).join('');
   selH.innerHTML=DB.horarios.sort((a,b)=>DIA_ORDER[a.dia]-DIA_ORDER[b.dia]||a.hora_inicio.localeCompare(b.hora_inicio))
     .map(h=>`<option value="${h.id}">${DIA_LABEL[h.dia]} ${h.hora_inicio}–${h.hora_fin} — ${MOD_LABEL[h.modalidad]}</option>`).join('');
+  selH.onchange=_miPrellenaPrice;
   document.getElementById('mi-precio').value='';
+  _miPrellenaPrice();
   document.getElementById('modal-inscripcion').style.display='flex';
 }
 function closeModalInsc(){document.getElementById('modal-inscripcion').style.display='none';}
 async function saveInscripcion(){
+  if(_saving)return; _saving=true;
   const alumna_id=parseInt(document.getElementById('mi-alumna').value);
   const horario_id=parseInt(document.getElementById('mi-horario').value);
   const precio=parseFloat(document.getElementById('mi-precio').value)||0;
   const existe=DB.inscripciones.find(i=>i.alumna_id===alumna_id&&i.horario_id===horario_id);
-  if(existe){document.getElementById('mi-err').textContent='Esta alumna ya está inscripta en ese horario.';return;}
+  if(existe){document.getElementById('mi-err').textContent='Esta alumna ya está inscripta en ese horario.';_saving=false;return;}
   const{error}=await rpc('triskel_insert_inscripcion',{p_alumna_id:alumna_id,p_horario_id:horario_id,p_precio:precio});
-  if(error){document.getElementById('mi-err').textContent='Error al guardar.';return;}
+  if(error){document.getElementById('mi-err').textContent='Error: '+(error?.message||'intentá de nuevo');_saving=false;return;}
+  _saving=false;
   showMsg('✓ Inscripción guardada');
   closeModalInsc();
   await loadAll();
 }
 async function desinscribir(id){
-  if(!confirm('¿Dar de baja esta inscripción?'))return;
+  if(!await openConfirm('Baja de inscripción','¿Dar de baja esta inscripción? La alumna dejará de aparecer en este horario.','Dar de baja',true))return;
   const{data,error}=await rpc('triskel_deactivate_inscripcion',{p_id:id});
   if(error||data?.ok===false){showMsg('❌ Error al dar de baja: '+(data?.msg||error?.message||'error'));return;}
   showMsg('✓ Inscripción dada de baja');
@@ -4234,22 +4380,24 @@ function removeEj(i){
   renderEjerciciosModal();
 }
 async function saveClase(){
+  if(_saving)return; _saving=true;
   const horario_id=parseInt(document.getElementById('mcl-horario').value);
   const fecha=document.getElementById('mcl-fecha').value;
   const notas=document.getElementById('mcl-notas').value.trim()||null;
-  if(!horario_id){document.getElementById('mcl-err').textContent='Seleccioná un horario. Si no aparece ninguno, ejecutá la migración SQL en Supabase.';return;}
-  if(!fecha){document.getElementById('mcl-err').textContent='La fecha es obligatoria.';return;}
+  if(!horario_id){document.getElementById('mcl-err').textContent='Seleccioná un horario. Si no aparece ninguno, ejecutá la migración SQL en Supabase.';_saving=false;return;}
+  if(!fecha){document.getElementById('mcl-err').textContent='La fecha es obligatoria.';_saving=false;return;}
   const ejercicios=_claseEjs.filter(e=>e.nombre.trim()).map((e,i)=>({orden:i+1,nombre:e.nombre.trim(),vt:e.vt?.trim()||null}));
   const params={p_horario_id:horario_id,p_fecha:fecha,p_ejercicios:ejercicios,p_notas:notas};
   if(_editClaseId) params.p_id=_editClaseId;
   const{error}=await rpc('triskel_save_clase',params);
-  if(error){document.getElementById('mcl-err').textContent='Error al guardar.';return;}
+  if(error){document.getElementById('mcl-err').textContent='Error: '+(error?.message||'intentá de nuevo');_saving=false;return;}
+  _saving=false;
   showMsg(_editClaseId?'✓ Clase actualizada':'✓ Clase registrada');
   closeModalClase();
   await loadAll();
 }
 async function deleteClase(id){
-  if(!confirm('¿Borrar esta clase?'))return;
+  if(!await openConfirm('🗑 Borrar clase','¿Borrar esta clase? Se perderán los ejercicios registrados.','Borrar',true))return;
   const{data,error}=await rpc('triskel_delete_clase',{p_id:id});
   if(error||data?.ok===false){showMsg('❌ Error al borrar clase: '+(data?.msg||error?.message||'error'));return;}
   showMsg('✓ Clase borrada');
@@ -4318,11 +4466,12 @@ function renderPagoHorarios(){
   }
 }
 async function savePago(){
+  if(_saving)return; _saving=true;
   const alumna_id=parseInt(document.getElementById('mp-alumna').value);
   const selVal=document.getElementById('mp-insc').value;
   const mes=document.getElementById('mp-mes').value;
   const monto=parseFloat(document.getElementById('mp-monto').value)||0;
-  if(!mes){document.getElementById('mp-err').textContent='El mes es obligatorio.';return;}
+  if(!mes){document.getElementById('mp-err').textContent='El mes es obligatorio.';_saving=false;return;}
   const hoy=new Date().toISOString().split('T')[0];
   const nota=_mpMedio==='transferencia'?'Transferencia':'Efectivo';
   const[tipo,idsStr]=selVal.split(':');
@@ -4338,12 +4487,14 @@ async function savePago(){
       p_fecha_pago:hoy,
       p_nota:nota
     });
-    if(error||!data?.ok){document.getElementById('mp-err').textContent='Error al guardar.';return;}
+    if(error||!data?.ok){document.getElementById('mp-err').textContent='Error: '+(data?.msg||error?.message||'intentá de nuevo');_saving=false;return;}
   }else{
     const inscripcion_id=parseInt(idsStr);
     const{error}=await rpc('triskel_insert_pago',{p_alumna_id:alumna_id,p_inscripcion_id:inscripcion_id,p_mes:mes,p_monto:monto,p_pagado:true,p_fecha_pago:hoy,p_nota:nota});
-    if(error){document.getElementById('mp-err').textContent='Error al guardar.';return;}
+    if(error){document.getElementById('mp-err').textContent='Error: '+(error?.message||'intentá de nuevo');_saving=false;return;}
   }
+  _saving=false;
+  if(navigator.vibrate)navigator.vibrate(50);
   showMsg('✓ Pago registrado');
   closeModalPago();
   await loadAll();
