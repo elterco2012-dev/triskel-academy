@@ -98,6 +98,7 @@
     .modal{background:var(--s);border-radius:var(--r);padding:1.5rem;width:100%;max-width:540px;max-height:88vh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
     .modal h3{font-family:'DM Serif Display',serif;font-size:1.2rem;margin-bottom:1rem;}
     .frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .mfs-section{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--sub);border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:.6rem;}
     label{font-size:12px;font-weight:500;color:var(--tm);display:block;margin-bottom:4px;}
 
     /* Alumna row */
@@ -304,105 +305,151 @@
 <!-- Modal Ficha de Salud -->
 <div class="modal-bg" id="modal-ficha-salud" style="display:none;overflow-y:auto;" onclick="if(event.target===this)closeModalFichaSalud()" role="dialog" aria-modal="true">
   <div class="modal" style="max-width:580px;max-height:90vh;overflow-y:auto;">
-    <h3 style="margin-bottom:1rem;">📋 Declaración Jurada de Salud</h3>
-    <div id="mfs-alumna-nombre" style="font-size:13px;color:var(--tm);margin-bottom:1rem;"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+      <h3 style="margin:0;">📋 Ficha de Salud</h3>
+      <button class="btn btn-s" onclick="closeModalFichaSalud()">✕</button>
+    </div>
+    <div id="mfs-alumna-nombre" style="font-size:13px;font-weight:600;color:var(--mat);margin-bottom:1rem;"></div>
 
-    <div style="font-size:11px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;margin-top:.25rem;">Datos personales extra</div>
+    <div class="mfs-section">Datos personales</div>
     <div class="frow">
       <div><label>DNI</label><input id="mfs-dni" type="text" placeholder="12.345.678"></div>
       <div><label>Celular familiar</label><input id="mfs-celular-familiar" type="text" placeholder="11 xxxx-xxxx"></div>
     </div>
     <div class="frow">
-      <div><label>Grupo sanguíneo</label><input id="mfs-grupo" type="text" placeholder="0 Rh+"></div>
-      <div><label>Obra social</label><input id="mfs-obra-social" type="text" placeholder="OSDE / No tiene"></div>
+      <div><label>Grupo sanguíneo</label>
+        <select id="mfs-grupo">
+          <option value="">—</option>
+          <option>0 Rh positivo</option><option>0 Rh negativo</option>
+          <option>A Rh positivo</option><option>A Rh negativo</option>
+          <option>B Rh positivo</option><option>B Rh negativo</option>
+          <option>AB Rh positivo</option><option>AB Rh negativo</option>
+          <option>No sabe</option>
+        </select>
+      </div>
     </div>
 
-    <div style="font-size:11px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;margin-top:1rem;">Contexto y objetivos</div>
-    <div><label>Objetivos de entrenamiento</label><input id="mfs-objetivos" type="text" placeholder="Bajar peso / Tonificar / Bienestar / Rehabilitación..."></div>
+    <div class="mfs-section" style="margin-top:1rem;">Objetivos y contexto</div>
+    <div><label>Objetivo principal <span style="color:var(--rd);">*</span></label>
+      <select id="mfs-objetivos">
+        <option value="">— seleccionar —</option>
+        <option>Bajar de peso</option><option>Tonificar</option><option>Ganar fuerza</option>
+        <option>Bienestar general</option><option>Flexibilidad y movilidad</option>
+        <option>Rehabilitación</option><option>Deporte y rendimiento</option>
+        <option>Varios de los anteriores</option>
+      </select>
+    </div>
     <div class="frow">
       <div><label>Nivel de actividad previo</label>
         <select id="mfs-nivel-actividad">
-          <option value="">— seleccionar —</option>
-          <option value="sedentaria">Sedentaria</option>
-          <option value="algo activa">Algo activa</option>
-          <option value="activa">Activa</option>
+          <option value="">—</option>
+          <option value="Sedentaria (casi no me muevo)">Sedentaria</option>
+          <option value="Algo activa (actividades ligeras)">Algo activa</option>
+          <option value="Activa (ejercicio regular)">Activa</option>
         </select>
       </div>
-      <div><label>Cómo llegó a Triskel</label>
+      <div><label>Cómo llegó</label>
         <select id="mfs-como-llego">
-          <option value="">— seleccionar —</option>
-          <option value="Recomendación">Recomendación</option>
-          <option value="Redes sociales">Redes sociales</option>
-          <option value="Pasando por el lugar">Pasando por el lugar</option>
-          <option value="Otro">Otro</option>
+          <option value="">—</option>
+          <option>Recomendación</option><option>Redes sociales</option>
+          <option>Pasando por el lugar</option><option>Otro</option>
         </select>
       </div>
     </div>
 
-    <div style="font-size:11px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;margin-top:1rem;">Hábitos diarios</div>
+    <div class="mfs-section" style="margin-top:1rem;">Hábitos</div>
     <div class="frow">
       <div><label>Café por día</label>
         <select id="mfs-cafe">
           <option value="">—</option>
-          <option value="No">No</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3+">3+</option>
+          <option value="No tomo">No</option><option value="1 taza">1</option>
+          <option value="2 tazas">2</option><option value="3 o más">3+</option>
         </select>
       </div>
-      <div><label>Hs. de sueño</label><input id="mfs-sueno" type="number" min="0" max="24" step="0.5" placeholder="7"></div>
+      <div><label>Hs. sueño</label><input id="mfs-sueno" type="number" min="0" max="24" step="0.5" placeholder="7"></div>
     </div>
-    <div class="frow" style="align-items:center;gap:1.5rem;flex-wrap:wrap;">
-      <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer;"><input type="checkbox" id="mfs-trabaja"> Trabaja</label>
-      <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer;"><input type="checkbox" id="mfs-trabajo-pie"> Trabajo de pie</label>
-      <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer;"><input type="checkbox" id="mfs-alcohol"> Toma alcohol</label>
-      <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer;"><input type="checkbox" id="mfs-dieta"> Hace dieta</label>
-    </div>
-    <div class="frow" style="margin-top:.5rem;">
-      <div><label>Tiempo sentada</label><input id="mfs-sentada" type="text" placeholder="Mucho / Poco / No"></div>
-      <div><label>Camina frecuencia</label><input id="mfs-camina" type="text" placeholder="Poco / Moderado / Mucho"></div>
-    </div>
-
-    <div style="font-size:11px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;margin-top:1rem;">Postura y lesiones</div>
-    <div><label>Problemas posturales</label><input id="mfs-posturales" type="text" placeholder="Ej: Se encorva por trabajo en cocina"></div>
-    <div><label>Cirugías / Lesiones previas</label><input id="mfs-cirugias" type="text" placeholder="Ej: Arthrosis, osteop. tobillo derecho — tornillos"></div>
-    <div><label>Embarazo / Postparto</label><input id="mfs-embarazo" type="text" placeholder="Ej: Postparto 6 meses / No"></div>
-    <div><label>Dolor crónico</label><input id="mfs-dolor" type="text" placeholder="Ej: Lumbar / Cervical / No"></div>
-
-    <div style="font-size:11px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;margin-top:1rem;">Actividad y salud</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:.5rem;">
-      <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;cursor:pointer;"><input type="checkbox" id="mfs-act-fisica"> Realiza actividad física</label>
-      <div><label style="font-weight:400;font-size:12px;">Frecuencia</label><input id="mfs-act-frecuencia" type="text" placeholder="Ej: 4 por semana" style="margin-top:2px;"></div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-      <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;cursor:pointer;"><input type="checkbox" id="mfs-fumadora"> Fumadora</label>
-      <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;cursor:pointer;"><input type="checkbox" id="mfs-colesterol"> Colesterol alto</label>
-      <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;cursor:pointer;"><input type="checkbox" id="mfs-convulsiones"> Tuvo convulsiones</label>
-      <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;cursor:pointer;"><input type="checkbox" id="mfs-consume-droga"> Consume alguna droga</label>
-      <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;cursor:pointer;"><input type="checkbox" id="mfs-diabetes"> Diabetes</label>
-    </div>
-    <div class="frow" style="margin-top:.5rem;">
-      <div><label>Alergia a medicamento</label><input id="mfs-alergia" type="text" placeholder="No / Cual..."></div>
-      <div><label>Toma medicamento</label><input id="mfs-medicamento" type="text" placeholder="No / Cual..."></div>
-    </div>
-    <div><label>Afecciones cardíacas</label><input id="mfs-cardiacas" type="text" placeholder="No / Cual..."></div>
-    <div><label>Afecciones respiratorias</label><input id="mfs-respiratorias" type="text" placeholder="No / Cual..."></div>
-
-    <div style="font-size:11px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;margin-top:1rem;">Datos adicionales</div>
-    <div><label>Datos importantes (texto libre)</label><textarea id="mfs-datos" placeholder="Ej: Arthrosis, osteop. tobillo derecho — tornillos..." style="height:52px;"></textarea></div>
-    <div><label>Antecedentes familiares (cardíacos, etc.)</label><input id="mfs-antecedentes" type="text" placeholder="Ej: Padre — paro cardíaco / Sin antecedentes"></div>
-
-    <div style="font-size:11px;font-weight:700;color:var(--rd);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;margin-top:1rem;">Mediciones (completar en persona)</div>
     <div class="frow">
-      <div><label>Peso real (kg)</label><input id="mfs-peso" type="number" step="0.1" placeholder="Ej: 68"></div>
+      <div><label>Tiempo sentada</label>
+        <select id="mfs-sentada">
+          <option value="">—</option>
+          <option>Casi nada</option><option>Poco (1-2 hs)</option>
+          <option>Moderado (3-4 hs)</option><option>Mucho (5-6 hs)</option>
+          <option>Todo el día (+6 hs)</option>
+        </select>
+      </div>
+      <div><label>Camina por día</label>
+        <select id="mfs-camina">
+          <option value="">—</option>
+          <option>Casi nada</option><option>15-30 minutos</option>
+          <option>30-60 minutos</option><option>Más de 1 hora</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 1rem;margin-top:.5rem;align-items:center;">
+      <label style="display:flex;align-items:center;gap:7px;font-weight:400;font-size:13px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="mfs-trabaja" style="width:15px;height:15px;"> Trabaja</label>
+      <label style="display:flex;align-items:center;gap:7px;font-weight:400;font-size:13px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="mfs-trabajo-pie" style="width:15px;height:15px;"> Trabaja de pie</label>
+      <label style="display:flex;align-items:center;gap:7px;font-weight:400;font-size:13px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="mfs-alcohol" style="width:15px;height:15px;"> Toma alcohol</label>
+      <label style="display:flex;align-items:center;gap:7px;font-weight:400;font-size:13px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="mfs-dieta" style="width:15px;height:15px;"> Hace dieta</label>
+    </div>
+
+    <div class="mfs-section" style="margin-top:1rem;">Cuerpo y lesiones</div>
+    <div><label>Problemas posturales</label><input id="mfs-posturales" type="text" placeholder="Ej: Se encorva por trabajo en cocina"></div>
+    <div><label>Lesión activa / Cirugías previas</label><input id="mfs-cirugias" type="text" placeholder="Ej: Rodilla derecha activa · Tornillos tobillo"></div>
+    <div><label>Embarazo / Postparto</label>
+      <select id="mfs-embarazo">
+        <option value="">—</option>
+        <option>No aplica</option><option>Embarazada actualmente</option>
+        <option>Postparto reciente (menos de 6 meses)</option>
+        <option>Postparto 6-12 meses</option><option>Postparto hace más de 1 año</option>
+      </select>
+    </div>
+    <div><label>Dolor crónico</label><input id="mfs-dolor" type="text" placeholder="No / Lumbar / Cervical..."></div>
+
+    <div class="mfs-section" style="margin-top:1rem;">Actividad y salud</div>
+    <div class="frow" style="align-items:flex-end;">
+      <div style="display:flex;align-items:center;gap:7px;padding-bottom:.3rem;">
+        <input type="checkbox" id="mfs-act-fisica" style="width:15px;height:15px;">
+        <label for="mfs-act-fisica" style="font-size:13px;font-weight:400;margin:0;cursor:pointer;">Realiza actividad física</label>
+      </div>
+      <div><label>Frecuencia</label>
+        <select id="mfs-act-frecuencia">
+          <option value="">—</option>
+          <option>1 vez por semana</option><option>2 veces por semana</option>
+          <option>3 veces por semana</option><option>4 veces por semana</option>
+          <option>5 o más veces</option><option>Esporádicamente</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 1rem;margin:.5rem 0;align-items:center;">
+      <label style="display:flex;align-items:center;gap:7px;font-weight:400;font-size:13px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="mfs-fumadora" style="width:15px;height:15px;"> Fumadora</label>
+      <label style="display:flex;align-items:center;gap:7px;font-weight:400;font-size:13px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="mfs-colesterol" style="width:15px;height:15px;"> Colesterol alto</label>
+      <label style="display:flex;align-items:center;gap:7px;font-weight:400;font-size:13px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="mfs-convulsiones" style="width:15px;height:15px;"> Tuvo convulsiones</label>
+      <label style="display:flex;align-items:center;gap:7px;font-weight:400;font-size:13px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="mfs-diabetes" style="width:15px;height:15px;"> Diabetes</label>
+    </div>
+    <div class="frow">
+      <div><label>Alergia a medicamento</label><input id="mfs-alergia" type="text" placeholder="No / Cuál"></div>
+      <div><label>Medicamento actual</label><input id="mfs-medicamento" type="text" placeholder="No / Cuál"></div>
+    </div>
+    <div class="frow">
+      <div><label>Afecciones cardíacas</label><input id="mfs-cardiacas" type="text" placeholder="No / Cuál"></div>
+      <div><label>Afecciones respiratorias</label><input id="mfs-respiratorias" type="text" placeholder="No / Cuál"></div>
+    </div>
+
+    <div class="mfs-section" style="margin-top:1rem;">Datos adicionales</div>
+    <div><label>Datos importantes</label><textarea id="mfs-datos" placeholder="Ej: Arthrosis tobillo, tornillos, hernia lumbar..." style="height:52px;"></textarea></div>
+    <div><label>Antecedentes familiares</label><input id="mfs-antecedentes" type="text" placeholder="Sin antecedentes / Padre — paro cardíaco"></div>
+
+    <div class="mfs-section" style="margin-top:1rem;color:var(--rd);">Mediciones (en persona)</div>
+    <div class="frow">
+      <div><label>Peso (kg)</label><input id="mfs-peso" type="number" step="0.1" placeholder="68"></div>
       <div><label>TA</label><input id="mfs-ta" type="text" placeholder="120/80"></div>
       <div><label>FC (lpm)</label><input id="mfs-fc" type="number" placeholder="75"></div>
     </div>
     <div class="frow">
-      <div><label>Cintura (cm)</label><input id="mfs-cintura" type="number" step="0.5" placeholder="80"></div>
-      <div><label>Cadera (cm)</label><input id="mfs-cadera" type="number" step="0.5" placeholder="95"></div>
-      <div><label>Pierna D (cm)</label><input id="mfs-pierna-d" type="number" step="0.5" placeholder="55"></div>
-      <div><label>Pierna I (cm)</label><input id="mfs-pierna-i" type="number" step="0.5" placeholder="55"></div>
+      <div><label>Cintura cm</label><input id="mfs-cintura" type="number" step="0.5" placeholder="80"></div>
+      <div><label>Cadera cm</label><input id="mfs-cadera" type="number" step="0.5" placeholder="95"></div>
+      <div><label>Pierna D cm</label><input id="mfs-pierna-d" type="number" step="0.5" placeholder="55"></div>
+      <div><label>Pierna I cm</label><input id="mfs-pierna-i" type="number" step="0.5" placeholder="55"></div>
     </div>
 
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1rem;">
@@ -4677,7 +4724,7 @@ function openModalFichaSalud(alumnaId){
   set('mfs-dolor',f.dolor_cronico);set('mfs-act-fisica',f.actividad_fisica);
   set('mfs-act-frecuencia',f.actividad_frecuencia);set('mfs-fumadora',f.fumadora);
   set('mfs-colesterol',f.colesterol_alto);set('mfs-convulsiones',f.convulsiones);
-  set('mfs-consume-droga',f.consume_droga);set('mfs-diabetes',f.diabetes);
+  set('mfs-diabetes',f.diabetes);
   set('mfs-alergia',f.alergia_medicamento);set('mfs-medicamento',f.toma_medicamento);
   set('mfs-cardiacas',f.afecciones_cardiacas);set('mfs-respiratorias',f.afecciones_respiratorias);
   set('mfs-datos',f.datos_importantes);set('mfs-antecedentes',f.antecedentes_familiares);
@@ -4699,7 +4746,7 @@ async function saveFichaSalud(){
   const{error}=await rpc('triskel_save_ficha_salud',{
     p_alumna_id:_fichaEditAlumnaId,
     p_dni:g('mfs-dni'),p_celular_familiar:g('mfs-celular-familiar'),
-    p_grupo_sanguineo:g('mfs-grupo'),p_obra_social:g('mfs-obra-social'),
+    p_grupo_sanguineo:g('mfs-grupo'),
     p_objetivos:g('mfs-objetivos'),p_nivel_actividad_previo:g('mfs-nivel-actividad'),
     p_como_llego:g('mfs-como-llego'),p_cafe_por_dia:g('mfs-cafe'),
     p_trabaja:gc('mfs-trabaja'),p_trabajo_de_pie:gc('mfs-trabajo-pie'),
@@ -4710,7 +4757,7 @@ async function saveFichaSalud(){
     p_dolor_cronico:g('mfs-dolor'),p_actividad_fisica:gc('mfs-act-fisica'),
     p_actividad_frecuencia:g('mfs-act-frecuencia'),p_fumadora:gc('mfs-fumadora'),
     p_colesterol_alto:gc('mfs-colesterol'),p_convulsiones:gc('mfs-convulsiones'),
-    p_consume_droga:gc('mfs-consume-droga'),p_diabetes:gc('mfs-diabetes'),
+    p_diabetes:gc('mfs-diabetes'),
     p_alergia_medicamento:g('mfs-alergia'),p_toma_medicamento:g('mfs-medicamento'),
     p_afecciones_cardiacas:g('mfs-cardiacas'),p_afecciones_respiratorias:g('mfs-respiratorias'),
     p_datos_importantes:g('mfs-datos'),p_antecedentes_familiares:g('mfs-antecedentes'),
