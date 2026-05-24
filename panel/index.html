@@ -3651,8 +3651,8 @@ function rClases(){
   const dow=hoy.getDay()||7;
   const lunes=new Date(hoy);lunes.setDate(hoy.getDate()-(dow-1)+_planSemanaOffset*7);
   const viernes=new Date(lunes);viernes.setDate(lunes.getDate()+4);
-  const semStart=lunes.toISOString().split('T')[0];
-  const semEnd=viernes.toISOString().split('T')[0];
+  const semStart=localDateStr(lunes);
+  const semEnd=localDateStr(viernes);
   const semLabel=lunes.toLocaleDateString('es-AR',{day:'numeric',month:'short'})+' – '+viernes.toLocaleDateString('es-AR',{day:'numeric',month:'short'});
   const diaHoyKey=diaKey[hoy.getDay()];
   const esFinDeSemana=hoy.getDay()===0||hoy.getDay()===6;
@@ -4185,8 +4185,8 @@ function openClaseParaHorario(horarioId){
   const dow=hoy.getDay()||7;
   const lunes=new Date(hoy);lunes.setDate(hoy.getDate()-(dow-1)+_planSemanaOffset*7);
   const viernes=new Date(lunes);viernes.setDate(lunes.getDate()+4);
-  const semStart=lunes.toISOString().split('T')[0];
-  const semEnd=viernes.toISOString().split('T')[0];
+  const semStart=localDateStr(lunes);
+  const semEnd=localDateStr(viernes);
   const claseExistente=DB.clases.find(c=>c.horario_id===horarioId&&c.fecha>=semStart&&c.fecha<=semEnd);
   openModalClase(claseExistente?.id||null,horarioId);
 }
@@ -4197,7 +4197,7 @@ function openModalClase(claseId,horarioId){
   const selH=document.getElementById('mcl-horario');
   selH.innerHTML=DB.horarios.sort((a,b)=>DIA_ORDER[a.dia]-DIA_ORDER[b.dia]||a.hora_inicio.localeCompare(b.hora_inicio))
     .map(h=>`<option value="${h.id}"${h.id===horarioId?' selected':''}>${DIA_LABEL[h.dia]} ${h.hora_inicio}–${h.hora_fin} — ${MOD_LABEL[h.modalidad]}</option>`).join('');
-  const hoy=new Date().toISOString().split('T')[0];
+  const hoy=localDateStr();
   const sugDiv=document.getElementById('mcl-sugerencia');
   const cloneBtn=document.getElementById('mcl-btn-clonar');
   const cloneSection=document.getElementById('mcl-clone-section');
@@ -4264,7 +4264,7 @@ function fechaDelDiaEstaSemana(diaKey){
   const lunes=new Date(hoy);lunes.setDate(hoy.getDate()-(dow-1)+_planSemanaOffset*7);
   const offset=order[diaKey]??0;
   const target=new Date(lunes);target.setDate(lunes.getDate()+offset);
-  return target.toISOString().split('T')[0];
+  return localDateStr(target);
 }
 function actualizarFechaClone(){
   const selC=document.getElementById('mcl-clone-horario');
