@@ -171,6 +171,23 @@ input,select,textarea,button{font-family:'DM Sans',-apple-system,BlinkMacSystemF
 .loading{display:flex;align-items:center;justify-content:center;padding:3rem;color:var(--sub);font-size:14px;}
 .spinner{width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--tm);border-radius:50%;animation:spin .7s linear infinite;margin-right:.5rem;}
 @keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── ONBOARDING ── */
+#onboarding{position:fixed;inset:0;z-index:999;display:none;flex-direction:column;align-items:center;justify-content:flex-end;background:linear-gradient(160deg,#5B3F9E 0%,#7C5CBF 45%,#9b6fd4 100%);}
+#onboarding.visible{display:flex;}
+.ob-skip{position:absolute;top:1.1rem;right:1.2rem;background:rgba(255,255,255,.18);border:none;color:#fff;font-size:13px;font-weight:600;padding:.35rem .9rem;border-radius:20px;cursor:pointer;letter-spacing:.02em;}
+.ob-slides{flex:1;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 2rem 0;text-align:center;}
+.ob-emoji{font-size:72px;line-height:1;margin-bottom:1.5rem;filter:drop-shadow(0 4px 16px rgba(0,0,0,.2));}
+.ob-title{font-size:24px;font-weight:700;color:#fff;margin-bottom:.75rem;line-height:1.25;}
+.ob-body{font-size:15px;color:rgba(255,255,255,.88);line-height:1.65;max-width:320px;}
+.ob-bottom{width:100%;background:rgba(0,0,0,.15);backdrop-filter:blur(8px);padding:1.25rem 1.5rem 2.25rem;border-radius:24px 24px 0 0;}
+.ob-dots{display:flex;justify-content:center;gap:7px;margin-bottom:1.25rem;}
+.ob-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.3);transition:all .25s;}
+.ob-dot.active{width:22px;border-radius:4px;background:#fff;}
+.ob-btns{display:flex;gap:.75rem;}
+.ob-btn-prev{flex:0 0 48px;height:48px;border-radius:50%;border:2px solid rgba(255,255,255,.4);background:transparent;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.ob-btn-next{flex:1;height:48px;border-radius:14px;border:none;background:#fff;color:#7C5CBF;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.01em;transition:opacity .15s;}
+.ob-btn-next:active{opacity:.85;}
 </style>
 </head>
 <body>
@@ -191,6 +208,19 @@ input,select,textarea,button{font-family:'DM Sans',-apple-system,BlinkMacSystemF
 </div>
 
 <!-- ── APP ── -->
+<!-- ── ONBOARDING ── -->
+<div id="onboarding" role="dialog" aria-modal="true">
+  <button class="ob-skip" onclick="closeOnboarding()">Saltar</button>
+  <div class="ob-slides" id="ob-slide"></div>
+  <div class="ob-bottom">
+    <div class="ob-dots" id="ob-dots"></div>
+    <div class="ob-btns">
+      <button class="ob-btn-prev" id="ob-prev" onclick="obNav(-1)" aria-label="Anterior">‹</button>
+      <button class="ob-btn-next" id="ob-next" onclick="obNav(1)">Siguiente →</button>
+    </div>
+  </div>
+</div>
+
 <div id="app">
   <!-- Header -->
   <div class="app-header">
@@ -369,6 +399,7 @@ async function loadFicha(){
     updateSaludBadge();
   }).catch(()=>{});
   navTo('inicio');
+  showOnboarding();
 }
 
 function updateSaludBadge(){
@@ -1333,6 +1364,93 @@ _initDarkBtn();
   if(session){await initApp();}
   else{document.getElementById('auth-screen').style.display='flex';}
 })();
+
+// ── ONBOARDING ────────────────────────────────────────────────────────────────
+const OB_KEY='triskel_onboarding_v1';
+const OB_SLIDES=[
+  {
+    emoji:'🌿',
+    titulo:'¡Bienvenida a Triskel!',
+    texto:'Nos alegra tenerte acá. Esta app es tu espacio personal: tus clases, tus pagos y tu bienestar, todo en un solo lugar.'
+  },
+  {
+    emoji:'🏠',
+    titulo:'Tu inicio, de un vistazo',
+    texto:'Cada vez que entrés vas a ver tus próximas clases y los recordatorios importantes. Sin buscar, sin complicaciones.'
+  },
+  {
+    emoji:'📅',
+    titulo:'Seguí tu progreso',
+    texto:'En Clases podés ver el historial de todo lo que entrenaste: qué ejercicios hiciste, cuándo y cómo avanzaste semana a semana.'
+  },
+  {
+    emoji:'💳',
+    titulo:'Pagos sin idas y vueltas',
+    texto:'¿Transferiste o pagaste en efectivo? Avisanos desde acá en segundos. Tu profesora lo confirma y te llega la notificación al instante.'
+  },
+  {
+    emoji:'📋',
+    titulo:'Tu ficha de salud',
+    texto:'Completala una sola vez. Es privada y solo la ve tu profesora para que cada clase sea perfecta para vos y para lo que tu cuerpo necesita.'
+  },
+  {
+    emoji:'🔔',
+    titulo:'Que no se te escape nada',
+    texto:'Activá las notificaciones y recibís avisos cuando tu pago es confirmado, recordatorios de cuota y novedades de Triskel. Todo sin abrir la app.'
+  },
+  {
+    emoji:'✨',
+    titulo:'¡Ya estás lista!',
+    texto:'Tu profesora preparó todo para que cada clase sea especial para vos. Bienvenida al equipo Triskel. 🌿'
+  }
+];
+let _obStep=0;
+
+function showOnboarding(){
+  if(localStorage.getItem(OB_KEY))return;
+  _obStep=0;
+  renderObSlide();
+  document.getElementById('onboarding').classList.add('visible');
+}
+
+function closeOnboarding(){
+  localStorage.setItem(OB_KEY,'1');
+  document.getElementById('onboarding').classList.remove('visible');
+}
+
+function obNav(dir){
+  const total=OB_SLIDES.length;
+  if(dir===1&&_obStep===total-1){closeOnboarding();return;}
+  _obStep=Math.max(0,Math.min(total-1,_obStep+dir));
+  renderObSlide();
+}
+
+function renderObSlide(){
+  const s=OB_SLIDES[_obStep];
+  const total=OB_SLIDES.length;
+  const isLast=_obStep===total-1;
+  const isFirst=_obStep===0;
+
+  document.getElementById('ob-slide').innerHTML=`
+    <div class="ob-emoji">${s.emoji}</div>
+    <div class="ob-titulo" style="font-size:24px;font-weight:700;color:#fff;margin-bottom:.75rem;line-height:1.25;">${s.titulo}</div>
+    <div style="font-size:15px;color:rgba(255,255,255,.88);line-height:1.65;max-width:300px;">${s.texto}</div>
+  `;
+
+  document.getElementById('ob-dots').innerHTML=OB_SLIDES.map((_,i)=>
+    `<div class="ob-dot${i===_obStep?' active':''}"></div>`
+  ).join('');
+
+  const prev=document.getElementById('ob-prev');
+  const next=document.getElementById('ob-next');
+  prev.style.visibility=isFirst?'hidden':'visible';
+  next.textContent=isLast?'¡Arranquemos! 🌿':'Siguiente →';
+  next.style.background=isLast?'#27ae60':'#fff';
+  next.style.color=isLast?'#fff':'#7C5CBF';
+
+  const skip=document.querySelector('.ob-skip');
+  if(skip)skip.style.display=isLast?'none':'block';
+}
 </script>
 </body>
 </html>
