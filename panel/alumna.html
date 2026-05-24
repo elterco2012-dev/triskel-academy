@@ -232,7 +232,7 @@ input,select,textarea,button{font-family:'DM Sans',-apple-system,BlinkMacSystemF
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">💳 Avisar pago</div>
-    <div style="font-size:13px;color:var(--sub);margin-bottom:.5rem;">Completá los datos de tu pago y Amira lo confirmará.</div>
+    <div style="font-size:13px;color:var(--sub);margin-bottom:.5rem;">Completá los datos de tu pago y tu profesora lo confirmará.</div>
     <div id="modal-pago-mes-label" style="font-size:13px;font-weight:600;color:var(--tm);margin-bottom:.5rem;"></div>
     <label class="modal-label">Monto abonado <span style="font-weight:400;color:#aaa;">(podés modificarlo si pagás menos)</span></label>
     <input class="modal-input" type="number" id="aviso-monto" placeholder="0" min="0">
@@ -354,7 +354,7 @@ async function loadFicha(){
       <div style="font-size:32px;margin-bottom:.5rem;">${noRpc?'⚙️':'🔗'}</div>
       <div style="font-size:14px;color:var(--sub);">${noRpc
         ?'El panel está siendo configurado.<br>Intentá de nuevo en unos minutos.'
-        :'Tu cuenta no está vinculada aún.<br>Pedile a Amira que la active.'}</div>
+        :'Tu cuenta no está vinculada aún.<br>Pedile a tu profesora que la active.'}</div>
       <button onclick="loadFicha()" style="margin-top:1rem;padding:.5rem 1.2rem;background:var(--tm);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;">↺ Reintentar</button>
     </div>`);
     return;
@@ -445,7 +445,7 @@ function renderInicio(){
         <div>
           <div style="font-size:12px;color:var(--sub);">Cuota ${mesLabel(mesActual)}</div>
           <div style="font-size:15px;font-weight:700;color:#f59e0b;">Pendiente de aprobación</div>
-          <div style="font-size:12px;color:var(--sub);">Avisaste que pagaste · Amira está revisando</div>
+          <div style="font-size:12px;color:var(--sub);">Avisaste que pagaste · Tu profesora está revisando</div>
         </div>
       </div>
     </div>`;
@@ -550,7 +550,7 @@ function renderHorarios(){
   if(!inscs.length){
     setContent(`<div class="card" style="text-align:center;padding:2rem;">
       <div style="font-size:32px;margin-bottom:.5rem;">📅</div>
-      <div style="font-size:14px;color:var(--sub);">No tenés inscripciones activas.<br>Hablá con Amira para inscribirte.</div>
+      <div style="font-size:14px;color:var(--sub);">No tenés inscripciones activas.<br>Hablá con tu profesora para inscribirte.</div>
     </div>`);
     return;
   }
@@ -782,7 +782,7 @@ function renderSalud(){
 
   setContent(`<div style="padding:1rem 1rem 6rem;">
     <div style="font-size:18px;font-weight:700;margin-bottom:.25rem;">📋 Ficha de Salud</div>
-    <div style="font-size:13px;color:var(--sub);margin-bottom:1.25rem;">Esta información es confidencial y la usa Amira para personalizar tus clases.</div>
+    <div style="font-size:13px;color:var(--sub);margin-bottom:1.25rem;">Esta información es confidencial y la usa tu profesora para personalizar tus clases.</div>
 
     ${!f.alumna_id?`<div style="background:#fffdf0;border:1.5px solid #ffc107;border-radius:12px;padding:.75rem 1rem;margin-bottom:1rem;font-size:13px;color:#856404;font-weight:600;">⚠️ Todavía no completaste tu ficha. ¡Te lleva 2 minutos!</div>`:''}
 
@@ -838,7 +838,7 @@ function renderSalud(){
     <div style="background:var(--white);border-radius:14px;padding:1rem;margin-bottom:1rem;border:1.5px solid var(--border);">
       <div style="font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem;">Información adicional</div>
       <div style="margin-bottom:.75rem;">
-        <label style="display:block;font-size:12px;color:var(--sub);margin-bottom:3px;">Cualquier dato que Amira deba saber sobre tu salud</label>
+        <label style="display:block;font-size:12px;color:var(--sub);margin-bottom:3px;">Cualquier dato que tu profesora deba saber sobre tu salud</label>
         <textarea oninput="STATE.ficha_salud=STATE.ficha_salud||{};STATE.ficha_salud['datos_importantes']=this.value;"
           placeholder="Ej: Operación de rodilla hace 2 años, uso plantillas, migraña frecuente..."
           style="${inputStyle}height:80px;resize:none;">${esc2(f.datos_importantes)}</textarea>
@@ -1132,7 +1132,7 @@ async function confirmarAviso(){
   cerrarModalPago();
   await loadFicha();
   navTo('pagos');
-  showToast('✅ Aviso enviado. Amira lo revisará pronto.');
+  showToast('✅ Aviso enviado. Tu profesora lo revisará pronto.');
 }
 
 // ── FOTO UPLOAD ───────────────────────────────────────────────────────────────
