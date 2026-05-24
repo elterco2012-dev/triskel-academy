@@ -549,6 +549,8 @@
   <div class="modal" style="max-width:640px;">
     <h3 id="bib-title">📚 Biblioteca de ejercicios</h3>
     <p style="font-size:12px;color:var(--tm);margin-bottom:.75rem;" id="bib-subtitle">Seleccioná un ejercicio para agregarlo a la clase.</p>
+    <input id="bib-search" type="search" placeholder="🔍 Buscar ejercicio…" oninput="renderBibList()" autocomplete="off"
+      style="width:100%;margin-bottom:.75rem;padding:7px 10px;font-size:13px;border:1px solid var(--b);border-radius:var(--rs);background:var(--s2);color:var(--t);box-sizing:border-box;">
     <div style="margin-bottom:.5rem;">
       <div style="font-size:11px;font-weight:600;color:var(--tm);margin-bottom:.3rem;">Categoría</div>
       <div id="bib-cats" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
@@ -4329,6 +4331,7 @@ function openBiblioteca(swapIdx, context){
     _bibMod=hor?.modalidad||'mat';
   }
   _bibCatFiltro=null;_bibNivelFiltro=null;
+  const bibSearch=document.getElementById('bib-search');if(bibSearch)bibSearch.value='';
   document.getElementById('bib-title').textContent=`📚 Biblioteca · ${MOD_LABEL[_bibMod]||_bibMod}`;
   if(_bibSwapIdx!==null){
     document.getElementById('bib-subtitle').textContent=`Elegí el ejercicio con el que reemplazás el N°${_bibSwapIdx+1}`;
@@ -4369,11 +4372,17 @@ function renderBibList(){
   let ejercs=getBibEjs(_bibMod);
   if(_bibCatFiltro) ejercs=ejercs.filter(e=>e.cat===_bibCatFiltro);
   if(_bibNivelFiltro) ejercs=ejercs.filter(e=>e.nivel===_bibNivelFiltro);
+  const q=(document.getElementById('bib-search')?.value||'').trim().toLowerCase();
+  if(q) ejercs=ejercs.filter(e=>e.nombre.toLowerCase().includes(q)||(e.vt||'').toLowerCase().includes(q)||(e.cat||'').toLowerCase().includes(q));
+  ejercs.sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
   const btnLabel=_bibSwapIdx!==null?'🔄 Reemplazar':'＋ Agregar';
   window._bibCache=ejercs;
   document.getElementById('bib-list').innerHTML=ejercs.length
     ?ejercs.map((e,i)=>`<div class="banco-card" style="display:flex;flex-direction:column;gap:5px;" onclick="elegirDeBiblioteca(${i})">
-        <div><span style="font-size:10px;font-weight:700;background:${NIVEL_BG[e.nivel]||'var(--s2)'};color:${NIVEL_COLOR[e.nivel]||'var(--tm)'};padding:1px 6px;border-radius:99px;text-transform:uppercase;">${e.nivel||''}</span></div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          ${e.cat&&CAT_ICON[e.cat]?`<span style="font-size:16px;line-height:1;">${CAT_ICON[e.cat]}</span>`:''}
+          <span style="font-size:10px;font-weight:700;background:${NIVEL_BG[e.nivel]||'var(--s2)'};color:${NIVEL_COLOR[e.nivel]||'var(--tm)'};padding:1px 6px;border-radius:99px;text-transform:uppercase;">${e.nivel||''}</span>
+        </div>
         <div class="banco-card-title">${e.nombre}</div>
         ${e.vt?`<div class="banco-card-sub">${e.vt}</div>`:''}
         <div style="margin-top:2px;"><span style="display:inline-block;font-size:11px;font-weight:700;color:var(--v);background:var(--vl);border-radius:99px;padding:2px 10px;">${btnLabel}</span></div>
