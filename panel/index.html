@@ -4973,9 +4973,9 @@ function renderEjerciciosModal(){
   if(!_claseEjs.length){cont.innerHTML=`<div style="font-size:12px;color:var(--tm);padding:.5rem 0;">Sin ejercicios. Hacé clic en "+ Agregar" o "📚 Biblioteca".</div>`;return;}
   cont.innerHTML=_claseEjs.map((e,i)=>`<div class="ej-row">
     <div class="ej-num">${i+1}</div>
-    <div class="ej-body" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-      <input value="${e.nombre||''}" placeholder="Ejercicio" oninput="_claseEjs[${i}].nombre=this.value" style="margin:0;font-size:12px;">
-      <input value="${e.vt||''}" placeholder="VT (variante, opcional)" oninput="_claseEjs[${i}].vt=this.value" style="margin:0;font-size:12px;">
+    <div class="ej-body" style="display:flex;flex-direction:column;gap:5px;">
+      <input value="${e.nombre||''}" placeholder="Ejercicio" oninput="_claseEjs[${i}].nombre=this.value" style="margin:0;font-size:13px;font-weight:500;">
+      <input value="${e.vt||''}" placeholder="Variante / tiempo / anotación..." oninput="_claseEjs[${i}].vt=this.value" style="margin:0;font-size:12px;color:var(--tm);background:var(--s2);">
     </div>
     <button onclick="openBiblioteca(${i})" title="Cambiar por otro de la biblioteca" style="background:none;border:1px solid var(--bm);border-radius:var(--rs);padding:2px 5px;font-size:11px;color:var(--tm);cursor:pointer;flex-shrink:0;white-space:nowrap;">🔄</button>
     <div style="display:flex;flex-direction:column;gap:1px;margin-right:2px;">
