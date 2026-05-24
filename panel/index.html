@@ -5211,9 +5211,9 @@ function renderEjerciciosModal(){
   </div>`).join('');
 }
 // ─── BIBLIOTECA DE EJERCICIOS ────────────────────────────
-const CAT_LABELS_BIB={core:'Core',columna:'Columna',lateral:'Lateral',piernas:'Piernas',glúteos:'Glúteos',espalda:'Espalda',footwork:'Footwork',cadera:'Cadera',brazos:'Brazos',pecho:'Pecho',hombros:'Hombros',cardio:'Cardio'};
-const CAT_ICON={core:'🎯',columna:'🌿',lateral:'↔️',piernas:'🦵',glúteos:'🍑',espalda:'🏹',footwork:'🦶',cadera:'💫',brazos:'💪',pecho:'🤲',hombros:'🙌',cardio:'❤️‍🔥'};
-const CAT_COLOR={core:'#7c3aed',columna:'#059669',lateral:'#0ea5e9',piernas:'#d97706',glúteos:'#db2777',espalda:'#16a34a',footwork:'#2563eb',cadera:'#7c3aed',brazos:'#ea580c',pecho:'#dc2626',hombros:'#0891b2',cardio:'#e11d48'};
+const CAT_LABELS_BIB={core:'Core',columna:'Columna',lateral:'Lateral',piernas:'Piernas',glúteos:'Glúteos',espalda:'Espalda',footwork:'Footwork',cadera:'Cadera',brazos:'Brazos',pecho:'Pecho',hombros:'Hombros',cardio:'Cardio',calentamiento:'Calentamiento',elongación:'Elongación',equilibrio:'Equilibrio'};
+const CAT_ICON={core:'🎯',columna:'🌿',lateral:'↔️',piernas:'🦵',glúteos:'🍑',espalda:'🏹',footwork:'🦶',cadera:'💫',brazos:'💪',pecho:'🤲',hombros:'🙌',cardio:'❤️‍🔥',calentamiento:'🔥',elongación:'🤸',equilibrio:'⚖️'};
+const CAT_COLOR={core:'#7c3aed',columna:'#059669',lateral:'#0ea5e9',piernas:'#d97706',glúteos:'#db2777',espalda:'#16a34a',footwork:'#2563eb',cadera:'#7c3aed',brazos:'#ea580c',pecho:'#dc2626',hombros:'#0891b2',cardio:'#e11d48',calentamiento:'#f59e0b',elongación:'#10b981',equilibrio:'#8b5cf6'};
 const NIVEL_COLOR={básico:'var(--mat)',intermedio:'var(--fun)',avanzado:'var(--ref)'};
 const NIVEL_BG={básico:'var(--matl)',intermedio:'var(--funl)',avanzado:'var(--refl)'};
 
@@ -5903,7 +5903,7 @@ function renderBibAdminPage(){
 }
 
 function rBibliotecaAdmin(){
-  const allMods=['mat','reformer','funcional'];
+  const allMods=['mat','reformer','funcional','esferodinamia'];
   const modTabs=allMods.map(m=>{
     const tot=getBibEjs(m).length;
     return`<button class="btn btn-s ${_bibAdminMod===m?'btn-p':''}" onclick="_bibAdminMod='${m}';_bibAdminSearch='';_bibAdminCatFil='';_bibAdminNivelFil='';renderBibAdminPage();" style="display:flex;flex-direction:column;align-items:center;gap:1px;padding:.4rem .9rem;">
