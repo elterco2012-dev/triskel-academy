@@ -301,6 +301,118 @@
   </div>
 </div>
 
+<!-- Modal Ficha de Salud -->
+<div class="modal-bg" id="modal-ficha-salud" style="display:none;overflow-y:auto;" onclick="if(event.target===this)closeModalFichaSalud()" role="dialog" aria-modal="true">
+  <div class="modal" style="max-width:580px;max-height:90vh;overflow-y:auto;">
+    <h3 style="margin-bottom:1rem;">📋 Declaración Jurada de Salud</h3>
+    <div id="mfs-alumna-nombre" style="font-size:13px;color:var(--tm);margin-bottom:1rem;"></div>
+
+    <div style="font-size:11px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;margin-top:.25rem;">Datos personales extra</div>
+    <div class="frow">
+      <div><label>DNI</label><input id="mfs-dni" type="text" placeholder="12.345.678"></div>
+      <div><label>Celular familiar</label><input id="mfs-celular-familiar" type="text" placeholder="11 xxxx-xxxx"></div>
+    </div>
+    <div class="frow">
+      <div><label>Grupo sanguíneo</label><input id="mfs-grupo" type="text" placeholder="0 Rh+"></div>
+      <div><label>Obra social</label><input id="mfs-obra-social" type="text" placeholder="OSDE / No tiene"></div>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;margin-top:1rem;">Contexto y objetivos</div>
+    <div><label>Objetivos de entrenamiento</label><input id="mfs-objetivos" type="text" placeholder="Bajar peso / Tonificar / Bienestar / Rehabilitación..."></div>
+    <div class="frow">
+      <div><label>Nivel de actividad previo</label>
+        <select id="mfs-nivel-actividad">
+          <option value="">— seleccionar —</option>
+          <option value="sedentaria">Sedentaria</option>
+          <option value="algo activa">Algo activa</option>
+          <option value="activa">Activa</option>
+        </select>
+      </div>
+      <div><label>Cómo llegó a Triskel</label>
+        <select id="mfs-como-llego">
+          <option value="">— seleccionar —</option>
+          <option value="Recomendación">Recomendación</option>
+          <option value="Redes sociales">Redes sociales</option>
+          <option value="Pasando por el lugar">Pasando por el lugar</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;margin-top:1rem;">Hábitos diarios</div>
+    <div class="frow">
+      <div><label>Café por día</label>
+        <select id="mfs-cafe">
+          <option value="">—</option>
+          <option value="No">No</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3+">3+</option>
+        </select>
+      </div>
+      <div><label>Hs. de sueño</label><input id="mfs-sueno" type="number" min="0" max="24" step="0.5" placeholder="7"></div>
+    </div>
+    <div class="frow" style="align-items:center;gap:1.5rem;flex-wrap:wrap;">
+      <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer;"><input type="checkbox" id="mfs-trabaja"> Trabaja</label>
+      <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer;"><input type="checkbox" id="mfs-trabajo-pie"> Trabajo de pie</label>
+      <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer;"><input type="checkbox" id="mfs-alcohol"> Toma alcohol</label>
+      <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer;"><input type="checkbox" id="mfs-dieta"> Hace dieta</label>
+    </div>
+    <div class="frow" style="margin-top:.5rem;">
+      <div><label>Tiempo sentada</label><input id="mfs-sentada" type="text" placeholder="Mucho / Poco / No"></div>
+      <div><label>Camina frecuencia</label><input id="mfs-camina" type="text" placeholder="Poco / Moderado / Mucho"></div>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;margin-top:1rem;">Postura y lesiones</div>
+    <div><label>Problemas posturales</label><input id="mfs-posturales" type="text" placeholder="Ej: Se encorva por trabajo en cocina"></div>
+    <div><label>Cirugías / Lesiones previas</label><input id="mfs-cirugias" type="text" placeholder="Ej: Arthrosis, osteop. tobillo derecho — tornillos"></div>
+    <div><label>Embarazo / Postparto</label><input id="mfs-embarazo" type="text" placeholder="Ej: Postparto 6 meses / No"></div>
+    <div><label>Dolor crónico</label><input id="mfs-dolor" type="text" placeholder="Ej: Lumbar / Cervical / No"></div>
+
+    <div style="font-size:11px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;margin-top:1rem;">Actividad y salud</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:.5rem;">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;cursor:pointer;"><input type="checkbox" id="mfs-act-fisica"> Realiza actividad física</label>
+      <div><label style="font-weight:400;font-size:12px;">Frecuencia</label><input id="mfs-act-frecuencia" type="text" placeholder="Ej: 4 por semana" style="margin-top:2px;"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;cursor:pointer;"><input type="checkbox" id="mfs-fumadora"> Fumadora</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;cursor:pointer;"><input type="checkbox" id="mfs-colesterol"> Colesterol alto</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;cursor:pointer;"><input type="checkbox" id="mfs-convulsiones"> Tuvo convulsiones</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;cursor:pointer;"><input type="checkbox" id="mfs-consume-droga"> Consume alguna droga</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;cursor:pointer;"><input type="checkbox" id="mfs-diabetes"> Diabetes</label>
+    </div>
+    <div class="frow" style="margin-top:.5rem;">
+      <div><label>Alergia a medicamento</label><input id="mfs-alergia" type="text" placeholder="No / Cual..."></div>
+      <div><label>Toma medicamento</label><input id="mfs-medicamento" type="text" placeholder="No / Cual..."></div>
+    </div>
+    <div><label>Afecciones cardíacas</label><input id="mfs-cardiacas" type="text" placeholder="No / Cual..."></div>
+    <div><label>Afecciones respiratorias</label><input id="mfs-respiratorias" type="text" placeholder="No / Cual..."></div>
+
+    <div style="font-size:11px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;margin-top:1rem;">Datos adicionales</div>
+    <div><label>Datos importantes (texto libre)</label><textarea id="mfs-datos" placeholder="Ej: Arthrosis, osteop. tobillo derecho — tornillos..." style="height:52px;"></textarea></div>
+    <div><label>Antecedentes familiares (cardíacos, etc.)</label><input id="mfs-antecedentes" type="text" placeholder="Ej: Padre — paro cardíaco / Sin antecedentes"></div>
+
+    <div style="font-size:11px;font-weight:700;color:var(--rd);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;margin-top:1rem;">Mediciones (completar en persona)</div>
+    <div class="frow">
+      <div><label>Peso real (kg)</label><input id="mfs-peso" type="number" step="0.1" placeholder="Ej: 68"></div>
+      <div><label>TA</label><input id="mfs-ta" type="text" placeholder="120/80"></div>
+      <div><label>FC (lpm)</label><input id="mfs-fc" type="number" placeholder="75"></div>
+    </div>
+    <div class="frow">
+      <div><label>Cintura (cm)</label><input id="mfs-cintura" type="number" step="0.5" placeholder="80"></div>
+      <div><label>Cadera (cm)</label><input id="mfs-cadera" type="number" step="0.5" placeholder="95"></div>
+      <div><label>Pierna D (cm)</label><input id="mfs-pierna-d" type="number" step="0.5" placeholder="55"></div>
+      <div><label>Pierna I (cm)</label><input id="mfs-pierna-i" type="number" step="0.5" placeholder="55"></div>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1rem;">
+      <button class="btn" onclick="closeModalFichaSalud()">Cancelar</button>
+      <button class="btn btn-p" onclick="saveFichaSalud()">Guardar ficha</button>
+    </div>
+    <div id="mfs-err" style="font-size:12px;color:var(--rd);margin-top:.5rem;"></div>
+  </div>
+</div>
+
 <!-- Confirm dialog (replaces window.confirm) -->
 <div class="modal-bg" id="modal-confirm" style="display:none" role="dialog" aria-modal="true" aria-labelledby="mc-title">
   <div class="modal" style="max-width:340px;">
@@ -670,7 +782,7 @@ const DIA_ORDER={lun:0,mar:1,mie:2,jue:3,vie:4};
 const MOD_LABEL={mat:'Mat',reformer:'Reformer',funcional:'Funcional'};
 const MOD_CLASS={mat:'mat',reformer:'ref',funcional:'fun'};
 
-let DB={horarios:[],alumnas:[],inscripciones:[],clases:[],pagos:[],espera:[],observaciones:[],avisos:[],ausencias:[],asistencia:[],config:{},banco:{}};
+let DB={horarios:[],alumnas:[],inscripciones:[],clases:[],pagos:[],espera:[],observaciones:[],avisos:[],ausencias:[],asistencia:[],fichasSalud:[],config:{},banco:{}};
 let currentPage='inicio';
 let _claseEjs=[];
 let _editClaseId=null;
@@ -2559,7 +2671,7 @@ async function loadAll(){
   DB.observaciones=data?.observaciones||[];
   console.log('DB cargado — horarios:',DB.horarios.length,'alumnas:',DB.alumnas.length);
   await loadAvisos();
-  await Promise.all([loadConfig(), loadBanco(), loadAusencias(), loadAsistencia()]);
+  await Promise.all([loadConfig(), loadBanco(), loadAusencias(), loadAsistencia(), loadFichasSalud()]);
   _saveDbCache();
   render();
 }
@@ -2628,6 +2740,14 @@ async function loadAsistencia(){
     DB.asistencia=data?.data||[];
   }catch(e){DB.asistencia=[];}
 }
+
+async function loadFichasSalud(){
+  try{
+    const{data}=await sb.rpc('triskel_get_fichas_salud');
+    DB.fichasSalud=data||[];
+  }catch(e){DB.fichasSalud=[];}
+}
+function fichaByAlumna(id){return DB.fichasSalud.find(f=>f.alumna_id===id)||null;}
 
 async function loadAvisos(){
   try{
@@ -3536,6 +3656,8 @@ function rFicha(){
     <div style="font-size:13px;color:#c0392b;line-height:1.5;">${esc(a.contraindicaciones)}</div>
   </div>`:''}
 
+  ${rFichaSaludCard(a.id)}
+
   <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:.75rem;">
     <div class="metric"><div class="mlabel">Total pagado</div><div class="mval g">$${totalPagado.toLocaleString('es-AR')}</div></div>
     <div class="metric"><div class="mlabel">Deuda pendiente</div><div class="mval" style="color:${deuda>0?'var(--rd)':'var(--mat)'};">$${deuda.toLocaleString('es-AR')}</div></div>
@@ -3871,6 +3993,7 @@ function rAlumnas(){
         <div class="asub" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;">
           ${inscs.map(i=>{const h=i.triskel_horarios;return`<span style="display:inline-flex;align-items:center;gap:3px;">${modBadge(h?.modalidad)}<span style="font-size:10px;color:var(--tm);">${h?DIA_LABEL[h.dia]+' '+h.hora_inicio:''}</span></span>`;}).join('')}
           ${a.tel?`<a href="https://wa.me/${a.tel}" target="_blank" style="font-size:11px;color:var(--mat);">💬 WA</a>`:''}
+          ${!fichaByAlumna(a.id)?`<span style="font-size:10px;background:#fff3cd;color:#856404;padding:1px 6px;border-radius:99px;border:1px solid #ffc107;">📋 Ficha pendiente</span>`:''}
         </div>
       </div>
       ${inscs.length>0?pago:''}
@@ -4461,6 +4584,146 @@ async function saveAlumna(){
     showMsg(esNueva?'✓ Alumna creada':'✓ Alumna actualizada');
   }
   _saving=false;
+}
+
+// ─── FICHA DE SALUD ──────────────────────────────────────
+let _fichaEditAlumnaId=null;
+
+function rFichaSaludCard(alumnaId){
+  const f=fichaByAlumna(alumnaId);
+  if(!f){
+    return`<div class="card" style="margin-bottom:1rem;border-left:4px solid #ffc107;background:#fffdf0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#856404;margin-bottom:2px;">📋 Declaración Jurada de Salud</div>
+          <div style="font-size:12px;color:var(--tm);">Ficha no completada todavía.</div>
+        </div>
+        <button class="btn btn-s" onclick="openModalFichaSalud(${alumnaId})">+ Completar</button>
+      </div>
+    </div>`;
+  }
+  const filaYN=(label,val)=>val!=null?`<div style="display:flex;gap:6px;font-size:12px;padding:3px 0;border-bottom:1px solid var(--b);"><span style="color:var(--tm);flex:1;">${label}</span><span style="font-weight:600;color:${val?'var(--mat)':'var(--rd)'};">${val?'Sí':'No'}</span></div>`:'';
+  const filaTxt=(label,val)=>val?`<div style="display:flex;gap:6px;font-size:12px;padding:3px 0;border-bottom:1px solid var(--b);"><span style="color:var(--tm);flex:1;">${label}</span><span style="font-weight:500;">${esc(val)}</span></div>`:'';
+  const updated=f.updated_at?new Date(f.updated_at).toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'}):'';
+  return`<div class="card" style="margin-bottom:1rem;border-left:4px solid var(--mat);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--mat);">📋 Declaración Jurada de Salud</div>
+        ${updated?`<div style="font-size:10px;color:var(--tm);">Actualizada ${updated}${f.completada_alumna?' · completada por la alumna':' · cargada por la profe'}</div>`:''}
+      </div>
+      <button class="btn btn-s" onclick="openModalFichaSalud(${alumnaId})">Editar</button>
+    </div>
+    ${(f.datos_importantes||f.cirugias_lesiones)?`<div style="background:#fff5f5;border-radius:6px;padding:.5rem .75rem;margin-bottom:.6rem;border-left:3px solid var(--rd);">
+      <div style="font-size:11px;font-weight:700;color:var(--rd);margin-bottom:2px;">⚠️ Importante</div>
+      ${f.datos_importantes?`<div style="font-size:12px;color:#c0392b;">${esc(f.datos_importantes)}</div>`:''}
+      ${f.cirugias_lesiones?`<div style="font-size:12px;color:#c0392b;">${esc(f.cirugias_lesiones)}</div>`:''}
+    </div>`:''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 1rem;">
+      <div>
+        ${filaTxt('Objetivos',f.objetivos)}
+        ${filaTxt('Nivel previo',f.nivel_actividad_previo)}
+        ${filaTxt('Grupo sanguíneo',f.grupo_sanguineo)}
+        ${filaTxt('Obra social',f.obra_social)}
+        ${filaTxt('DNI',f.dni)}
+        ${filaTxt('Celular familiar',f.celular_familiar)}
+        ${filaTxt('Dolor crónico',f.dolor_cronico)}
+        ${filaTxt('Embarazo/postparto',f.embarazo_postparto)}
+      </div>
+      <div>
+        ${filaYN('Actividad física',f.actividad_fisica)}
+        ${filaTxt('Frecuencia',f.actividad_frecuencia)}
+        ${filaYN('Fumadora',f.fumadora)}
+        ${filaYN('Diabetes',f.diabetes)}
+        ${filaYN('Colesterol alto',f.colesterol_alto)}
+        ${filaYN('Convulsiones',f.convulsiones)}
+        ${filaTxt('Cardíacas',f.afecciones_cardiacas)}
+        ${filaTxt('Resp.',f.afecciones_respiratorias)}
+        ${filaTxt('Alergia medicamento',f.alergia_medicamento)}
+        ${filaTxt('Medicamento',f.toma_medicamento)}
+      </div>
+    </div>
+    ${(f.peso_real||f.ta||f.fc||f.cintura_cm)?`<div style="margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--b);">
+      <div style="font-size:10px;font-weight:700;color:var(--tm);margin-bottom:.3rem;">MEDICIONES</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        ${f.peso_real?`<span style="font-size:12px;"><span style="color:var(--tm);">Peso</span> <b>${f.peso_real}kg</b></span>`:''}
+        ${f.ta?`<span style="font-size:12px;"><span style="color:var(--tm);">TA</span> <b>${f.ta}</b></span>`:''}
+        ${f.fc?`<span style="font-size:12px;"><span style="color:var(--tm);">FC</span> <b>${f.fc}lpm</b></span>`:''}
+        ${f.cintura_cm?`<span style="font-size:12px;"><span style="color:var(--tm);">Cintura</span> <b>${f.cintura_cm}cm</b></span>`:''}
+        ${f.cadera_cm?`<span style="font-size:12px;"><span style="color:var(--tm);">Cadera</span> <b>${f.cadera_cm}cm</b></span>`:''}
+        ${f.pierna_d_cm?`<span style="font-size:12px;"><span style="color:var(--tm);">Pierna D</span> <b>${f.pierna_d_cm}cm</b></span>`:''}
+        ${f.pierna_i_cm?`<span style="font-size:12px;"><span style="color:var(--tm);">Pierna I</span> <b>${f.pierna_i_cm}cm</b></span>`:''}
+      </div>
+    </div>`:''}
+    ${f.antecedentes_familiares?`<div style="margin-top:.5rem;font-size:12px;color:var(--tm);">👨‍👩‍👧 Antecedentes: ${esc(f.antecedentes_familiares)}</div>`:''}
+  </div>`;
+}
+
+function openModalFichaSalud(alumnaId){
+  _fichaEditAlumnaId=alumnaId;
+  const a=alumnaById(alumnaId);
+  const f=fichaByAlumna(alumnaId)||{};
+  document.getElementById('mfs-err').textContent='';
+  document.getElementById('mfs-alumna-nombre').textContent=a?`${a.nombre} ${a.apellido||''}`:'';
+  const set=(id,val)=>{const el=document.getElementById(id);if(!el)return;if(el.type==='checkbox')el.checked=!!val;else el.value=val||'';};
+  set('mfs-dni',f.dni);set('mfs-celular-familiar',f.celular_familiar);
+  set('mfs-grupo',f.grupo_sanguineo);set('mfs-obra-social',f.obra_social);
+  set('mfs-objetivos',f.objetivos);set('mfs-nivel-actividad',f.nivel_actividad_previo);
+  set('mfs-como-llego',f.como_llego);set('mfs-cafe',f.cafe_por_dia);
+  set('mfs-sueno',f.hs_sueno);set('mfs-trabaja',f.trabaja);
+  set('mfs-trabajo-pie',f.trabajo_de_pie);set('mfs-alcohol',f.toma_alcohol);
+  set('mfs-dieta',f.hace_dieta);set('mfs-sentada',f.hs_sentada);
+  set('mfs-camina',f.camina_frecuencia);set('mfs-posturales',f.problemas_posturales);
+  set('mfs-cirugias',f.cirugias_lesiones);set('mfs-embarazo',f.embarazo_postparto);
+  set('mfs-dolor',f.dolor_cronico);set('mfs-act-fisica',f.actividad_fisica);
+  set('mfs-act-frecuencia',f.actividad_frecuencia);set('mfs-fumadora',f.fumadora);
+  set('mfs-colesterol',f.colesterol_alto);set('mfs-convulsiones',f.convulsiones);
+  set('mfs-consume-droga',f.consume_droga);set('mfs-diabetes',f.diabetes);
+  set('mfs-alergia',f.alergia_medicamento);set('mfs-medicamento',f.toma_medicamento);
+  set('mfs-cardiacas',f.afecciones_cardiacas);set('mfs-respiratorias',f.afecciones_respiratorias);
+  set('mfs-datos',f.datos_importantes);set('mfs-antecedentes',f.antecedentes_familiares);
+  set('mfs-peso',f.peso_real);set('mfs-ta',f.ta);set('mfs-fc',f.fc);
+  set('mfs-cintura',f.cintura_cm);set('mfs-cadera',f.cadera_cm);
+  set('mfs-pierna-d',f.pierna_d_cm);set('mfs-pierna-i',f.pierna_i_cm);
+  document.getElementById('modal-ficha-salud').style.display='flex';
+  document.body.style.overflow='hidden';
+}
+function closeModalFichaSalud(){document.getElementById('modal-ficha-salud').style.display='none';document.body.style.overflow='';}
+
+async function saveFichaSalud(){
+  const g=(id)=>document.getElementById(id)?.value.trim()||null;
+  const gc=(id)=>document.getElementById(id)?.checked||false;
+  const gn=(id)=>{const v=parseFloat(document.getElementById(id)?.value);return isNaN(v)?null:v;};
+  const gi=(id)=>{const v=parseInt(document.getElementById(id)?.value);return isNaN(v)?null:v;};
+  const btn=document.querySelector('#modal-ficha-salud .btn-p');
+  btn.disabled=true;btn.textContent='Guardando...';
+  const{error}=await rpc('triskel_save_ficha_salud',{
+    p_alumna_id:_fichaEditAlumnaId,
+    p_dni:g('mfs-dni'),p_celular_familiar:g('mfs-celular-familiar'),
+    p_grupo_sanguineo:g('mfs-grupo'),p_obra_social:g('mfs-obra-social'),
+    p_objetivos:g('mfs-objetivos'),p_nivel_actividad_previo:g('mfs-nivel-actividad'),
+    p_como_llego:g('mfs-como-llego'),p_cafe_por_dia:g('mfs-cafe'),
+    p_trabaja:gc('mfs-trabaja'),p_trabajo_de_pie:gc('mfs-trabajo-pie'),
+    p_hs_sentada:g('mfs-sentada'),p_camina_frecuencia:g('mfs-camina'),
+    p_toma_alcohol:gc('mfs-alcohol'),p_hs_sueno:gn('mfs-sueno'),
+    p_hace_dieta:gc('mfs-dieta'),p_problemas_posturales:g('mfs-posturales'),
+    p_cirugias_lesiones:g('mfs-cirugias'),p_embarazo_postparto:g('mfs-embarazo'),
+    p_dolor_cronico:g('mfs-dolor'),p_actividad_fisica:gc('mfs-act-fisica'),
+    p_actividad_frecuencia:g('mfs-act-frecuencia'),p_fumadora:gc('mfs-fumadora'),
+    p_colesterol_alto:gc('mfs-colesterol'),p_convulsiones:gc('mfs-convulsiones'),
+    p_consume_droga:gc('mfs-consume-droga'),p_diabetes:gc('mfs-diabetes'),
+    p_alergia_medicamento:g('mfs-alergia'),p_toma_medicamento:g('mfs-medicamento'),
+    p_afecciones_cardiacas:g('mfs-cardiacas'),p_afecciones_respiratorias:g('mfs-respiratorias'),
+    p_datos_importantes:g('mfs-datos'),p_antecedentes_familiares:g('mfs-antecedentes'),
+    p_peso_real:gn('mfs-peso'),p_ta:g('mfs-ta'),p_fc:gi('mfs-fc'),
+    p_cintura_cm:gn('mfs-cintura'),p_cadera_cm:gn('mfs-cadera'),
+    p_pierna_d_cm:gn('mfs-pierna-d'),p_pierna_i_cm:gn('mfs-pierna-i'),
+  });
+  btn.disabled=false;btn.textContent='Guardar ficha';
+  if(error){document.getElementById('mfs-err').textContent='Error: '+(error?.message||'intentá de nuevo');return;}
+  await loadFichasSalud();
+  closeModalFichaSalud();
+  render();
+  showMsg('✓ Ficha de salud guardada');
 }
 
 // Convierte YYYY-MM-DD a ddmmaa  (ej: 1990-03-15 → 150390)
