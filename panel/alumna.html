@@ -218,6 +218,9 @@ input,select,textarea,button{font-family:'DM Sans',-apple-system,BlinkMacSystemF
     <button class="nav-item" onclick="navTo('pagos')" id="nav-pagos">
       <span class="nav-icon" id="nav-pagos-icon">💳</span>Pagos
     </button>
+    <button class="nav-item" onclick="navTo('salud')" id="nav-salud">
+      <span class="nav-icon" id="nav-salud-icon">📋</span>Salud
+    </button>
     <button class="nav-item" onclick="navTo('perfil')" id="nav-perfil">
       <span class="nav-icon">👤</span>Perfil
     </button>
@@ -357,9 +360,22 @@ async function loadFicha(){
     return;
   }
   STATE=data;
+  STATE.ficha_salud=null;
   document.getElementById('header-nombre').textContent=STATE.alumna?.nombre||'';
   updatePagoBadge();
+  // Load ficha de salud in parallel (non-blocking if RPC doesn't exist yet)
+  sb.rpc('triskel_get_mi_ficha_salud').then(({data:fs})=>{
+    STATE.ficha_salud=fs||null;
+    updateSaludBadge();
+  }).catch(()=>{});
   navTo('inicio');
+}
+
+function updateSaludBadge(){
+  const icon=document.getElementById('nav-salud-icon');
+  if(!icon)return;
+  if(!STATE.ficha_salud){icon.textContent='📋';}
+  else{icon.textContent='✅';}
 }
 
 function updatePagoBadge(){
@@ -385,6 +401,7 @@ function navTo(page){
   switch(page){
     case 'inicio':      renderInicio();break;
     case 'pagos':       renderPagos();break;
+    case 'salud':       renderSalud();break;
     case 'perfil':      renderPerfil();break;
   }
 }
@@ -737,6 +754,151 @@ function renderBibAlumnaGrid(){
       </div>
     </div>`;
   }).join('');
+}
+
+// ── SALUD ─────────────────────────────────────────────────────────────────────
+
+function renderSalud(){
+  const f=STATE.ficha_salud||{};
+  const yn=(label,field,id)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+    <span style="font-size:14px;">${label}</span>
+    <div style="display:flex;gap:6px;">
+      <button onclick="toggleFichaBool('${field}',true)" style="padding:4px 12px;border-radius:8px;border:1.5px solid ${f[field]===true?'var(--mat)':'var(--border)'};background:${f[field]===true?'var(--mat)':'var(--white)'};color:${f[field]===true?'#fff':'var(--sub)'};font-size:13px;font-weight:600;cursor:pointer;">Sí</button>
+      <button onclick="toggleFichaBool('${field}',false)" style="padding:4px 12px;border-radius:8px;border:1.5px solid ${f[field]===false?'#e53e3e':'var(--border)'};background:${f[field]===false?'#e53e3e':'var(--white)'};color:${f[field]===false?'#fff':'var(--sub)'};font-size:13px;font-weight:600;cursor:pointer;">No</button>
+    </div>
+  </div>`;
+  const txt=(label,field,placeholder,type='text')=>`<div style="margin-bottom:.75rem;">
+    <label style="display:block;font-size:12px;color:var(--sub);margin-bottom:3px;">${label}</label>
+    <input type="${type}" value="${esc2(f[field])}" placeholder="${placeholder}" oninput="STATE.ficha_salud=STATE.ficha_salud||{};STATE.ficha_salud['${field}']=this.value;"
+      style="width:100%;box-sizing:border-box;padding:.55rem .75rem;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--white);color:var(--tm);">
+  </div>`;
+  const sel=(label,field,opts)=>`<div style="margin-bottom:.75rem;">
+    <label style="display:block;font-size:12px;color:var(--sub);margin-bottom:3px;">${label}</label>
+    <select oninput="STATE.ficha_salud=STATE.ficha_salud||{};STATE.ficha_salud['${field}']=this.value;"
+      style="width:100%;padding:.55rem .75rem;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--white);color:var(--tm);">
+      <option value="">— seleccionar —</option>
+      ${opts.map(o=>`<option value="${o}" ${f[field]===o?'selected':''}>${o}</option>`).join('')}
+    </select>
+  </div>`;
+
+  setContent(`<div style="padding:1rem 1rem 6rem;">
+    <div style="font-size:18px;font-weight:700;margin-bottom:.25rem;">📋 Ficha de Salud</div>
+    <div style="font-size:13px;color:var(--sub);margin-bottom:1.25rem;">Esta información es confidencial y la usa Amira para personalizar tus clases.</div>
+
+    ${!f.alumna_id?`<div style="background:#fffdf0;border:1.5px solid #ffc107;border-radius:12px;padding:.75rem 1rem;margin-bottom:1rem;font-size:13px;color:#856404;font-weight:600;">⚠️ Todavía no completaste tu ficha. ¡Te lleva 2 minutos!</div>`:''}
+
+    <div style="background:var(--white);border-radius:14px;padding:1rem;margin-bottom:1rem;border:1.5px solid var(--border);">
+      <div style="font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem;">Datos personales</div>
+      ${txt('DNI','dni','12.345.678')}
+      ${txt('Celular familiar (para emergencias)','celular_familiar','11 xxxx-xxxx','tel')}
+      ${txt('Grupo sanguíneo','grupo_sanguineo','Ej: 0 Rh positivo')}
+      ${txt('Obra social','obra_social','OSDE / No tengo')}
+    </div>
+
+    <div style="background:var(--white);border-radius:14px;padding:1rem;margin-bottom:1rem;border:1.5px solid var(--border);">
+      <div style="font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem;">Objetivos</div>
+      ${txt('¿Qué querés lograr con el entrenamiento?','objetivos','Bajar peso / Tonificar / Bienestar...')}
+      ${sel('Nivel de actividad previo','nivel_actividad_previo',['Sedentaria','Algo activa','Activa'])}
+      ${sel('¿Cómo llegaste a Triskel?','como_llego',['Recomendación','Redes sociales','Pasando por el lugar','Otro'])}
+    </div>
+
+    <div style="background:var(--white);border-radius:14px;padding:1rem;margin-bottom:1rem;border:1.5px solid var(--border);">
+      <div style="font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem;">Hábitos diarios</div>
+      ${yn('Trabajás','trabaja')}
+      ${yn('Tu trabajo es de pie','trabajo_de_pie')}
+      ${yn('Tomás alcohol','toma_alcohol')}
+      ${yn('Hacés dieta','hace_dieta')}
+      ${sel('Café por día','cafe_por_dia',['No','1','2','3+'])}
+      ${txt('Horas de sueño por noche','hs_sueno','Ej: 7','number')}
+      ${txt('¿Cuánto tiempo del día estás sentada?','hs_sentada','Mucho / Poco / No')}
+      ${txt('¿Cuánto caminás por día?','camina_frecuencia','Poco / Moderado / Mucho')}
+    </div>
+
+    <div style="background:var(--white);border-radius:14px;padding:1rem;margin-bottom:1rem;border:1.5px solid var(--border);">
+      <div style="font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem;">Postura y lesiones</div>
+      ${txt('Problemas posturales','problemas_posturales','Ej: Me encorvo mucho...')}
+      ${txt('Cirugías o lesiones previas','cirugias_lesiones','Ej: Tobillo derecho — arthrosis y tornillos')}
+      ${txt('Embarazo / postparto','embarazo_postparto','No / Postparto 6 meses...')}
+      ${txt('Dolor crónico','dolor_cronico','No / Lumbar / Cervical...')}
+    </div>
+
+    <div style="background:var(--white);border-radius:14px;padding:1rem;margin-bottom:1rem;border:1.5px solid var(--border);">
+      <div style="font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem;">Actividad y salud</div>
+      ${yn('Realizás actividad física regularmente','actividad_fisica')}
+      ${txt('¿Con qué frecuencia?','actividad_frecuencia','Ej: 3 veces por semana')}
+      ${yn('Fumás','fumadora')}
+      ${yn('Colesterol alto','colesterol_alto')}
+      ${yn('Alguna vez tuviste convulsiones','convulsiones')}
+      ${yn('Diabetes','diabetes')}
+      ${txt('Alergia a algún medicamento','alergia_medicamento','No / ¿Cuál?')}
+      ${txt('Tomás algún medicamento','toma_medicamento','No / ¿Cuál?')}
+      ${txt('Afecciones cardíacas','afecciones_cardiacas','No / ¿Cuál?')}
+      ${txt('Afecciones respiratorias','afecciones_respiratorias','No / ¿Cuál?')}
+    </div>
+
+    <div style="background:var(--white);border-radius:14px;padding:1rem;margin-bottom:1rem;border:1.5px solid var(--border);">
+      <div style="font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem;">Información adicional</div>
+      <div style="margin-bottom:.75rem;">
+        <label style="display:block;font-size:12px;color:var(--sub);margin-bottom:3px;">Datos importantes que Amira deba saber</label>
+        <textarea oninput="STATE.ficha_salud=STATE.ficha_salud||{};STATE.ficha_salud['datos_importantes']=this.value;"
+          placeholder="Ej: Arthrosis en tobillo, osteop., tornillos..."
+          style="width:100%;box-sizing:border-box;padding:.55rem .75rem;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--white);color:var(--tm);height:72px;resize:none;">${esc2(f.datos_importantes)}</textarea>
+      </div>
+      ${txt('Antecedentes familiares (cardíacos, etc.)','antecedentes_familiares','Sin antecedentes / Papá — paro cardíaco')}
+    </div>
+
+    <button onclick="saveMiFichaSalud()" id="btn-guardar-ficha"
+      style="width:100%;padding:.9rem;background:var(--mat);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;letter-spacing:.02em;">
+      Guardar ficha ✓
+    </button>
+    <div id="ficha-salud-msg" style="text-align:center;margin-top:.5rem;font-size:13px;color:var(--sub);"></div>
+  </div>`);
+}
+
+function esc2(v){return(v||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
+
+function toggleFichaBool(field,val){
+  STATE.ficha_salud=STATE.ficha_salud||{};
+  if(STATE.ficha_salud[field]===val) STATE.ficha_salud[field]=null;
+  else STATE.ficha_salud[field]=val;
+  renderSalud();
+}
+
+async function saveMiFichaSalud(){
+  const btn=document.getElementById('btn-guardar-ficha');
+  const msg=document.getElementById('ficha-salud-msg');
+  if(btn){btn.disabled=true;btn.textContent='Guardando...';}
+  const f=STATE.ficha_salud||{};
+  const gn=(v)=>{const n=parseFloat(v);return isNaN(n)?null:n;};
+  const{error}=await sb.rpc('triskel_save_mi_ficha_salud',{
+    p_dni:f.dni||null,p_celular_familiar:f.celular_familiar||null,
+    p_grupo_sanguineo:f.grupo_sanguineo||null,p_obra_social:f.obra_social||null,
+    p_objetivos:f.objetivos||null,p_nivel_actividad_previo:f.nivel_actividad_previo||null,
+    p_como_llego:f.como_llego||null,p_cafe_por_dia:f.cafe_por_dia||null,
+    p_trabaja:f.trabaja??null,p_trabajo_de_pie:f.trabajo_de_pie??null,
+    p_hs_sentada:f.hs_sentada||null,p_camina_frecuencia:f.camina_frecuencia||null,
+    p_toma_alcohol:f.toma_alcohol??null,p_hs_sueno:gn(f.hs_sueno),
+    p_hace_dieta:f.hace_dieta??null,p_problemas_posturales:f.problemas_posturales||null,
+    p_cirugias_lesiones:f.cirugias_lesiones||null,p_embarazo_postparto:f.embarazo_postparto||null,
+    p_dolor_cronico:f.dolor_cronico||null,p_actividad_fisica:f.actividad_fisica??null,
+    p_actividad_frecuencia:f.actividad_frecuencia||null,p_fumadora:f.fumadora??null,
+    p_colesterol_alto:f.colesterol_alto??null,p_convulsiones:f.convulsiones??null,
+    p_consume_droga:f.consume_droga??null,p_diabetes:f.diabetes??null,
+    p_alergia_medicamento:f.alergia_medicamento||null,p_toma_medicamento:f.toma_medicamento||null,
+    p_afecciones_cardiacas:f.afecciones_cardiacas||null,p_afecciones_respiratorias:f.afecciones_respiratorias||null,
+    p_datos_importantes:f.datos_importantes||null,p_antecedentes_familiares:f.antecedentes_familiares||null,
+  });
+  if(error){
+    if(btn){btn.disabled=false;btn.textContent='Guardar ficha ✓';}
+    if(msg)msg.textContent='❌ Error al guardar. Intentá de nuevo.';
+    return;
+  }
+  // Reload
+  const{data:fs}=await sb.rpc('triskel_get_mi_ficha_salud');
+  STATE.ficha_salud=fs||null;
+  updateSaludBadge();
+  if(btn){btn.disabled=false;btn.textContent='Guardar ficha ✓';}
+  if(msg){msg.textContent='✅ ¡Ficha guardada!';setTimeout(()=>{if(msg)msg.textContent='';},3000);}
 }
 
 // ── PERFIL ────────────────────────────────────────────────────────────────────
