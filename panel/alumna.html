@@ -911,6 +911,14 @@ async function saveMiFichaSalud(){
   updateSaludBadge();
   if(btn){btn.disabled=false;btn.textContent='Guardar ficha ✓';}
   if(msg){msg.textContent='✅ ¡Ficha guardada!';setTimeout(()=>{if(msg)msg.textContent='';},3000);}
+  // Notificar a la profe que la alumna completó su ficha
+  try{
+    const{data:{session:sess}}=await sb.auth.getSession();
+    fetch(`${SB_URL}/functions/v1/send-push`,{method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(sess?.access_token||SB_KEY)},
+      body:JSON.stringify({tipo:'ficha_completada',target_tipo:'teacher',nombre:STATE.alumna?.nombre||'Una alumna'})
+    }).catch(()=>{});
+  }catch(e){}
 }
 
 // ── PERFIL ────────────────────────────────────────────────────────────────────

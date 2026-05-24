@@ -1,38 +1,53 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
 
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+const SUPABASE_URL        = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const VAPID_PUBLIC  = 'BEXtjaNEQhKEN8rEGQAp0NhcpFsAfl7vWrTCJTMUdOrNf6iOvmkdFIUEOcchkkNoJoixRdqLheqrIkjwQEAIw28';
 const VAPID_PRIVATE = Deno.env.get('VAPID_PRIVATE_KEY')!;
 const VAPID_EMAIL   = 'mailto:aaron_armoa@hotmail.com';
 
 webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC, VAPID_PRIVATE);
-
 const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 interface PushPayload {
-  tipo: 'aviso_pago' | 'recordatorio_pago' | 'pago_aprobado' | 'pago_rechazado';
+  tipo: string;
   target_user_id?: string;
   target_tipo?: string;
   nombre?: string;
   mes?: string;
   monto?: number;
   nota?: string;
+  clase?: string;
+  fecha?: string;
+  motivo?: string;
 }
 
+// Tipos que una alumna autenticada puede enviar (siempre hacia 'teacher')
+const ALUMNA_ALLOWED = ['aviso_pago', 'ausencia', 'ficha_completada'];
+
 const TITLES: Record<string, string> = {
-  aviso_pago:        '💰 Nueva notificación de pago',
-  recordatorio_pago: '⏰ Recordatorio de pago',
-  pago_aprobado:     '✅ Pago aprobado',
-  pago_rechazado:    '❌ Pago pendiente de revisión',
+  aviso_pago:          '💰 Nueva notificación de pago',
+  recordatorio_pago:   '⏰ Recordatorio de pago',
+  recordatorio_manual: '⏰ Recordatorio de pago',
+  pago_aprobado:       '✅ Pago aprobado',
+  pago_rechazado:      '❌ Pago pendiente de revisión',
+  ausencia:            '📅 Aviso de ausencia',
+  clase_planificada:   '📋 Clase planificada',
+  ficha_completada:    '📋 Nueva ficha de salud',
+  cumpleanos:          '🎂 Cumpleaños hoy',
 };
 
 const BODIES: Record<string, (p: PushPayload) => string> = {
-  aviso_pago:        (p) => `${p.nombre} avisó que pagó ${p.mes ? `(${mesLabel(p.mes)})` : ''} ${p.monto ? `· $${p.monto.toLocaleString('es-AR')}` : ''}`.trim(),
-  recordatorio_pago: (p) => `Hola ${p.nombre}! Recordá abonar tu cuota de ${mesLabel(p.mes||'')}. 🌿`,
-  pago_aprobado:     (p) => `¡Tu pago de ${mesLabel(p.mes||'')} fue aprobado! ✅`,
-  pago_rechazado:    (p) => `Tu aviso de pago de ${mesLabel(p.mes||'')} está siendo revisado.`,
+  aviso_pago:          (p) => `${p.nombre} avisó que pagó ${p.mes ? `(${mesLabel(p.mes)})` : ''} ${p.monto ? `· $${p.monto.toLocaleString('es-AR')}` : ''}`.trim(),
+  recordatorio_pago:   (p) => `Hola ${p.nombre}! Recordá abonar tu cuota de ${mesLabel(p.mes||'')}. 🌿`,
+  recordatorio_manual: (p) => `Hola ${p.nombre}! Tu profe te manda un recordatorio de pago de ${mesLabel(p.mes||'')}. 🌿`,
+  pago_aprobado:       (p) => `¡Tu pago de ${mesLabel(p.mes||'')} fue aprobado! ✅`,
+  pago_rechazado:      (p) => `Tu aviso de pago de ${mesLabel(p.mes||'')} está siendo revisado.`,
+  ausencia:            (p) => `${p.nombre} avisó que no puede ir el ${p.fecha||''} · ${p.clase||''}${p.motivo ? ` — ${p.motivo}` : ''}`,
+  clase_planificada:   (p) => `Tu clase de ${p.clase||''} del ${p.fecha||''} ya tiene ejercicios cargados. ¡A entrenar! 💪`,
+  ficha_completada:    (p) => `${p.nombre} completó su ficha de salud. Revisala cuando puedas.`,
+  cumpleanos:          (p) => `¡Hoy cumple años ${p.nombre}! 🎂 No te olvides de saludarla.`,
 };
 
 function mesLabel(mes: string): string {
@@ -49,21 +64,17 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Verify caller is authenticated
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) return json({ ok: false, msg: 'not authenticated' }, 401);
 
     const token = authHeader.replace('Bearer ', '');
-
-    // Allow service_role calls from internal cron (pg_net)
     const isServiceRole = token === SUPABASE_SERVICE_KEY;
 
-    let alumnaRecord = null;
+    let alumnaRecord: { id: number; nombre: string; apellido: string } | null = null;
     if (!isServiceRole) {
       const { data: { user }, error: authErr } = await sb.auth.getUser(token);
       if (authErr || !user) return json({ ok: false, msg: 'invalid token' }, 401);
 
-      // Check if caller is an alumna
       const { data } = await sb
         .from('triskel_alumnas')
         .select('id, nombre, apellido')
@@ -75,19 +86,14 @@ Deno.serve(async (req) => {
     const payload: PushPayload = await req.json();
     const { tipo, target_user_id, target_tipo } = payload;
 
-    // Validate tipo
-    const allowedTipos = ['aviso_pago', 'recordatorio_pago', 'pago_aprobado', 'pago_rechazado'];
-    if (!allowedTipos.includes(tipo)) return json({ ok: false, msg: 'tipo invalido' }, 400);
+    if (!TITLES[tipo]) return json({ ok: false, msg: 'tipo invalido' }, 400);
 
     if (alumnaRecord) {
-      // Alumnas can only send aviso_pago to teachers, using their real name
-      if (tipo !== 'aviso_pago') return json({ ok: false, msg: 'no autorizado' }, 403);
+      if (!ALUMNA_ALLOWED.includes(tipo)) return json({ ok: false, msg: 'no autorizado' }, 403);
       if (target_tipo !== 'teacher') return json({ ok: false, msg: 'no autorizado' }, 403);
-      // Override nombre with actual DB name (prevents spoofing)
       payload.nombre = alumnaRecord.nombre;
     }
 
-    // Fetch subscriptions
     let query = sb.from('triskel_push_subscriptions').select('*');
     if (target_user_id) {
       query = query.eq('user_id', target_user_id);
@@ -99,9 +105,7 @@ Deno.serve(async (req) => {
 
     const { data: subs, error } = await query;
     if (error) throw error;
-    if (!subs || subs.length === 0) {
-      return json({ ok: true, sent: 0, msg: 'no subscriptions found' });
-    }
+    if (!subs || subs.length === 0) return json({ ok: true, sent: 0, msg: 'no subscriptions' });
 
     const title = TITLES[tipo] || 'Triskel Academy';
     const body  = BODIES[tipo]?.(payload) || '';
@@ -109,7 +113,7 @@ Deno.serve(async (req) => {
       title, body,
       icon:  '/panel/logo-triskel.png',
       badge: '/panel/logo-triskel.png',
-      data:  { tipo, mes: payload.mes }
+      data:  { tipo, mes: payload.mes },
     });
 
     let sent = 0, failed = 0;
@@ -117,10 +121,11 @@ Deno.serve(async (req) => {
       try {
         await webpush.sendNotification(sub.subscription, notification);
         sent++;
-      } catch (e) {
-        console.error('Push failed for', sub.user_id, e);
-        if ((e as any).statusCode === 410) {
-          await sb.from('triskel_push_subscriptions').delete().eq('user_id', sub.user_id);
+      } catch (e: any) {
+        console.error('Push failed sub.id', sub.id, e?.statusCode);
+        // 410 Gone or 404 = subscription expired/unregistered → delete it
+        if (e?.statusCode === 410 || e?.statusCode === 404) {
+          await sb.from('triskel_push_subscriptions').delete().eq('id', sub.id);
         }
         failed++;
       }
