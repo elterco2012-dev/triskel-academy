@@ -5358,25 +5358,6 @@ async function saveClase(){
   _saving=false;
   showMsg(_editClaseId?'✓ Clase actualizada':'✓ Clase registrada');
   closeModalClase();
-  // Push clase_planificada a las alumnas del horario (solo clases nuevas con ejercicios)
-  if(!_editClaseId && ejercicios.length>0){
-    try{
-      const hor=DB.horarios.find(h=>h.id===horario_id);
-      const dias={lunes:'Lunes',martes:'Martes',miercoles:'Miércoles',jueves:'Jueves',viernes:'Viernes',sabado:'Sábado',domingo:'Domingo'};
-      const claseLabel=hor?`${MOD_LABEL[hor.modalidad]||hor.modalidad} · ${dias[hor.dia]||hor.dia} ${hor.hora_inicio}`:'clase';
-      const fechaLabel=fecha?new Date(fecha+'T12:00:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'}):'';
-      const{data:{session:sess}}=await sb.auth.getSession();
-      const inscsHor=DB.inscripciones.filter(i=>i.horario_id===horario_id&&i.estado==='activa');
-      for(const insc of inscsHor){
-        const al=DB.alumnas.find(a=>a.id===insc.alumna_id);
-        if(!al?.auth_user_id)continue;
-        fetch(`${SB_URL}/functions/v1/send-push`,{method:'POST',
-          headers:{'Content-Type':'application/json','Authorization':'Bearer '+(sess?.access_token||SB_KEY)},
-          body:JSON.stringify({tipo:'clase_planificada',target_user_id:al.auth_user_id,nombre:al.nombre,clase:claseLabel,fecha:fechaLabel})
-        }).catch(()=>{});
-      }
-    }catch(e){console.warn('Push clase_planificada:',e);}
-  }
   await loadAll();
 }
 async function deleteClase(id){
