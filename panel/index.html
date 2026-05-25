@@ -4836,7 +4836,8 @@ async function saveAlumna(){
   for(const cb of checks){
     const hId=parseInt(cb.value);
     const precio=parseFloat(document.getElementById(`hp-${hId}`)?.value)||0;
-    await rpc('triskel_insert_inscripcion',{p_alumna_id:alumnaId,p_horario_id:hId,p_precio:precio});
+    const{error:inscErr}=await rpc('triskel_insert_inscripcion',{p_alumna_id:alumnaId,p_horario_id:hId,p_precio:precio});
+    if(inscErr){document.getElementById('mal-err').textContent='Error al inscribir horario: '+(inscErr?.message||'intentá de nuevo');_saving=false;return;}
   }
   // Auto-crear acceso en panel alumna solo cuando es nueva
   let passGenerada=null;
@@ -5013,11 +5014,12 @@ function nacimientoAPass(fechaISO){
   return d+m+y.slice(2);
 }
 
+let _msgAccesoClipboard='';
 function showMsgAcceso(nombre,email,pass,tel){
   const old=document.getElementById('msg-acceso-toast');
   if(old)old.remove();
   const panelUrl=`${location.origin}/panel/alumna.html`;
-  const msg=`Hola ${nombre}! 🌿 Ya tenés acceso a tu panel de Triskel Academy.\n📧 Email: ${email}\n🔑 Contraseña: ${pass}\n🔗 ${panelUrl}`;
+  _msgAccesoClipboard=`Hola ${nombre}! 🌿 Ya tenés acceso a tu panel de Triskel Academy.\n📧 Email: ${email}\n🔑 Contraseña: ${pass}\n🔗 ${panelUrl}`;
   const div=document.createElement('div');
   div.id='msg-acceso-toast';
   div.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:300;background:var(--s);border:1px solid var(--bm);border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.15);padding:14px 16px;width:min(92vw,360px);';
@@ -5028,11 +5030,17 @@ function showMsgAcceso(nombre,email,pass,tel){
       <div style="font-size:11px;color:var(--tm);margin-top:2px;">Panel: ${panelUrl}</div>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:8px;">
-      <a href="https://wa.me/${tel.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}" target="_blank" style="flex:1;background:#25D366;color:#fff;text-align:center;padding:7px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700;">📲 Enviar por WA</a>
-      <button id="btn-copiar-acceso" onclick="navigator.clipboard.writeText(${JSON.stringify(msg)}).then(()=>{const b=document.getElementById('btn-copiar-acceso');b.textContent='✅ Copiado';setTimeout(()=>{b.textContent='📋 Copiar';},2000);})" style="flex:1;background:var(--s2);border:1px solid var(--bm);border-radius:8px;padding:7px;font-size:13px;cursor:pointer;color:var(--t);font-weight:600;">📋 Copiar</button>
+      <a href="https://wa.me/${tel.replace(/\D/g,'')}?text=${encodeURIComponent(_msgAccesoClipboard)}" target="_blank" style="flex:1;background:#25D366;color:#fff;text-align:center;padding:7px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700;">📲 Enviar por WA</a>
+      <button id="btn-copiar-acceso" onclick="copiarMsgAcceso()" style="flex:1;background:var(--s2);border:1px solid var(--bm);border-radius:8px;padding:7px;font-size:13px;cursor:pointer;color:var(--t);font-weight:600;">📋 Copiar</button>
     </div>
     <button onclick="document.getElementById('msg-acceso-toast').remove()" style="width:100%;background:transparent;border:none;padding:4px;font-size:12px;cursor:pointer;color:var(--sub);">Cerrar</button>`;
   document.body.appendChild(div);
+}
+function copiarMsgAcceso(){
+  navigator.clipboard.writeText(_msgAccesoClipboard).then(()=>{
+    const b=document.getElementById('btn-copiar-acceso');
+    if(b){b.textContent='✅ Copiado';setTimeout(()=>{b.textContent='📋 Copiar';},2000);}
+  });
 }
 
 async function cambiarClaveAlumna(id){
@@ -5641,7 +5649,7 @@ async function enviarRecordatorioPush(authUserId, nombre){
 
 async function resolverAviso(id,accion,alumnaId,mes){
   const{data,error}=await sb.rpc('triskel_resolver_aviso',{p_id:id,p_accion:accion});
-  if(error||!data?.ok){showMsg('Error al resolver aviso');return;}
+  if(error||!data?.ok){showMsg(data?.msg||'Error al resolver aviso');return;}
   const a=alumnaById(alumnaId);
   const[y,m]=(mes||'').split('-');
   const mesLabel=y&&m?new Date(y,m-1,1).toLocaleDateString('es-AR',{month:'long',year:'numeric'}):'';
