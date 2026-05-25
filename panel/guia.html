@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Triskel Academy · Instalá la app</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f9f4fc;color:#2d2d2d;}
+
+  /* ── HEADER ── */
+  .header{background:#6c5b7b;color:#fff;padding:28px 24px 24px;text-align:center;}
+  .header-inner{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:10px;}
+  .header img{width:56px;height:56px;border-radius:14px;}
+  .header h1{font-size:26px;font-weight:800;letter-spacing:-.3px;}
+  .header-sub{font-size:15px;opacity:.85;}
+
+  /* ── BADGE ── */
+  .badge{background:#e8f5e9;border-left:4px solid #43a047;border-radius:0 12px 12px 0;padding:12px 18px;margin:20px 16px 0;font-size:14px;color:#1b5e20;line-height:1.5;}
+  .badge strong{display:block;font-size:15px;margin-bottom:2px;}
+
+  /* ── STEPS ── */
+  .section{padding:20px 16px 0;}
+  .section-title{font-size:11px;font-weight:700;letter-spacing:1.5px;color:#9b8aaa;margin-bottom:14px;text-transform:uppercase;}
+
+  .steps{display:flex;flex-direction:column;gap:14px;}
+  .step{display:flex;align-items:flex-start;gap:14px;background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 1px 6px rgba(108,91,123,.09);}
+  .step-num{background:#6c5b7b;color:#fff;width:30px;height:30px;border-radius:50%;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+  .step-text strong{display:block;font-size:15px;font-weight:700;margin-bottom:2px;}
+  .step-text span{font-size:13px;color:#666;line-height:1.5;}
+  .step-text code{background:#f0e6fa;color:#5a3e7a;border-radius:4px;padding:1px 5px;font-family:inherit;font-size:12px;font-weight:600;}
+
+  /* ── INSTALL BOX ── */
+  .install-box{background:#fff;border-radius:16px;margin:20px 16px 0;padding:18px;box-shadow:0 1px 6px rgba(108,91,123,.09);display:flex;gap:16px;align-items:flex-start;}
+  .install-box img{width:100px;height:100px;flex-shrink:0;border-radius:10px;}
+  .install-content h3{font-size:14px;font-weight:700;color:#6c5b7b;margin-bottom:8px;}
+  .install-row{display:flex;align-items:baseline;gap:6px;margin-bottom:6px;}
+  .install-row .os{font-size:12px;font-weight:700;color:#2d2d2d;min-width:58px;}
+  .install-row span{font-size:12px;color:#555;line-height:1.4;}
+
+  /* ── FOOTER ── */
+  .footer{background:#6c5b7b;color:#fff;padding:16px 20px;text-align:center;margin-top:28px;font-size:13px;opacity:1;}
+  .footer a{color:#e0d0f0;text-decoration:none;}
+  .footer .url{font-size:12px;opacity:.75;margin-top:4px;}
+
+  @media(min-width:520px){
+    .header h1{font-size:30px;}
+    .section,.badge,.install-box{max-width:480px;margin-left:auto;margin-right:auto;}
+  }
+  @media print{
+    body{background:#fff;}
+    .install-box,.step,.badge{box-shadow:none;border:1px solid #ddd;}
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <img src="/panel/icon-192.png" alt="Triskel">
+    <h1>Triskel Academy</h1>
+  </div>
+  <div class="header-sub">Tu panel personal · pagos · ausencias · clases</div>
+</div>
+
+<div class="badge">
+  <strong>📦 No ocupa espacio en tu celular</strong>
+  No se instala desde el Play Store ni el App Store. Es una app web que se agrega directo a tu pantalla — como un acceso directo, pero funciona igual que una app.
+</div>
+
+<div class="section">
+  <div class="section-title">Cómo usarla — 3 pasos</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        <strong>Escaneá el código QR o abrí el link</strong>
+        <span>Desde el celular: escaneá con la cámara o entrá a <code>triskel-academy.vercel.app</code></span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        <strong>Instalá la app en tu pantalla</strong>
+        <span>Seguí las instrucciones según tu celular (ver abajo). Tarda menos de 1 minuto.</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">
+        <strong>Iniciá sesión con tu DNI</strong>
+        <span>Tu usuario es tu número de DNI. Tu contraseña es tu fecha de nacimiento en formato <code>ddmmaa</code> — por ejemplo: <code>261188</code></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="install-box">
+  <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=6&data=https://triskel-academy.vercel.app/panel/instalar.html" alt="QR Triskel">
+  <div class="install-content">
+    <h3>📲 Cómo instalarla en tu celular</h3>
+    <div class="install-row">
+      <span class="os">Android:</span>
+      <span>Chrome → menú ⋮ → "Agregar a pantalla de inicio" → Instalar</span>
+    </div>
+    <div class="install-row">
+      <span class="os">iPhone:</span>
+      <span>Safari → compartir ⬆ → "Añadir a pantalla de inicio" → Añadir</span>
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:#9b8aaa;">Escaneá el QR para ver el paso a paso</div>
+  </div>
+</div>
+
+<div class="footer">
+  <div><a href="https://triskel-academy.vercel.app/panel/alumna.html">triskel-academy.vercel.app</a></div>
+  <div class="url">Escaneá el QR o ingresá al link</div>
+</div>
+
+</body>
+</html>
