@@ -278,7 +278,10 @@
     </div>
     <div class="frow">
       <div><label for="mal-tel">Teléfono (WhatsApp)</label><input id="mal-tel" placeholder="5491112345678"></div>
-      <div><label for="mal-email">Email</label><input id="mal-email" placeholder="maria@gmail.com"></div>
+      <div><label for="mal-email">Email <span style="font-weight:400;color:var(--tm);">(opcional)</span></label><input id="mal-email" placeholder="maria@gmail.com"></div>
+    </div>
+    <div class="frow">
+      <div><label for="mal-dni">DNI <span style="font-weight:400;color:var(--tm);">— si no tiene email, se usa para el login</span></label><input id="mal-dni" placeholder="Ej: 32456789" type="text" inputmode="numeric"></div>
     </div>
     <label for="mal-notas">Notas</label>
     <textarea id="mal-notas" placeholder="Preferencias, observaciones generales..."></textarea>
@@ -4852,7 +4855,8 @@ function openModalAlumna(id){
   document.getElementById('mal-nombre').value=a?.nombre||'';
   document.getElementById('mal-apellido').value=a?.apellido||'';
   document.getElementById('mal-tel').value=a?.tel||'';
-  document.getElementById('mal-email').value=a?.email||'';
+  document.getElementById('mal-email').value=a?.email&&!a.email.endsWith('@triskel.local')?a.email:'';
+  document.getElementById('mal-dni').value=a?.dni||'';
   document.getElementById('mal-notas').value=a?.notas||'';
   document.getElementById('mal-diapago').value=a?.dia_pago||'';
   document.getElementById('mal-nacimiento').value=a?.fecha_nacimiento||'';
@@ -4868,17 +4872,22 @@ async function saveAlumna(){
   const nombre=document.getElementById('mal-nombre').value.trim();
   if(!nombre){document.getElementById('mal-err').textContent='El nombre es obligatorio.';_saving=false;return;}
   const email=document.getElementById('mal-email').value.trim()||null;
+  const dni=document.getElementById('mal-dni').value.trim()||null;
   const nacimiento=document.getElementById('mal-nacimiento').value||null;
   const esNueva=!_editAlumnaId;
+  // Si no tiene email pero tiene DNI, usamos dni@triskel.local como auth email
+  const emailAuth=email||(dni?`${dni}@triskel.local`:null);
+  // El email guardado en la DB es el real (null si no tiene); el fake solo va a auth
   const params={
     p_nombre:nombre,
     p_apellido:document.getElementById('mal-apellido').value.trim()||null,
     p_tel:document.getElementById('mal-tel').value.trim()||null,
-    p_email:email,
+    p_email:emailAuth, // guardamos el auth email para poder reconocerla
     p_notas:document.getElementById('mal-notas').value.trim()||null,
     p_dia_pago:parseInt(document.getElementById('mal-diapago').value)||null,
     p_fecha_nacimiento:nacimiento,
     p_contraindicaciones:document.getElementById('mal-contra').value.trim()||null,
+    p_dni:dni,
   };
   if(_editAlumnaId)params.p_id=_editAlumnaId;
   else params.p_estado='activa';
@@ -4892,23 +4901,24 @@ async function saveAlumna(){
     const{error:inscErr}=await rpc('triskel_insert_inscripcion',{p_alumna_id:alumnaId,p_horario_id:hId,p_precio:precio});
     if(inscErr){document.getElementById('mal-err').textContent='Error al inscribir horario: '+(inscErr?.message||'intentá de nuevo');_saving=false;return;}
   }
-  // Auto-crear acceso en panel alumna solo cuando es nueva
+  // Auto-crear acceso en panel alumna solo cuando es nueva y tiene email o DNI
   let passGenerada=null;
-  if(esNueva&&email){
+  if(esNueva&&emailAuth){
     passGenerada=nacimiento?nacimientoAPass(nacimiento):generarPassAleatoria();
     try{
       const{data:{session:sess}}=await sb.auth.getSession();
       await fetch(`${SB_URL}/functions/v1/setup-alumna-auth`,{
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+(sess?.access_token||SB_KEY)},
-        body:JSON.stringify({alumna_id:alumnaId,email,password:passGenerada})
+        body:JSON.stringify({alumna_id:alumnaId,email:emailAuth,password:passGenerada})
       });
     }catch(e){console.warn('No se pudo crear acceso alumna:',e);}
   }
   closeModalAlumna();
   await loadAll();
   if(passGenerada){
-    showMsgAcceso(nombre,email,passGenerada,alumnaById(alumnaId)?.tel||'');
+    const usaDni=!email&&!!dni;
+    showMsgAcceso(nombre,emailAuth,passGenerada,alumnaById(alumnaId)?.tel||'',usaDni?dni:null);
   }else{
     showMsg(esNueva?'✓ Alumna creada':'✓ Alumna actualizada');
   }
@@ -5068,22 +5078,24 @@ function nacimientoAPass(fechaISO){
 }
 
 let _msgAccesoClipboard='';
-function showMsgAcceso(nombre,email,pass,tel){
+function showMsgAcceso(nombre,email,pass,tel,dni=null){
   const old=document.getElementById('msg-acceso-toast');
   if(old)old.remove();
   const panelUrl=`${location.origin}/panel/alumna.html`;
-  _msgAccesoClipboard=`Hola ${nombre}! 🌿 Ya tenés acceso a tu panel de Triskel Academy.\n📧 Email: ${email}\n🔑 Contraseña: ${pass}\n🔗 ${panelUrl}`;
+  const usuarioLabel=dni?`DNI: ${dni}`:`Email: ${email}`;
+  const usuarioIcon=dni?'🪪':'📧';
+  _msgAccesoClipboard=`Hola ${nombre}! 🌿 Ya tenés acceso a tu panel de Triskel Academy.\n${usuarioIcon} Usuario: ${dni||email}\n🔑 Contraseña: ${pass}\n🔗 ${panelUrl}`;
   const div=document.createElement('div');
   div.id='msg-acceso-toast';
   div.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:300;background:var(--s);border:1px solid var(--bm);border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.15);padding:14px 16px;width:min(92vw,360px);';
   div.innerHTML=`<div style="font-size:13px;font-weight:700;color:var(--t);margin-bottom:6px;">🔑 Acceso creado para ${nombre}</div>
     <div style="background:var(--s2);border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:10px;line-height:1.8;">
-      <div>📧 <b>${email}</b></div>
+      <div>${usuarioIcon} <b>${dni||email}</b>${dni?'<span style="font-size:11px;color:var(--tm);"> (DNI)</span>':''}</div>
       <div>🔑 <b>${pass}</b></div>
       <div style="font-size:11px;color:var(--tm);margin-top:2px;">Panel: ${panelUrl}</div>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:8px;">
-      <a href="https://wa.me/${tel.replace(/\D/g,'')}?text=${encodeURIComponent(_msgAccesoClipboard)}" target="_blank" style="flex:1;background:#25D366;color:#fff;text-align:center;padding:7px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700;">📲 Enviar por WA</a>
+      ${tel?`<a href="https://wa.me/${tel.replace(/\D/g,'')}?text=${encodeURIComponent(_msgAccesoClipboard)}" target="_blank" style="flex:1;background:#25D366;color:#fff;text-align:center;padding:7px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700;">📲 Enviar por WA</a>`:''}
       <button id="btn-copiar-acceso" onclick="copiarMsgAcceso()" style="flex:1;background:var(--s2);border:1px solid var(--bm);border-radius:8px;padding:7px;font-size:13px;cursor:pointer;color:var(--t);font-weight:600;">📋 Copiar</button>
     </div>
     <button onclick="document.getElementById('msg-acceso-toast').remove()" style="width:100%;background:transparent;border:none;padding:4px;font-size:12px;cursor:pointer;color:var(--sub);">Cerrar</button>`;

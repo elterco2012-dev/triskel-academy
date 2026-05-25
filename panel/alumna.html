@@ -198,8 +198,8 @@ input,select,textarea,button{font-family:'DM Sans',-apple-system,BlinkMacSystemF
   <div class="auth-title">Triskel Academy</div>
   <div class="auth-sub">Mi Panel de Alumna</div>
   <div class="auth-card">
-    <label>Email</label>
-    <input type="email" id="login-email" placeholder="tu@email.com" autocomplete="email">
+    <label>Email o DNI</label>
+    <input type="text" id="login-email" placeholder="tu@email.com o tu DNI" autocomplete="username" inputmode="email">
     <label>Contraseña</label>
     <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
     <button class="btn-primary" onclick="doLogin()">Ingresar</button>
@@ -347,17 +347,23 @@ async function rpc(fn, params){
 
 // ── AUTH ────────────────────────────────────────────────────────────────────
 
+function normalizeLoginEmail(input){
+  // Si es solo números (DNI), convertir a formato interno
+  return /^\d+$/.test(input)?`${input}@triskel.local`:input;
+}
+
 async function doLogin(){
-  const email=document.getElementById('login-email').value.trim();
+  const raw=document.getElementById('login-email').value.trim();
+  const email=normalizeLoginEmail(raw);
   const pass=document.getElementById('login-pass').value;
   const errEl=document.getElementById('auth-error');
   const btn=document.querySelector('#auth-screen .btn-primary');
   errEl.style.display='none';
-  if(!email||!pass){errEl.textContent='Completá email y contraseña.';errEl.style.display='block';return;}
+  if(!raw||!pass){errEl.textContent='Completá usuario y contraseña.';errEl.style.display='block';return;}
   try{
     if(btn){btn.disabled=true;btn.textContent='Ingresando…';}
     const{error}=await sb.auth.signInWithPassword({email,password:pass});
-    if(error){errEl.textContent='Email o contraseña incorrectos.';errEl.style.display='block';return;}
+    if(error){errEl.textContent='Usuario o contraseña incorrectos.';errEl.style.display='block';return;}
     await initApp();
   }catch(e){
     errEl.textContent='Error de conexión. Revisá tu internet e intentá de nuevo.';
