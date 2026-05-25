@@ -6,210 +6,209 @@
 <title>Instalar Triskel Academy</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff8f5;color:#2d2d2d;min-height:100vh;}
-  .header{background:#6c5b7b;color:#fff;padding:24px 20px 20px;text-align:center;}
-  .header img{width:60px;height:60px;object-fit:contain;border-radius:14px;margin-bottom:10px;}
-  .header h1{font-size:20px;font-weight:700;margin-bottom:4px;}
-  .header p{font-size:14px;opacity:.85;}
-  .tabs{display:flex;background:#fff;border-bottom:2px solid #f0e6fa;position:sticky;top:0;z-index:10;}
-  .tab{flex:1;padding:13px 8px;text-align:center;font-size:14px;font-weight:600;cursor:pointer;color:#888;border-bottom:3px solid transparent;transition:.2s;}
-  .tab.active{color:#6c5b7b;border-bottom-color:#6c5b7b;}
-  .panel{display:none;padding:20px 16px 40px;}
-  .panel.active{display:block;}
-  .intro{background:#f0e6fa;border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.6;margin-bottom:20px;color:#4a3a5c;}
-  .intro strong{display:block;font-size:15px;margin-bottom:4px;color:#6c5b7b;}
-  .step{display:flex;gap:14px;align-items:flex-start;margin-bottom:18px;}
-  .step-num{background:#6c5b7b;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;margin-top:2px;}
-  .step-body{flex:1;}
-  .step-body strong{display:block;font-size:15px;font-weight:700;margin-bottom:3px;color:#2d2d2d;}
-  .step-body span{font-size:13px;color:#555;line-height:1.5;}
-  .step-img{background:#f5f0fb;border:1px solid #e0d0f0;border-radius:10px;padding:10px 14px;margin-top:8px;font-size:22px;text-align:center;letter-spacing:4px;}
-  .note{background:#fff3cd;border-left:4px solid #f0ad4e;border-radius:0 8px 8px 0;padding:10px 14px;font-size:13px;line-height:1.5;margin-bottom:20px;color:#5a4a00;}
-  .note strong{display:block;margin-bottom:2px;}
-  .divider{border:none;border-top:1px solid #e8dff0;margin:20px 0;}
-  .btn-app{display:block;background:#6c5b7b;color:#fff;text-align:center;padding:15px;border-radius:12px;font-size:16px;font-weight:700;text-decoration:none;margin-top:24px;box-shadow:0 4px 12px rgba(108,91,123,.35);}
-  .btn-app span{display:block;font-size:12px;font-weight:400;opacity:.85;margin-top:2px;}
-  .success{background:#d4edda;border-radius:12px;padding:16px;text-align:center;margin-top:20px;}
-  .success .icon{font-size:36px;margin-bottom:8px;}
-  .success p{font-size:14px;color:#1a5c2a;line-height:1.5;}
-  .compat{background:#e8f4fd;border-radius:10px;padding:12px 14px;font-size:13px;color:#1a4a6c;margin-bottom:20px;line-height:1.6;}
-  .compat strong{display:block;margin-bottom:4px;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff8f5;min-height:100vh;display:flex;flex-direction:column;}
+
+  .top{background:#6c5b7b;color:#fff;padding:20px 20px 16px;text-align:center;flex-shrink:0;}
+  .top img{width:52px;height:52px;border-radius:12px;margin-bottom:8px;}
+  .top h1{font-size:18px;font-weight:700;}
+
+  .device-toggle{display:flex;background:#fff;border-bottom:2px solid #ede0f5;}
+  .dtab{flex:1;padding:12px;text-align:center;font-size:15px;font-weight:600;cursor:pointer;color:#aaa;border-bottom:3px solid transparent;transition:.15s;}
+  .dtab.active{color:#6c5b7b;border-bottom-color:#6c5b7b;}
+
+  .wizard{flex:1;display:flex;flex-direction:column;padding:24px 20px 32px;max-width:480px;margin:0 auto;width:100%;}
+
+  .step-counter{font-size:13px;color:#aaa;text-align:center;margin-bottom:20px;}
+
+  .card{background:#fff;border-radius:20px;box-shadow:0 2px 16px rgba(108,91,123,.12);padding:32px 24px;text-align:center;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+  .card .icon{font-size:72px;line-height:1;}
+  .card h2{font-size:20px;font-weight:700;color:#2d2d2d;line-height:1.3;}
+  .card p{font-size:15px;color:#555;line-height:1.6;max-width:300px;}
+  .card .highlight{background:#f0e6fa;color:#4a3a5c;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:600;width:100%;}
+
+  .warn{background:#fff3cd;border-radius:12px;padding:12px 16px;font-size:14px;color:#6b4e00;line-height:1.5;text-align:left;width:100%;}
+  .warn strong{display:block;margin-bottom:2px;}
+
+  .btn-next{background:#6c5b7b;color:#fff;border:none;border-radius:14px;padding:16px 24px;font-size:17px;font-weight:700;cursor:pointer;width:100%;margin-top:20px;flex-shrink:0;}
+  .btn-next:active{opacity:.85;}
+  .btn-back{background:transparent;color:#aaa;border:none;font-size:14px;cursor:pointer;margin-top:10px;padding:8px;width:100%;flex-shrink:0;}
+
+  .done-card{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px;padding:24px 0;}
+  .done-card .icon{font-size:80px;}
+  .done-card h2{font-size:22px;font-weight:700;color:#2d2d2d;}
+  .done-card p{font-size:15px;color:#555;line-height:1.6;}
+  .btn-app{display:block;background:#6c5b7b;color:#fff;text-align:center;padding:16px;border-radius:14px;font-size:17px;font-weight:700;text-decoration:none;margin-top:8px;width:100%;}
 </style>
 </head>
 <body>
 
-<div class="header">
+<div class="top">
   <img src="/panel/icon-192.png" alt="Triskel">
   <h1>Triskel Academy</h1>
-  <p>Seguí estos pasos para instalar la app y activar las notificaciones</p>
 </div>
 
-<div class="tabs">
-  <div class="tab" id="tab-android" onclick="switchTab('android')">📱 Android</div>
-  <div class="tab" id="tab-ios" onclick="switchTab('ios')">🍎 iPhone</div>
+<div class="device-toggle">
+  <div class="dtab" id="tab-android" onclick="setDevice('android')">📱 Android</div>
+  <div class="dtab" id="tab-ios" onclick="setDevice('ios')">🍎 iPhone</div>
 </div>
 
-<!-- ── ANDROID ── -->
-<div class="panel" id="panel-android">
-
-  <div class="intro">
-    <strong>¿Tenés un teléfono Android?</strong>
-    Seguí estos 6 pasos. Solo lleva 2 minutos y después vas a tener la app en tu pantalla como cualquier otra aplicación.
-  </div>
-
-  <div class="step">
-    <div class="step-num">1</div>
-    <div class="step-body">
-      <strong>Abrí este link en Chrome</strong>
-      <span>El navegador tiene que ser <b>Chrome</b> (el ícono de la pelota de colores). Si lo abriste desde WhatsApp, tocá los 3 puntos arriba a la derecha y elegí "Abrir en Chrome".</span>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-num">2</div>
-    <div class="step-body">
-      <strong>Tocá los 3 puntos ⋮ arriba a la derecha</strong>
-      <span>Están en la esquina superior derecha de Chrome.</span>
-      <div class="step-img">⋮</div>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-num">3</div>
-    <div class="step-body">
-      <strong>Tocá "Agregar a pantalla de inicio"</strong>
-      <span>Puede aparecer también como "Instalar app". Bajá en el menú si no lo ves enseguida.</span>
-      <div class="step-img">📲 Agregar a pantalla de inicio</div>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-num">4</div>
-    <div class="step-body">
-      <strong>Tocá "Instalar" o "Agregar"</strong>
-      <span>Aparece una ventana pidiendo confirmación. Tocá el botón para confirmar.</span>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-num">5</div>
-    <div class="step-body">
-      <strong>Abrí la app desde tu pantalla</strong>
-      <span>Va a aparecer el ícono de Triskel en tu pantalla de inicio. <b>Abrilo desde ahí</b> (no desde Chrome).</span>
-      <div class="step-img">🌿</div>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-num">6</div>
-    <div class="step-body">
-      <strong>Permitir notificaciones</strong>
-      <span>La app te va a preguntar si querés recibir notificaciones. Tocá <b>"Permitir"</b> para recibir avisos de pago y confirmaciones.</span>
-      <div class="step-img">🔔 Permitir</div>
-    </div>
-  </div>
-
-  <div class="success">
-    <div class="icon">🎉</div>
-    <p><strong>¡Listo!</strong> Ya tenés la app instalada y las notificaciones activas.<br>Iniciá sesión con tu DNI y la contraseña que te dio tu profe.</p>
-  </div>
-
-  <a href="/panel/alumna.html" class="btn-app">
-    Abrir la app de Triskel
-    <span>triskel-academy.vercel.app</span>
-  </a>
-
-</div>
-
-<!-- ── iOS ── -->
-<div class="panel" id="panel-ios">
-
-  <div class="compat">
-    <strong>⚠️ Importante antes de empezar</strong>
-    En iPhone las notificaciones solo funcionan si instalás la app en tu pantalla (paso 1 al 5). Si la abrís directo desde Safari sin instalarla, <b>no van a llegar las notificaciones</b>.
-  </div>
-
-  <div class="note">
-    <strong>Usá Safari, no Chrome</strong>
-    En iPhone, la instalación solo funciona desde el navegador <b>Safari</b> (el ícono de la brújula azul). Si recibiste este link por WhatsApp, tocá los 3 puntos ··· y elegí "Abrir en Safari".
-  </div>
-
-  <div class="step">
-    <div class="step-num">1</div>
-    <div class="step-body">
-      <strong>Abrí este link en Safari</strong>
-      <span>Safari es el navegador con el ícono de brújula azul que viene con el iPhone.</span>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-num">2</div>
-    <div class="step-body">
-      <strong>Tocá el ícono de compartir</strong>
-      <span>Es el cuadrado con una flecha para arriba <b>↑</b> que está <b>abajo en el centro</b> de la pantalla.</span>
-      <div class="step-img">⬜↑</div>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-num">3</div>
-    <div class="step-body">
-      <strong>Tocá "Añadir a pantalla de inicio"</strong>
-      <span>Deslizá hacia abajo en el menú que apareció hasta encontrar esta opción.</span>
-      <div class="step-img">➕ Añadir a pantalla de inicio</div>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-num">4</div>
-    <div class="step-body">
-      <strong>Tocá "Añadir" arriba a la derecha</strong>
-      <span>Aparece una pantalla de confirmación. Tocá "Añadir" en la esquina superior derecha.</span>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-num">5</div>
-    <div class="step-body">
-      <strong>Abrí la app desde tu pantalla</strong>
-      <span>Va a aparecer el ícono de Triskel en tu pantalla de inicio. <b>Abrilo desde ahí</b>, no desde Safari.</span>
-      <div class="step-img">🌿</div>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-num">6</div>
-    <div class="step-body">
-      <strong>Permitir notificaciones</strong>
-      <span>La app te va a preguntar si querés recibir notificaciones. Tocá <b>"Permitir"</b>.</span>
-      <div class="step-img">🔔 Permitir</div>
-    </div>
-  </div>
-
-  <div class="success">
-    <div class="icon">🎉</div>
-    <p><strong>¡Listo!</strong> Ya tenés la app instalada y las notificaciones activas.<br>Iniciá sesión con tu DNI y la contraseña que te dio tu profe.</p>
-  </div>
-
-  <a href="/panel/alumna.html" class="btn-app">
-    Abrir la app de Triskel
-    <span>triskel-academy.vercel.app</span>
-  </a>
-
+<div class="wizard" id="wizard">
+  <!-- Se genera por JS -->
 </div>
 
 <script>
-function switchTab(tab){
-  document.getElementById('tab-android').classList.toggle('active', tab==='android');
-  document.getElementById('tab-ios').classList.toggle('active', tab==='ios');
-  document.getElementById('panel-android').classList.toggle('active', tab==='android');
-  document.getElementById('panel-ios').classList.toggle('active', tab==='ios');
+const STEPS = {
+  android: [
+    {
+      icon: '🌐',
+      title: 'Abrí esto en Chrome',
+      text: 'Si estás leyendo esto desde WhatsApp, tocá los 3 puntos arriba a la derecha y elegí <b>"Abrir en Chrome"</b>.',
+      highlight: null,
+      warn: null,
+      btn: 'Ya estoy en Chrome →'
+    },
+    {
+      icon: '⋮',
+      title: 'Tocá los 3 puntos',
+      text: 'Están en la esquina <b>superior derecha</b> de Chrome.',
+      highlight: null,
+      warn: null,
+      btn: 'Listo →'
+    },
+    {
+      icon: '📲',
+      title: 'Tocá esta opción',
+      text: 'En el menú que se abrió, buscá y tocá:',
+      highlight: '📲  Agregar a pantalla de inicio',
+      warn: null,
+      btn: 'La encontré →'
+    },
+    {
+      icon: '✅',
+      title: 'Confirmá la instalación',
+      text: 'Tocá <b>"Instalar"</b> o <b>"Agregar"</b> en la ventana que apareció.',
+      highlight: null,
+      warn: null,
+      btn: 'Instalé la app →'
+    },
+    {
+      icon: '🌿',
+      title: 'Abrí la app desde tu pantalla',
+      text: 'Buscá el ícono de Triskel en tu pantalla de inicio y <b>abrilo desde ahí</b>.',
+      highlight: null,
+      warn: null,
+      btn: 'Abrí la app →'
+    },
+    {
+      icon: '🔔',
+      title: 'Permitir notificaciones',
+      text: 'Cuando la app te pregunte, tocá:',
+      highlight: '🔔  Permitir',
+      warn: null,
+      btn: 'Listo, permití →'
+    },
+  ],
+  ios: [
+    {
+      icon: '🧭',
+      title: 'Abrí esto en Safari',
+      text: 'En iPhone tiene que ser <b>Safari</b> (la brújula azul). Si llegaste por WhatsApp, tocá los <b>···</b> y elegí <b>"Abrir en Safari"</b>.',
+      highlight: null,
+      warn: {title:'¿Por qué Safari?', text:'En iPhone, Chrome no permite instalar apps. Solo funciona con Safari.'},
+      btn: 'Ya estoy en Safari →'
+    },
+    {
+      icon: '⬆️',
+      title: 'Tocá el ícono de compartir',
+      text: 'Es el cuadrado con la flecha que está <b>abajo en el centro</b> de la pantalla.',
+      highlight: null,
+      warn: null,
+      btn: 'Lo toqué →'
+    },
+    {
+      icon: '➕',
+      title: 'Tocá esta opción',
+      text: 'Deslizá el menú hacia abajo y tocá:',
+      highlight: '➕  Añadir a pantalla de inicio',
+      warn: null,
+      btn: 'La encontré →'
+    },
+    {
+      icon: '✅',
+      title: 'Tocá "Añadir"',
+      text: 'Aparece una pantalla de confirmación. Tocá <b>"Añadir"</b> arriba a la derecha.',
+      highlight: null,
+      warn: null,
+      btn: 'Añadí la app →'
+    },
+    {
+      icon: '🌿',
+      title: 'Abrí la app desde tu pantalla',
+      text: 'Buscá el ícono de Triskel en tu pantalla de inicio y <b>abrilo desde ahí</b>.',
+      highlight: null,
+      warn: null,
+      btn: 'Abrí la app →'
+    },
+    {
+      icon: '🔔',
+      title: 'Permitir notificaciones',
+      text: 'Cuando la app te pregunte, tocá:',
+      highlight: '🔔  Permitir',
+      warn: null,
+      btn: 'Listo, permití →'
+    },
+  ]
+};
+
+let device = 'android';
+let step = 0;
+
+function setDevice(d) {
+  device = d;
+  step = 0;
+  document.getElementById('tab-android').classList.toggle('active', d==='android');
+  document.getElementById('tab-ios').classList.toggle('active', d==='ios');
+  render();
 }
 
-// Auto-detectar dispositivo
-const ua = navigator.userAgent;
-const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-switchTab(isIOS ? 'ios' : 'android');
+function render() {
+  const steps = STEPS[device];
+  const w = document.getElementById('wizard');
+
+  if (step >= steps.length) {
+    w.innerHTML = `
+      <div class="done-card">
+        <div class="icon">🎉</div>
+        <h2>¡Todo listo!</h2>
+        <p>Ya tenés la app instalada y las notificaciones activadas.<br><br>Iniciá sesión con tu <b>DNI</b> y la contraseña que te dio tu profe.</p>
+        <a href="/panel/alumna.html" class="btn-app">Abrir Triskel Academy</a>
+      </div>`;
+    return;
+  }
+
+  const s = steps[step];
+  const total = steps.length;
+
+  w.innerHTML = `
+    <div class="step-counter">Paso ${step+1} de ${total}</div>
+    <div class="card">
+      <div class="icon">${s.icon}</div>
+      <h2>${s.title}</h2>
+      <p>${s.text}</p>
+      ${s.highlight ? `<div class="highlight">${s.highlight}</div>` : ''}
+      ${s.warn ? `<div class="warn"><strong>⚠️ ${s.warn.title}</strong>${s.warn.text}</div>` : ''}
+    </div>
+    <button class="btn-next" onclick="next()">${s.btn}</button>
+    ${step > 0 ? `<button class="btn-back" onclick="back()">← Volver</button>` : ''}
+  `;
+}
+
+function next() { step++; render(); }
+function back() { step = Math.max(0, step-1); render(); }
+
+// Auto-detectar
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+setDevice(isIOS ? 'ios' : 'android');
 </script>
 
 </body>
