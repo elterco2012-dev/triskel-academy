@@ -65,6 +65,7 @@ CREATE POLICY "own_ficha" ON triskel_fichas_salud
   );
 
 -- ── 2. GET: devuelve la ficha de la alumna autenticada (null si no existe) ───
+DROP FUNCTION IF EXISTS triskel_get_mi_ficha_salud();
 CREATE OR REPLACE FUNCTION triskel_get_mi_ficha_salud()
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
