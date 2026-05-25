@@ -333,6 +333,18 @@ let avisoPagoMes='';
 let _showAllPagos=false;
 function toggleAllPagos(){_showAllPagos=!_showAllPagos;renderPagos();}
 
+// ── RPC HELPER ───────────────────────────────────────────────────────────────
+async function rpc(fn, params){
+  let{data,error}=await sb.rpc(fn, params||{});
+  if(error?.message?.includes('JWT expired')||error?.code==='PGRST301'){
+    const{error:refreshErr}=await sb.auth.refreshSession();
+    if(refreshErr){await sb.auth.signOut();location.reload();return{data:null,error};}
+    ({data,error}=await sb.rpc(fn, params||{}));
+  }
+  if(error)console.error('rpc',fn,error);
+  return{data,error};
+}
+
 // ── AUTH ────────────────────────────────────────────────────────────────────
 
 async function doLogin(){
@@ -375,7 +387,7 @@ async function initApp(){
 }
 
 async function loadFicha(){
-  const{data,error}=await sb.rpc('triskel_get_mi_ficha');
+  const{data,error}=await rpc('triskel_get_mi_ficha');
   if(error||!data?.ok){
     // RPC missing (migration not run yet) or account not linked
     const msg=error?.message||'';
@@ -914,7 +926,7 @@ async function saveMiFichaSalud(){
   if(btn){btn.disabled=true;btn.textContent='Guardando...';}
   const f=STATE.ficha_salud||{};
   const gn=(v)=>{const n=parseFloat(v);return isNaN(n)?null:n;};
-  const{error}=await sb.rpc('triskel_save_mi_ficha_salud',{
+  const{error}=await rpc('triskel_save_mi_ficha_salud',{
     p_dni:f.dni||null,p_celular_familiar:f.celular_familiar||null,
     p_grupo_sanguineo:f.grupo_sanguineo||null,
     p_objetivos:f.objetivos||null,p_nivel_actividad_previo:f.nivel_actividad_previo||null,
@@ -938,7 +950,7 @@ async function saveMiFichaSalud(){
     return;
   }
   // Reload
-  const{data:fs}=await sb.rpc('triskel_get_mi_ficha_salud');
+  const{data:fs}=await rpc('triskel_get_mi_ficha_salud');
   STATE.ficha_salud=fs||null;
   updateSaludBadge();
   if(btn){btn.disabled=false;btn.textContent='Guardar ficha ✓';}
@@ -1066,7 +1078,7 @@ async function activarNotif(){
       userVisibleOnly:true,
       applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC)
     });
-    await sb.rpc('triskel_save_push_subscription',{p_subscription:sub.toJSON(),p_tipo:'alumna'});
+    await rpc('triskel_save_push_subscription',{p_subscription:sub.toJSON(),p_tipo:'alumna'});
     localStorage.removeItem(NOTIF_SNOOZE_KEY);
     showToast('🔔 Notificaciones activadas');
     navTo(curPage);
@@ -1090,7 +1102,7 @@ async function syncPushSubscription(){
     if(!reg)return;
     const sub=await reg.pushManager.getSubscription();
     if(!sub)return;
-    await sb.rpc('triskel_save_push_subscription',{p_subscription:sub.toJSON(),p_tipo:'alumna'});
+    await rpc('triskel_save_push_subscription',{p_subscription:sub.toJSON(),p_tipo:'alumna'});
   }catch(_){}
 }
 
@@ -1139,7 +1151,7 @@ async function confirmarAviso(){
   const btn=document.querySelector('#modal-pago .btn-confirm');
   btn.disabled=true;btn.textContent='Enviando...';
 
-  const{data,error}=await sb.rpc('triskel_crear_aviso_pago',{
+  const{data,error}=await rpc('triskel_crear_aviso_pago',{
     p_mes:avisoPagoMes,
     p_monto_declarado:monto,
     p_nota:nota
@@ -1190,7 +1202,7 @@ function subirFoto(){
     showToast('Guardando foto...');
     // Redimensionar y convertir a base64
     const base64=await resizeAndEncode(file,600);
-    const{data:r}=await sb.rpc('triskel_save_mi_foto',{p_foto_url:base64});
+    const{data:r}=await rpc('triskel_save_mi_foto',{p_foto_url:base64});
     if(r?.ok){
       STATE.alumna.foto_url=base64;
       showToast('✅ Foto actualizada');
@@ -1332,7 +1344,7 @@ async function confirmarAusencia(){
   const btn=document.getElementById('btn-confirmar-ausencia');
   btn.disabled=true;btn.textContent='Enviando...';
 
-  const{data,error}=await sb.rpc('triskel_avisar_ausencia',{
+  const{data,error}=await rpc('triskel_avisar_ausencia',{
     p_inscripcion_id:_ausenciaInscId,
     p_fecha:_ausenciaFecha,
     p_motivo:motivo
