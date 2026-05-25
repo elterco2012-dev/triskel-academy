@@ -4836,7 +4836,8 @@ async function saveAlumna(){
   for(const cb of checks){
     const hId=parseInt(cb.value);
     const precio=parseFloat(document.getElementById(`hp-${hId}`)?.value)||0;
-    await rpc('triskel_insert_inscripcion',{p_alumna_id:alumnaId,p_horario_id:hId,p_precio:precio});
+    const{error:inscErr}=await rpc('triskel_insert_inscripcion',{p_alumna_id:alumnaId,p_horario_id:hId,p_precio:precio});
+    if(inscErr){document.getElementById('mal-err').textContent='Error al inscribir horario: '+(inscErr?.message||'intentá de nuevo');_saving=false;return;}
   }
   // Auto-crear acceso en panel alumna solo cuando es nueva
   let passGenerada=null;
