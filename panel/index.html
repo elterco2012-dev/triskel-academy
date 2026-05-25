@@ -4841,7 +4841,7 @@ async function saveAlumna(){
   // Auto-crear acceso en panel alumna solo cuando es nueva
   let passGenerada=null;
   if(esNueva&&email){
-    passGenerada=generarPassAleatoria();
+    passGenerada=nacimiento?nacimientoAPass(nacimiento):generarPassAleatoria();
     try{
       const{data:{session:sess}}=await sb.auth.getSession();
       await fetch(`${SB_URL}/functions/v1/setup-alumna-auth`,{
@@ -5005,6 +5005,12 @@ async function saveFichaSalud(){
 function generarPassAleatoria(){
   const chars='abcdefghjkmnpqrstuvwxyz23456789';
   return Array.from(crypto.getRandomValues(new Uint8Array(8))).map(b=>chars[b%chars.length]).join('');
+}
+
+// Convierte '1985-03-15' → '150385' (ddmmaa)
+function nacimientoAPass(fechaISO){
+  const[y,m,d]=fechaISO.split('-');
+  return d+m+y.slice(2);
 }
 
 function showMsgAcceso(nombre,email,pass,tel){
