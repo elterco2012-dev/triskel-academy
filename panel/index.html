@@ -3192,7 +3192,6 @@ function alumnaInits(nombre,apellido){
 const MSG_KEY='triskel_msg_templates';
 const MSG_DEFAULTS={
   hoy:'Hola {nombre}! 🌿 Te recordamos que hoy vence tu cuota mensual de Triskel Academy{monto}. Ante cualquier consulta escribinos. ¡Gracias!',
-  proxima:'Hola {nombre}! 🌿 Te avisamos que en los próximos días vence tu cuota mensual de Triskel Academy{monto}. ¡Gracias!',
   atrasada:'Hola {nombre}! 🌿 Tenés una cuota pendiente de Triskel Academy{monto}. Cuando puedas, regularizá tu pago. ¡Gracias!'
 };
 function getMsgTemplates(){return{...MSG_DEFAULTS,...(DB.config?.msg_templates||{})};}
@@ -3210,13 +3209,12 @@ function waMsg(tel,nombre,monto,tipo){
 function openModalMensajes(){
   const t=getMsgTemplates();
   document.getElementById('msg-hoy').value=t.hoy;
-  document.getElementById('msg-proxima').value=t.proxima;
   document.getElementById('msg-atrasada').value=t.atrasada;
   document.getElementById('modal-mensajes').style.display='flex';
 }
 function closeModalMensajes(){document.getElementById('modal-mensajes').style.display='none';}
 async function saveMsgModal(){
-  await saveMsgTemplates({hoy:document.getElementById('msg-hoy').value.trim()||MSG_DEFAULTS.hoy,proxima:document.getElementById('msg-proxima').value.trim()||MSG_DEFAULTS.proxima,atrasada:document.getElementById('msg-atrasada').value.trim()||MSG_DEFAULTS.atrasada});
+  await saveMsgTemplates({hoy:document.getElementById('msg-hoy').value.trim()||MSG_DEFAULTS.hoy,atrasada:document.getElementById('msg-atrasada').value.trim()||MSG_DEFAULTS.atrasada});
   showMsg('✓ Mensajes guardados');closeModalMensajes();
 }
 
@@ -3224,7 +3222,7 @@ function getReminders(){
   const hoy=new Date();
   const diaHoy=hoy.getDate();
   const mesActual=hoy.toISOString().slice(0,7);
-  const res={hoy:[],atrasadas:[],proximas:[]};
+  const res={hoy:[],atrasadas:[]};
   DB.alumnas.filter(a=>a.estado==='activa'&&a.dia_pago).forEach(a=>{
     const pagado=DB.pagos.some(p=>p.alumna_id===a.id&&p.mes===mesActual&&p.pagado);
     if(pagado)return;
@@ -3232,14 +3230,13 @@ function getReminders(){
     const diff=diaHoy-a.dia_pago;
     if(diff===0)res.hoy.push({...a,monto});
     else if(diff>0&&diff<=15)res.atrasadas.push({...a,monto,diff});
-    else if(diff<0&&diff>=-3)res.proximas.push({...a,monto,diasFaltan:-diff});
   });
   return res;
 }
 
 function rRecordatorios(){
   const rem=getReminders();
-  const total=rem.hoy.length+rem.atrasadas.length+rem.proximas.length;
+  const total=rem.hoy.length+rem.atrasadas.length;
   if(!total)return'';
 
   function remRow(a,tipo,label,color){
@@ -3263,7 +3260,6 @@ function rRecordatorios(){
     </div>
     ${rem.hoy.map(a=>remRow(a,'hoy','🔴 Vence HOY','var(--rd)')).join('')}
     ${rem.atrasadas.map(a=>remRow(a,'atrasada',`🟠 Atrasada ${a.diff} día${a.diff!==1?'s':''}`,`var(--fun)`)).join('')}
-    ${rem.proximas.map(a=>remRow(a,'proxima',`🟡 Vence en ${a.diasFaltan} día${a.diasFaltan!==1?'s':''}`,`var(--tm)`)).join('')}
   </div>`;
 }
 
@@ -6513,8 +6509,6 @@ initAuth();
     <p style="font-size:12px;color:var(--tm);margin-bottom:1rem;">Variables: <code>{nombre}</code> <code>{monto}</code> <code>{mes}</code></p>
     <label for="msg-hoy" style="font-size:12px;font-weight:600;">Vence HOY</label>
     <textarea id="msg-hoy" style="height:72px;font-size:12px;"></textarea>
-    <label for="msg-proxima" style="font-size:12px;font-weight:600;">Vence próximamente</label>
-    <textarea id="msg-proxima" style="height:72px;font-size:12px;"></textarea>
     <label for="msg-atrasada" style="font-size:12px;font-weight:600;">Cuota atrasada / pendiente</label>
     <textarea id="msg-atrasada" style="height:72px;font-size:12px;"></textarea>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:.75rem;">
