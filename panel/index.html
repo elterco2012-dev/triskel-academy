@@ -4448,6 +4448,10 @@ function goToHorarioDetalle(horarioId){
         ${esp.map(e=>`<button class="btn btn-s btn-danger" style="margin-left:4px;" onclick="removerEspera(${e.id})">✕ ${alumnaById(e.alumna_id)?.nombre||''}</button>`).join('')}
       </div>`;
     })()}
+    <div style="margin-bottom:1rem;">
+      <div style="font-size:11px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">📋 Lista de espera / Notas</div>
+      <textarea id="horario-notas-${h.id}" placeholder="Ej: María García 11-5555-1234 quiere este horario · Ana López espera lugar en Reformer" style="width:100%;border:1.5px solid var(--b);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;resize:vertical;min-height:70px;background:var(--s2);color:var(--t);outline:none;" onblur="saveHorarioNotas(${h.id})" onfocus="this.style.borderColor='var(--v)'" onblur="this.style.borderColor='var(--b)';saveHorarioNotas(${h.id})">${h.notas||''}</textarea>
+    </div>
     ${inscs.length?inscs.map(i=>{
       const a=alumnaById(i.alumna_id);
       if(!a)return'';
@@ -5805,6 +5809,15 @@ async function saveHorario(){
   closeModalHorario();
   await loadAll();
   showMsg(_editHorarioId?'✓ Horario actualizado':'✓ Horario creado');
+}
+
+async function saveHorarioNotas(id){
+  const el=document.getElementById(`horario-notas-${id}`);
+  if(!el)return;
+  const notas=el.value;
+  await rpc('triskel_save_horario_notas',{p_id:id,p_notas:notas});
+  const h=DB.horarios.find(x=>x.id===id);
+  if(h)h.notas=notas;
 }
 
 async function deleteHorario(id){
