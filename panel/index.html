@@ -2866,6 +2866,7 @@ function showPanel(){
   document.getElementById('PS').style.display='block';
   document.getElementById('tic').textContent=dark?'☀️ Modo claro':'🌙 Modo oscuro';
   loadAll();
+  syncPushSubscription();
 }
 
 function toggleDark(){
@@ -5586,6 +5587,17 @@ function urlB64ToUint8Array(b64){
   const base64=(b64+padding).replace(/-/g,'+').replace(/_/g,'/');
   const raw=atob(base64);
   return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
+}
+
+async function syncPushSubscription(){
+  try{
+    if(!('serviceWorker' in navigator)||Notification.permission!=='granted')return;
+    const reg=await navigator.serviceWorker.getRegistration('/panel/sw.js');
+    if(!reg)return;
+    const sub=await reg.pushManager.getSubscription();
+    if(!sub)return;
+    await sb.rpc('triskel_save_push_subscription',{p_subscription:sub.toJSON(),p_tipo:'teacher'});
+  }catch(_){}
 }
 
 async function enviarRecordatorioPush(authUserId, nombre){
