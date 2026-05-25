@@ -5027,10 +5027,11 @@ function showMsgAcceso(nombre,email,pass,tel){
       <div>🔑 <b>${pass}</b></div>
       <div style="font-size:11px;color:var(--tm);margin-top:2px;">Panel: ${panelUrl}</div>
     </div>
-    <div style="display:flex;gap:8px;">
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
       <a href="https://wa.me/${tel.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}" target="_blank" style="flex:1;background:#25D366;color:#fff;text-align:center;padding:7px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700;">📲 Enviar por WA</a>
-      <button onclick="document.getElementById('msg-acceso-toast').remove()" style="flex:1;background:var(--s2);border:none;border-radius:8px;padding:7px;font-size:13px;cursor:pointer;color:var(--t);">Cerrar</button>
-    </div>`;
+      <button id="btn-copiar-acceso" onclick="navigator.clipboard.writeText(${JSON.stringify(msg)}).then(()=>{const b=document.getElementById('btn-copiar-acceso');b.textContent='✅ Copiado';setTimeout(()=>{b.textContent='📋 Copiar';},2000);})" style="flex:1;background:var(--s2);border:1px solid var(--bm);border-radius:8px;padding:7px;font-size:13px;cursor:pointer;color:var(--t);font-weight:600;">📋 Copiar</button>
+    </div>
+    <button onclick="document.getElementById('msg-acceso-toast').remove()" style="width:100%;background:transparent;border:none;padding:4px;font-size:12px;cursor:pointer;color:var(--sub);">Cerrar</button>`;
   document.body.appendChild(div);
 }
 
