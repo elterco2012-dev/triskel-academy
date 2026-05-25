@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const SUPABASE_URL        = Deno.env.get('SUPABASE_URL')!;
+const SUPABASE_URL         = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
@@ -27,31 +27,37 @@ Deno.serve(async (req) => {
     if (authErr || !user) return json({ ok: false, msg: 'invalid token' }, 401);
 
     // Block alumnas from calling this endpoint
-    const { data: alumnaRecord } = await admin
+    const { data: callerAlumna } = await admin
       .from('triskel_alumnas')
       .select('id')
       .eq('auth_user_id', user.id)
       .maybeSingle();
-
-    if (alumnaRecord) return json({ ok: false, msg: 'no autorizado' }, 403);
+    if (callerAlumna) return json({ ok: false, msg: 'no autorizado' }, 403);
 
     const { alumna_id, email, password } = await req.json();
     if (!alumna_id || !email || !password) {
       return json({ ok: false, msg: 'alumna_id, email y password son requeridos' }, 400);
     }
 
-    // Use getUserByEmail instead of listing all users
-    let userId: string;
-    const { data: existingUser } = await admin.auth.admin.getUserByEmail(email);
+    // Check if this alumna already has a linked auth user
+    const { data: alumnaRow } = await admin
+      .from('triskel_alumnas')
+      .select('auth_user_id')
+      .eq('id', alumna_id)
+      .maybeSingle();
 
-    if (existingUser?.user) {
+    let userId: string;
+
+    if (alumnaRow?.auth_user_id) {
+      // Already linked — update email + password
       const { error: updateErr } = await admin.auth.admin.updateUserById(
-        existingUser.user.id,
-        { password }
+        alumnaRow.auth_user_id,
+        { email, password, email_confirm: true }
       );
       if (updateErr) return json({ ok: false, msg: updateErr.message }, 400);
-      userId = existingUser.user.id;
+      userId = alumnaRow.auth_user_id;
     } else {
+      // No linked user — create a new one
       const { data: created, error: createErr } = await admin.auth.admin.createUser({
         email,
         password,
@@ -66,7 +72,6 @@ Deno.serve(async (req) => {
       .from('triskel_alumnas')
       .update({ auth_user_id: userId })
       .eq('id', alumna_id);
-
     if (linkErr) return json({ ok: false, msg: linkErr.message }, 400);
 
     return json({ ok: true, user_id: userId });
