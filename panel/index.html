@@ -4875,14 +4875,13 @@ async function saveAlumna(){
   const dni=document.getElementById('mal-dni').value.trim()||null;
   const nacimiento=document.getElementById('mal-nacimiento').value||null;
   const esNueva=!_editAlumnaId;
-  // Si no tiene email pero tiene DNI, usamos dni@triskel.local como auth email
-  const emailAuth=email||(dni?`${dni}@triskel.local`:null);
-  // El email guardado en la DB es el real (null si no tiene); el fake solo va a auth
+  // Si tiene DNI, siempre se usa como credencial de login (dni@triskel.local) aunque tenga email
+  const emailAuth=dni?`${dni}@triskel.local`:email;
   const params={
     p_nombre:nombre,
     p_apellido:document.getElementById('mal-apellido').value.trim()||null,
     p_tel:document.getElementById('mal-tel').value.trim()||null,
-    p_email:emailAuth, // guardamos el auth email para poder reconocerla
+    p_email:email, // guardamos el email real para contacto; el auth email es emailAuth
     p_notas:document.getElementById('mal-notas').value.trim()||null,
     p_dia_pago:parseInt(document.getElementById('mal-diapago').value)||null,
     p_fecha_nacimiento:nacimiento,
@@ -4917,8 +4916,7 @@ async function saveAlumna(){
   closeModalAlumna();
   await loadAll();
   if(passGenerada){
-    const usaDni=!email&&!!dni;
-    showMsgAcceso(nombre,emailAuth,passGenerada,alumnaById(alumnaId)?.tel||'',usaDni?dni:null);
+    showMsgAcceso(nombre,emailAuth,passGenerada,alumnaById(alumnaId)?.tel||'',dni||null);
   }else{
     showMsg(esNueva?'✓ Alumna creada':'✓ Alumna actualizada');
   }
