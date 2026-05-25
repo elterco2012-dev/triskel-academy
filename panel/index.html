@@ -119,6 +119,11 @@
     .hslot.reformer{background:var(--refl);border-color:var(--ref);}
     .hslot.funcional{background:var(--funl);border-color:var(--fun);}
     .hslot.esferodinamia{background:var(--esfl);border-color:var(--esf);}
+    .hslot-empty{opacity:.45;}
+    .hslot-full.mat{background:#c8d6c0;border-color:var(--mat);border-width:2.5px;}
+    .hslot-full.reformer{background:#f5c6d0;border-color:var(--ref);border-width:2.5px;}
+    .hslot-full.funcional{background:#fde8b8;border-color:var(--fun);border-width:2.5px;}
+    .hslot-full.esferodinamia{background:#c8d6f5;border-color:var(--esf);border-width:2.5px;}
     .hslot-time{font-size:13px;font-weight:800;color:var(--t);letter-spacing:-.3px;line-height:1.2;}
     .hslot-mod{font-size:12px;font-weight:700;margin-top:5px;}
     .hslot-mod.mat{color:var(--mat);}
@@ -127,9 +132,11 @@
     .hslot-mod.esferodinamia{color:var(--esf);}
     .hslot-bar{height:5px;background:rgba(0,0,0,.1);border-radius:5px;margin:7px 4px 0;overflow:hidden;}
     .hslot-bar-fill{height:100%;border-radius:5px;}
-    .hslot-n{font-size:11px;font-weight:600;margin-top:5px;}
-    .hslot-full .hslot-n{color:#b91c1c;}
+    .hslot-n{font-size:11px;font-weight:600;margin-top:5px;color:var(--tm);}
+    .hslot-full .hslot-n{color:#b91c1c;font-weight:700;}
+    .hslot-warn .hslot-n{color:#b45309;font-weight:700;}
     .hslot-full .hslot-bar-fill{background:#b91c1c !important;}
+    .hslot-warn .hslot-bar-fill{background:#d97706 !important;}
 
     /* Clase builder */
     .ej-row{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--b);}
@@ -4371,14 +4378,25 @@ function rHorarios(){
       ${!slots.length?`<div style="font-size:11px;color:var(--th);padding:8px 4px;text-align:center;font-style:italic;">Sin clases</div>`:''}
       ${slots.map(s=>{
         const inscs=DB.inscripciones.filter(i=>i.horario_id===s.id);
-        const isFull=s.capacidad&&inscs.length>=s.capacidad;
-        const pct=s.capacidad?Math.min(100,Math.round(inscs.length/s.capacidad*100)):0;
-        const barColor=isFull?'#b91c1c':pct>=70?'#d97706':'#16a34a';
-        const capLabel=isFull?'🔴 COMPLETO':`${inscs.length}/${s.capacidad} · ${s.capacidad-inscs.length} libre${s.capacidad-inscs.length!==1?'s':''}`;
-        return`<div class="hslot ${s.modalidad}${isFull?' hslot-full':''}" onclick="goToHorarioDetalle(${s.id})">
+        const n=inscs.length, cap=s.capacidad||0;
+        const isFull=cap&&n>=cap;
+        const libres=cap?cap-n:null;
+        const isWarn=!isFull&&libres!==null&&libres<=3&&libres>0;
+        const isEmpty=n===0;
+        const pct=cap?Math.min(100,Math.round(n/cap*100)):0;
+        const barColor=isFull?'#b91c1c':isWarn?'#d97706':'#16a34a';
+        const capLabel=isFull
+          ?'🔴 COMPLETO'
+          :isEmpty
+            ?'Sin inscriptas aún'
+            :isWarn
+              ?`⚠️ ${libres} lugar${libres!==1?'es':''} libre${libres!==1?'s':''}`
+              :`${n}/${cap}`;
+        const extraClass=isFull?' hslot-full':isWarn?' hslot-warn':isEmpty?' hslot-empty':'';
+        return`<div class="hslot ${s.modalidad}${extraClass}" onclick="goToHorarioDetalle(${s.id})">
           <div class="hslot-time">${s.hora_inicio}–${s.hora_fin}</div>
           <div class="hslot-mod ${s.modalidad}">${MOD_LABEL[s.modalidad]||s.modalidad}</div>
-          <div class="hslot-bar"><div class="hslot-bar-fill" style="width:${pct}%;background:${barColor};"></div></div>
+          ${!isEmpty?`<div class="hslot-bar"><div class="hslot-bar-fill" style="width:${pct}%;background:${barColor};"></div></div>`:''}
           <div class="hslot-n">${capLabel}</div>
         </div>`;
       }).join('')}
@@ -4566,7 +4584,7 @@ function rClases(){
     </div>
     <button class="btn btn-s" onclick="goTo('historial')" style="font-size:11px;">🗓 Historial</button>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;">
     ${dias.map(dia=>{
       const slots=DB.horarios.filter(h=>h.dia===dia).sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
       if(!slots.length)return'';
