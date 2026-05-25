@@ -3565,14 +3565,18 @@ function rAlertasInteligentes(){
   const activas=DB.alumnas.filter(a=>a.estado==='activa');
 
   // Morosas: sin pago en dos meses consecutivos, con gracia de 10 días al inicio de mes
+  // Solo se exige pago de un mes si la alumna ya estaba inscripta ese mes (via created_at)
   const diasGracia=10;
   const esInicioMes=new Date().getDate()<=diasGracia;
   const morosas=activas.filter(a=>{
     const p0=DB.pagos.some(p=>p.alumna_id===a.id&&p.mes===mes0&&p.pagado);
     const p1=DB.pagos.some(p=>p.alumna_id===a.id&&p.mes===mes1&&p.pagado);
     const p2=DB.pagos.some(p=>p.alumna_id===a.id&&p.mes===mes2&&p.pagado);
-    if(esInicioMes)return !p1&&!p2;
-    return !p0&&!p1;
+    const mc=a.created_at?a.created_at.slice(0,7):'2000-01';
+    // esInicioMes: chequeamos mes1 y mes2; mc debe ser <= mes2 para que ambos apliquen
+    if(esInicioMes)return mc<=mes2&&!p1&&!p2;
+    // normal: chequeamos mes0 y mes1; mc debe ser <= mes1 (inscripta desde antes del mes anterior)
+    return mc<=mes1&&!p0&&!p1;
   });
 
   // 3+ ausencias seguidas: alumna no aparece en los últimos 3 registros de asistencia de sus horarios
