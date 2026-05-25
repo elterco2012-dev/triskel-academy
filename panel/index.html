@@ -4272,6 +4272,7 @@ function rAlumnas(){
       ${inscs.length>0?pago:''}
       <div class="arow-btns" style="display:flex;gap:6px;flex-wrap:wrap;">
         <button class="btn btn-s" onclick="openModalAlumna(${a.id})">Editar</button>
+        ${a.email?`<button class="btn btn-s" title="Cambiar contraseña" onclick="cambiarClaveAlumna(${a.id})">🔑</button>`:''}
         ${a.estado==='activa'?`<button class="btn btn-s" onclick="pausarAlumna(${a.id})">⏸ Pausar</button>`:''}
         ${a.estado==='pausada'?`<button class="btn btn-s btn-p" onclick="reactivarAlumna(${a.id})">▶ Reactivar</button>`:''}
         ${a.estado!=='baja'?`<button class="btn btn-s btn-danger" onclick="darDeBajaAlumna(${a.id})">Baja</button>`:''}
@@ -5025,6 +5026,24 @@ function showMsgAcceso(nombre,email,pass,tel){
       <button onclick="document.getElementById('msg-acceso-toast').remove()" style="flex:1;background:var(--s2);border:none;border-radius:8px;padding:7px;font-size:13px;cursor:pointer;color:var(--t);">Cerrar</button>
     </div>`;
   document.body.appendChild(div);
+}
+
+async function cambiarClaveAlumna(id){
+  const a=alumnaById(id);
+  if(!a?.email){showMsg('Esta alumna no tiene email registrado');return;}
+  const nueva=prompt(`Nueva contraseña para ${a.nombre}:`);
+  if(!nueva||nueva.trim().length<4){if(nueva!==null)showMsg('La contraseña debe tener al menos 4 caracteres');return;}
+  try{
+    const{data:{session:sess}}=await sb.auth.getSession();
+    const r=await fetch(`${SB_URL}/functions/v1/setup-alumna-auth`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(sess?.access_token||SB_KEY)},
+      body:JSON.stringify({alumna_id:id,email:a.email,password:nueva.trim()})
+    });
+    const d=await r.json();
+    if(!d.ok){showMsg('Error: '+(d.msg||'intentá de nuevo'));return;}
+    showMsgAcceso(a.nombre,a.email,nueva.trim(),a.tel||'');
+  }catch(e){showMsg('Error al cambiar contraseña');}
 }
 
 // ─── MODAL INSCRIPCION ──────────────────────────────────
