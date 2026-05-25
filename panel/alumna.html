@@ -398,6 +398,7 @@ async function loadFicha(){
     STATE.ficha_salud=fs||null;
     updateSaludBadge();
   }).catch(()=>{});
+  syncPushSubscription();
   navTo('inicio');
   showOnboarding();
 }
@@ -1080,6 +1081,17 @@ function urlBase64ToUint8Array(base64String){
   const base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/');
   const raw=atob(base64);
   return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
+}
+
+async function syncPushSubscription(){
+  try{
+    if(!('serviceWorker' in navigator)||Notification.permission!=='granted')return;
+    const reg=await navigator.serviceWorker.getRegistration('/panel/sw-alumna.js');
+    if(!reg)return;
+    const sub=await reg.pushManager.getSubscription();
+    if(!sub)return;
+    await sb.rpc('triskel_save_push_subscription',{p_subscription:sub.toJSON(),p_tipo:'alumna'});
+  }catch(_){}
 }
 
 // ── MODAL AVISO PAGO ──────────────────────────────────────────────────────────
