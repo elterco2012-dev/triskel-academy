@@ -111,21 +111,25 @@
     .asub{font-size:11px;color:var(--tm);}
 
     /* Horario grid */
-    .hgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
-    .hday{font-size:11px;font-weight:600;color:var(--tm);text-transform:uppercase;text-align:center;padding:.4rem 0;border-bottom:2px solid var(--b);margin-bottom:4px;}
-    .hslot{border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;border:1.5px solid transparent;transition:transform .1s,box-shadow .1s;}
-    .hslot:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.1);}
+    .hgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+    .hday{font-size:12px;font-weight:700;color:var(--t);text-transform:uppercase;text-align:center;padding:.6rem 0;border-bottom:2px solid var(--b);margin-bottom:6px;letter-spacing:.06em;}
+    .hslot{border-radius:12px;padding:12px 8px 10px;text-align:center;cursor:pointer;border:2px solid transparent;transition:transform .15s,box-shadow .15s;display:flex;flex-direction:column;gap:0;}
+    .hslot:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.13);}
     .hslot.mat{background:var(--matl);border-color:var(--mat);}
     .hslot.reformer{background:var(--refl);border-color:var(--ref);}
     .hslot.funcional{background:var(--funl);border-color:var(--fun);}
     .hslot.esferodinamia{background:var(--esfl);border-color:var(--esf);}
-    .hslot-time{font-size:10px;font-weight:600;color:var(--tm);}
-    .hslot-mod{font-size:11px;font-weight:600;margin-top:2px;}
+    .hslot-time{font-size:13px;font-weight:800;color:var(--t);letter-spacing:-.3px;line-height:1.2;}
+    .hslot-mod{font-size:12px;font-weight:700;margin-top:5px;}
     .hslot-mod.mat{color:var(--mat);}
     .hslot-mod.reformer{color:var(--ref);}
     .hslot-mod.funcional{color:var(--fun);}
     .hslot-mod.esferodinamia{color:var(--esf);}
-    .hslot-n{font-size:10px;color:var(--tm);margin-top:2px;}
+    .hslot-bar{height:5px;background:rgba(0,0,0,.1);border-radius:5px;margin:7px 4px 0;overflow:hidden;}
+    .hslot-bar-fill{height:100%;border-radius:5px;}
+    .hslot-n{font-size:11px;font-weight:600;margin-top:5px;}
+    .hslot-full .hslot-n{color:#b91c1c;}
+    .hslot-full .hslot-bar-fill{background:#b91c1c !important;}
 
     /* Clase builder */
     .ej-row{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--b);}
@@ -4367,11 +4371,15 @@ function rHorarios(){
       ${!slots.length?`<div style="font-size:11px;color:var(--th);padding:8px 4px;text-align:center;font-style:italic;">Sin clases</div>`:''}
       ${slots.map(s=>{
         const inscs=DB.inscripciones.filter(i=>i.horario_id===s.id);
-        const cc=capColor(inscs.length,s.capacidad);
-        return`<div class="hslot ${s.modalidad}" onclick="goToHorarioDetalle(${s.id})">
+        const isFull=s.capacidad&&inscs.length>=s.capacidad;
+        const pct=s.capacidad?Math.min(100,Math.round(inscs.length/s.capacidad*100)):0;
+        const barColor=isFull?'#b91c1c':pct>=70?'#d97706':'#16a34a';
+        const capLabel=isFull?'🔴 COMPLETO':`${inscs.length}/${s.capacidad} · ${s.capacidad-inscs.length} libre${s.capacidad-inscs.length!==1?'s':''}`;
+        return`<div class="hslot ${s.modalidad}${isFull?' hslot-full':''}" onclick="goToHorarioDetalle(${s.id})">
           <div class="hslot-time">${s.hora_inicio}–${s.hora_fin}</div>
           <div class="hslot-mod ${s.modalidad}">${MOD_LABEL[s.modalidad]||s.modalidad}</div>
-          <div class="hslot-n" style="color:${cc};font-weight:500;">${capText(inscs.length,s.capacidad)}</div>
+          <div class="hslot-bar"><div class="hslot-bar-fill" style="width:${pct}%;background:${barColor};"></div></div>
+          <div class="hslot-n">${capLabel}</div>
         </div>`;
       }).join('')}
     </div>`;
@@ -4381,7 +4389,7 @@ function rHorarios(){
     <div class="ptitle" style="margin:0;">Horarios</div>
     <button class="btn btn-p" onclick="openModalHorario()">+ Nuevo horario</button>
   </div>
-  <p style="font-size:13px;color:var(--tm);margin-bottom:.75rem;">Vista de turnos configurados — alumnas inscriptas y capacidad disponible. Para planificar ejercicios de una clase, usá <strong>Planificar</strong>.</p>
+  <p style="font-size:13px;color:var(--tm);margin-bottom:1rem;">Tocá un horario para ver las alumnas inscriptas o planificar la clase de la semana.</p>
   <div class="card">
     <div class="hgrid">${cols}</div>
   </div>
