@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Triskel Academy · Guía para la profe</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f9f4fc;color:#2d2d2d;}
+
+  .header{background:#6c5b7b;color:#fff;padding:28px 20px 22px;text-align:center;}
+  .header-inner{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:8px;}
+  .header img{width:48px;height:48px;border-radius:12px;}
+  .header h1{font-size:22px;font-weight:800;}
+  .header p{font-size:14px;opacity:.85;}
+
+  .flows{padding:20px 16px 40px;display:flex;flex-direction:column;gap:32px;max-width:500px;margin:0 auto;}
+
+  .flow-title{font-size:11px;font-weight:700;letter-spacing:1.5px;color:#9b8aaa;text-transform:uppercase;margin-bottom:4px;}
+  .flow-desc{font-size:15px;font-weight:700;color:#2d2d2d;margin-bottom:4px;}
+  .flow-sub{font-size:13px;color:#666;margin-bottom:14px;line-height:1.5;}
+
+  /* ── MOCKUP PHONE ── */
+  .phone{background:#fff;border-radius:16px;border:2px solid #e0d0f0;overflow:hidden;box-shadow:0 4px 20px rgba(108,91,123,.13);}
+  .phone-bar{background:#6c5b7b;color:#fff;padding:10px 14px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;}
+  .phone-bar span{opacity:.7;font-weight:400;}
+  .phone-body{padding:14px;}
+
+  /* Cards inside mockups */
+  .m-card{background:#f9f4fc;border-radius:12px;padding:12px 14px;margin-bottom:10px;border:1px solid #ede0f5;}
+  .m-card:last-child{margin-bottom:0;}
+  .m-label{font-size:10px;font-weight:700;letter-spacing:1px;color:#9b8aaa;text-transform:uppercase;margin-bottom:6px;}
+  .m-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .m-name{font-size:14px;font-weight:700;color:#2d2d2d;}
+  .m-detail{font-size:12px;color:#666;margin-top:2px;}
+  .m-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;}
+  .badge-pend{background:#fff3cd;color:#856404;}
+  .badge-ok{background:#d4edda;color:#155724;}
+  .badge-aus{background:#e3f0ff;color:#1a4a8c;}
+  .m-btns{display:flex;gap:8px;margin-top:10px;}
+  .m-btn{flex:1;padding:8px;border-radius:8px;font-size:12px;font-weight:700;text-align:center;border:none;}
+  .m-btn-ok{background:#6c5b7b;color:#fff;}
+  .m-btn-no{background:#f5f0fb;color:#6c5b7b;border:1px solid #d0b8e8;}
+
+  .m-avatar{width:36px;height:36px;border-radius:50%;background:#6c5b7b;color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .m-avatar-sm{width:28px;height:28px;border-radius:50%;background:#9b7bb5;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+  .m-input{border:1px solid #ddd;border-radius:8px;padding:8px 10px;font-size:13px;color:#2d2d2d;background:#fafafa;width:100%;margin-bottom:8px;}
+  .m-input::placeholder{color:#bbb;}
+
+  .m-notif{background:#6c5b7b;color:#fff;border-radius:12px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start;}
+  .m-notif-icon{font-size:22px;flex-shrink:0;}
+  .m-notif-text strong{display:block;font-size:13px;font-weight:700;margin-bottom:2px;}
+  .m-notif-text span{font-size:12px;opacity:.85;}
+
+  .step-hint{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;color:#9b8aaa;}
+  .step-hint::before{content:'👆';font-size:16px;}
+
+  .divider{border:none;border-top:1px solid #e8dff0;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <img src="/panel/icon-192.png" alt="Triskel">
+    <h1>Panel de la profe</h1>
+  </div>
+  <p>Los 4 momentos del día a día</p>
+</div>
+
+<div class="flows">
+
+  <!-- ── FLUJO 1: Confirmar pago ── -->
+  <div>
+    <div class="flow-title">Flujo 1</div>
+    <div class="flow-desc">💰 Una alumna avisó que pagó</div>
+    <div class="flow-sub">Le llega una notificación. Entra al panel, lo ve en <b>Inicio</b> y lo confirma o rechaza con un toque.</div>
+
+    <div class="phone">
+      <div class="phone-bar">🏠 Inicio <span>· Triskel Academy</span></div>
+      <div class="phone-body">
+        <div class="m-card">
+          <div class="m-label">💰 Avisos de pago pendientes</div>
+          <div class="m-row">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="m-avatar">MG</div>
+              <div>
+                <div class="m-name">María González</div>
+                <div class="m-detail">Mayo 2026 · $17.000 · Transferencia</div>
+              </div>
+            </div>
+            <span class="m-badge badge-pend">Pendiente</span>
+          </div>
+          <div class="m-btns">
+            <div class="m-btn m-btn-ok">✓ Confirmar</div>
+            <div class="m-btn m-btn-no">✗ Rechazar</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-row">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="m-avatar">LP</div>
+              <div>
+                <div class="m-name">Laura Pérez</div>
+                <div class="m-detail">Mayo 2026 · $17.000 · Efectivo</div>
+              </div>
+            </div>
+            <span class="m-badge badge-pend">Pendiente</span>
+          </div>
+          <div class="m-btns">
+            <div class="m-btn m-btn-ok">✓ Confirmar</div>
+            <div class="m-btn m-btn-no">✗ Rechazar</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="step-hint">Al confirmar, la alumna recibe una notificación automática</div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ── FLUJO 2: Ver ausencia ── -->
+  <div>
+    <div class="flow-title">Flujo 2</div>
+    <div class="flow-desc">📅 Una alumna avisó que no viene</div>
+    <div class="flow-sub">Le llega una notificación con el nombre, la clase y el motivo. No necesita hacer nada — queda registrado automáticamente.</div>
+
+    <div class="phone">
+      <div class="phone-bar">📱 Notificación recibida</div>
+      <div class="phone-body">
+        <div class="m-notif">
+          <div class="m-notif-icon">📅</div>
+          <div class="m-notif-text">
+            <strong>Aviso de ausencia</strong>
+            <span>Ana Martínez no puede ir el 28/05 · Reformer Martes 10:15 — Lesión en rodilla</span>
+          </div>
+        </div>
+        <div class="m-card" style="margin-top:10px;">
+          <div class="m-label">📅 Ausencias avisadas — esta semana</div>
+          <div class="m-row" style="margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="m-avatar-sm">AM</div>
+              <div>
+                <div style="font-size:13px;font-weight:700;">Ana Martínez</div>
+                <div style="font-size:11px;color:#666;">28 may · Reformer Mar 10:15</div>
+              </div>
+            </div>
+            <span class="m-badge badge-aus">Avisada</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="step-hint">Solo leer — no hay nada que confirmar</div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ── FLUJO 3: Agregar alumna ── -->
+  <div>
+    <div class="flow-title">Flujo 3</div>
+    <div class="flow-desc">👤 Agregar una alumna nueva</div>
+    <div class="flow-sub">Desde <b>Alumnas → Nueva alumna</b>. Se completan los datos, se elige el horario y el sistema le crea el acceso automáticamente.</div>
+
+    <div class="phone">
+      <div class="phone-bar">👤 Nueva alumna</div>
+      <div class="phone-body">
+        <input class="m-input" placeholder="Nombre *" readonly>
+        <input class="m-input" placeholder="Apellido" readonly>
+        <input class="m-input" placeholder="Teléfono (WhatsApp)" readonly>
+        <input class="m-input" placeholder="Email (opcional)" readonly>
+        <input class="m-input" placeholder="DNI — se usa para el login" readonly>
+        <input class="m-input" placeholder="Fecha de nacimiento → será la contraseña" readonly>
+        <div style="background:#f0e6fa;border-radius:8px;padding:10px 12px;font-size:12px;color:#4a3a5c;margin-top:4px;">
+          ✅ Al guardar, el sistema le crea el acceso automáticamente.<br>
+          Te muestra la clave para enviársela por WhatsApp.
+        </div>
+      </div>
+    </div>
+    <div class="step-hint">La contraseña es la fecha de nacimiento: ej. 261188</div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ── FLUJO 4: Recordatorio manual ── -->
+  <div>
+    <div class="flow-title">Flujo 4</div>
+    <div class="flow-desc">⏰ Mandar un recordatorio de pago</div>
+    <div class="flow-sub">Los recordatorios se mandan solos el día de vencimiento. Si querés mandar uno extra a una alumna, entrás a su ficha y tocás el botón.</div>
+
+    <div class="phone">
+      <div class="phone-bar">👤 María González <span>· Activa</span></div>
+      <div class="phone-body">
+        <div class="m-card">
+          <div class="m-label">Estado de pago — Mayo 2026</div>
+          <div class="m-row">
+            <div>
+              <div class="m-name">Sin pago registrado</div>
+              <div class="m-detail">Vence el día 15</div>
+            </div>
+            <span class="m-badge badge-pend">Pendiente</span>
+          </div>
+          <div class="m-btns" style="margin-top:10px;">
+            <div class="m-btn m-btn-ok">⏰ Recordatorio</div>
+            <div class="m-btn m-btn-no">📲 WhatsApp</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-label">✅ Pagos confirmados</div>
+          <div class="m-row">
+            <div>
+              <div style="font-size:13px;color:#666;">Abril 2026</div>
+            </div>
+            <span class="m-badge badge-ok">$17.000</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="step-hint">El sistema también manda recordatorios automáticos solo</div>
+  </div>
+
+</div>
+
+</body>
+</html>
