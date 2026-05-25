@@ -1198,10 +1198,10 @@ function subirFoto(){
   input.onchange=async()=>{
     const file=input.files[0];
     if(!file)return;
-    if(file.size>3*1024*1024){showToast('La imagen es muy grande (máx 3MB)');return;}
+    if(file.size>10*1024*1024){showToast('La imagen es muy grande (máx 10MB)');return;}
     showToast('Guardando foto...');
     // Redimensionar y convertir a base64
-    const base64=await resizeAndEncode(file,600);
+    const base64=await resizeAndEncode(file,800);
     const{data:r}=await rpc('triskel_save_mi_foto',{p_foto_url:base64});
     if(r?.ok){
       STATE.alumna.foto_url=base64;
