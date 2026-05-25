@@ -2923,7 +2923,12 @@ function toggleDark(){
 
 // ─── SUPABASE ───────────────────────────────────────────
 async function rpc(fn, params){
-  const{data,error}=await sb.rpc(fn, params||{});
+  let{data,error}=await sb.rpc(fn, params||{});
+  if(error?.message?.includes('JWT expired')||error?.code==='PGRST301'){
+    const{error:refreshErr}=await sb.auth.refreshSession();
+    if(refreshErr){await sb.auth.signOut();location.reload();return{data:null,error};}
+    ({data,error}=await sb.rpc(fn, params||{}));
+  }
   if(error)console.error('rpc',fn,error);
   return{data,error};
 }
