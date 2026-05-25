@@ -5648,7 +5648,7 @@ async function enviarRecordatorioPush(authUserId, nombre){
 
 async function resolverAviso(id,accion,alumnaId,mes){
   const{data,error}=await sb.rpc('triskel_resolver_aviso',{p_id:id,p_accion:accion});
-  if(error||!data?.ok){showMsg('Error al resolver aviso');return;}
+  if(error||!data?.ok){showMsg(data?.msg||'Error al resolver aviso');return;}
   const a=alumnaById(alumnaId);
   const[y,m]=(mes||'').split('-');
   const mesLabel=y&&m?new Date(y,m-1,1).toLocaleDateString('es-AR',{month:'long',year:'numeric'}):'';
