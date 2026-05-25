@@ -988,7 +988,7 @@ function renderPerfil(){
         ${fotoHtml}
         <button class="photo-btn" onclick="subirFoto()">📷 Cambiar foto</button>
         <div class="profile-name">${a.nombre||''} ${a.apellido||''}</div>
-        <div class="profile-email">${a.email||''}</div>
+        <div class="profile-email">${a.email&&!a.email.endsWith('@triskel.local')?a.email:''}</div>
       </div>
       <div class="profile-row">
         <span class="profile-label">Teléfono</span>
