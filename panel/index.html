@@ -465,6 +465,51 @@
 </div>
 
 <!-- Confirm dialog (replaces window.confirm) -->
+<div class="modal-bg" id="modal-horario" style="display:none" onclick="if(event.target===this)closeModalHorario()" role="dialog" aria-modal="true">
+  <div class="modal" style="max-width:380px;">
+    <h3 id="mh-title" style="margin-bottom:1rem;font-size:1rem;">Nuevo horario</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div style="grid-column:1/-1;">
+        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:3px;">Modalidad</label>
+        <select id="mh-modalidad" style="width:100%;">
+          <option value="reformer">Reformer</option>
+          <option value="mat">Mat</option>
+          <option value="funcional">Funcional</option>
+          <option value="esferodinamia">Esferodinamia</option>
+        </select>
+      </div>
+      <div style="grid-column:1/-1;">
+        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:3px;">Día</label>
+        <select id="mh-dia" style="width:100%;">
+          <option value="lun">Lunes</option>
+          <option value="mar">Martes</option>
+          <option value="mie">Miércoles</option>
+          <option value="jue">Jueves</option>
+          <option value="vie">Viernes</option>
+          <option value="sab">Sábado</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:3px;">Hora inicio</label>
+        <input id="mh-inicio" type="time" style="width:100%;">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:3px;">Hora fin</label>
+        <input id="mh-fin" type="time" style="width:100%;">
+      </div>
+      <div style="grid-column:1/-1;">
+        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:3px;">Capacidad máxima</label>
+        <input id="mh-capacidad" type="number" min="1" max="50" style="width:100%;">
+      </div>
+    </div>
+    <p id="mh-err" style="color:var(--rd);font-size:12px;margin-bottom:.5rem;min-height:1.2em;"></p>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn" onclick="closeModalHorario()">Cancelar</button>
+      <button class="btn btn-p" onclick="saveHorario()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="modal-confirm" style="display:none" role="dialog" aria-modal="true" aria-labelledby="mc-title">
   <div class="modal" style="max-width:340px;">
     <h3 id="mc-title" style="margin-bottom:.5rem;font-size:1rem;" aria-live="polite">Confirmar acción</h3>
@@ -4324,12 +4369,11 @@ function rHorarios(){
     </div>`;
   }).join('');
 
-  return`<div class="ptitle">Horarios</div>
-  <p style="font-size:13px;color:var(--tm);margin-bottom:.75rem;">Vista de turnos configurados — alumnas inscriptas y capacidad disponible. Para planificar ejercicios de una clase, usá <strong>Planificar</strong>.</p>
-  <div style="background:#fff8e1;border:1px solid #f0c040;border-radius:var(--rs);padding:.6rem .85rem;margin-bottom:1rem;font-size:12px;color:#7a5c00;display:flex;align-items:flex-start;gap:7px;">
-    <span style="flex-shrink:0;font-size:15px;">⚠️</span>
-    <span><strong>No borres horarios desde el panel de Supabase.</strong> Cada horario tiene clases e inscripciones asociadas — borrarlo arrastraría el historial de cobros. Si necesitás dar de baja un turno, primero desinscribí las alumnas y después pedínoslo.</span>
+  return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.25rem;">
+    <div class="ptitle" style="margin:0;">Horarios</div>
+    <button class="btn btn-p" onclick="openModalHorario()">+ Nuevo horario</button>
   </div>
+  <p style="font-size:13px;color:var(--tm);margin-bottom:.75rem;">Vista de turnos configurados — alumnas inscriptas y capacidad disponible. Para planificar ejercicios de una clase, usá <strong>Planificar</strong>.</p>
   <div class="card">
     <div class="hgrid">${cols}</div>
   </div>
@@ -4365,6 +4409,10 @@ function goToHorarioDetalle(horarioId){
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;">
       <div><div class="ctitle" style="margin:0;">${DIA_LABEL[h.dia]} ${h.hora_inicio}–${h.hora_fin}</div>
       <div style="margin-top:4px;">${modBadge(h.modalidad)}</div></div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-s" onclick="openModalHorario(${h.id})">Editar</button>
+        <button class="btn btn-s btn-danger" onclick="deleteHorario(${h.id})">Eliminar</button>
+      </div>
     </div>
     ${ejsHtml}
     <div class="ctitle" style="color:${capColor(inscs.length,h.capacidad)};">Alumnas inscriptas · ${capText(inscs.length,h.capacidad)}</div>
@@ -5682,6 +5730,62 @@ async function resolverAviso(id,accion,alumnaId,mes){
     await loadAll();
     showMsg('Aviso marcado como rechazado');
   }
+}
+
+// ─── HORARIOS CRUD ───────────────────────────────────────
+let _editHorarioId=null;
+
+function openModalHorario(id){
+  _editHorarioId=id||null;
+  document.getElementById('mh-err').textContent='';
+  document.getElementById('mh-title').textContent=id?'Editar horario':'Nuevo horario';
+  const h=id?DB.horarios.find(x=>x.id===id):null;
+  document.getElementById('mh-modalidad').value=h?.modalidad||'reformer';
+  document.getElementById('mh-dia').value=h?.dia||'lun';
+  document.getElementById('mh-inicio').value=h?.hora_inicio||'';
+  document.getElementById('mh-fin').value=h?.hora_fin||'';
+  document.getElementById('mh-capacidad').value=h?.capacidad||12;
+  document.getElementById('modal-horario').style.display='flex';
+  document.body.style.overflow='hidden';
+}
+
+function closeModalHorario(){
+  document.getElementById('modal-horario').style.display='none';
+  document.body.style.overflow='';
+}
+
+async function saveHorario(){
+  const modalidad=document.getElementById('mh-modalidad').value;
+  const dia=document.getElementById('mh-dia').value;
+  const inicio=document.getElementById('mh-inicio').value;
+  const fin=document.getElementById('mh-fin').value;
+  const capacidad=parseInt(document.getElementById('mh-capacidad').value)||12;
+  const errEl=document.getElementById('mh-err');
+
+  if(!inicio||!fin){errEl.textContent='Completá hora de inicio y fin.';return;}
+  if(inicio>=fin){errEl.textContent='La hora de fin debe ser mayor a la de inicio.';return;}
+
+  const params={p_modalidad:modalidad,p_dia:dia,p_hora_inicio:inicio,p_hora_fin:fin,p_capacidad:capacidad};
+  if(_editHorarioId)params.p_id=_editHorarioId;
+
+  const{data,error}=await rpc('triskel_upsert_horario',params);
+  if(error||!data?.ok){errEl.textContent=data?.msg||error?.message||'Error al guardar';return;}
+
+  closeModalHorario();
+  await loadAll();
+  showMsg(_editHorarioId?'✓ Horario actualizado':'✓ Horario creado');
+}
+
+async function deleteHorario(id){
+  const h=DB.horarios.find(x=>x.id===id);
+  const label=h?`${DIA_LABEL[h.dia]} ${h.hora_inicio}–${h.hora_fin} (${MOD_LABEL[h.modalidad]})`:'este horario';
+  const ok=await openConfirm('Eliminar horario',`¿Eliminar ${label}? Solo es posible si no tiene alumnas inscriptas.`,'Eliminar',true);
+  if(!ok)return;
+  const{data,error}=await rpc('triskel_delete_horario',{p_id:id});
+  if(error||!data?.ok){showMsg(data?.msg||error?.message||'Error al eliminar');return;}
+  document.getElementById('horario-detalle').innerHTML='';
+  await loadAll();
+  showMsg('✓ Horario eliminado');
 }
 
 // ─── BANCO DE EJERCICIOS ─────────────────────────────────
