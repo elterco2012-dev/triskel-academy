@@ -68,7 +68,14 @@ Deno.serve(async (req) => {
     if (!authHeader) return json({ ok: false, msg: 'not authenticated' }, 401);
 
     const token = authHeader.replace('Bearer ', '');
-    const isServiceRole = token === SUPABASE_SERVICE_KEY;
+    // Decode JWT and check role claim (more robust than string comparison)
+    let isServiceRole = false;
+    try {
+      const jwtPayload = JSON.parse(atob(token.split('.')[1]));
+      isServiceRole = jwtPayload.role === 'service_role';
+    } catch {
+      isServiceRole = token === SUPABASE_SERVICE_KEY;
+    }
 
     let alumnaRecord: { id: number; nombre: string; apellido: string } | null = null;
     if (!isServiceRole) {
