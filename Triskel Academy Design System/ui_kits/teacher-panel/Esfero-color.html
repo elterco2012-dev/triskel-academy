@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Esfero — elegir color seguro</title>
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin:0; background:#E7E9EE; font-family:var(--font-sans); color:var(--fg); }
+  .page { max-width: 1180px; margin:0 auto; padding:32px 24px 56px; }
+  h1 { font:var(--type-h1); margin:0 0 6px; }
+  .lead { font:14px/1.5 var(--font-sans); color:var(--fg-muted); max-width:680px; margin:0 0 28px; }
+
+  .sec-title { font:600 11px var(--font-sans); text-transform:uppercase; letter-spacing:.06em; color:var(--fg-muted); margin:28px 0 12px; }
+
+  /* The collision demo */
+  .collide { display:flex; gap:14px; flex-wrap:wrap; }
+  .demo-card {
+    background:#fff; border-radius:12px; border:1px solid var(--border);
+    border-top:4px solid var(--c); padding:12px 14px; width:200px;
+    box-shadow:0 2px 10px rgba(108,91,123,.08);
+  }
+  .demo-card .ttl { font:600 13px var(--font-sans); margin-bottom:8px; }
+  .demo-badge { display:inline-flex; padding:2px 9px; border-radius:99px; font:600 10px var(--font-sans); background:var(--ct); color:var(--c); }
+
+  .pill-row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+  .pill { display:inline-flex; align-items:center; padding:3px 10px; border-radius:99px; font:600 11px var(--font-sans); }
+
+  /* Options grid */
+  .opts { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+  @media(max-width:920px){ .opts{ grid-template-columns:repeat(2,1fr);} }
+  .opt {
+    background:#fff; border-radius:14px; border:1px solid var(--border);
+    overflow:hidden; box-shadow:0 2px 12px rgba(108,91,123,.08);
+  }
+  .opt.win { outline:2px solid var(--mod-mat); outline-offset:-2px; }
+  .opt-swatch { height:70px; background:var(--c); position:relative; }
+  .opt-swatch .tag { position:absolute; top:8px; left:10px; font:700 10px var(--font-sans); text-transform:uppercase; letter-spacing:.05em; color:#fff; opacity:.92; }
+  .opt-body { padding:12px 14px; }
+  .opt-name { font:700 13px var(--font-sans); margin-bottom:2px; }
+  .opt-hex { font:11px ui-monospace,monospace; color:var(--fg-muted); margin-bottom:10px; }
+  .opt-badge { display:inline-flex; padding:2px 10px; border-radius:99px; font:600 11px var(--font-sans); background:var(--ct); color:var(--c); }
+  /* side-by-side with danger to prove separation */
+  .vs { display:flex; gap:6px; align-items:center; margin-top:10px; }
+  .vs .sq { width:22px; height:22px; border-radius:6px; }
+  .vs .lbl { font:10px var(--font-sans); color:var(--fg-muted); }
+  .verdict { font:600 11px var(--font-sans); margin-top:10px; padding-top:10px; border-top:1px solid var(--border); }
+  .verdict.good { color:var(--mod-mat); }
+  .verdict.bad  { color:var(--status-danger); }
+  .verdict.meh  { color:var(--mod-funcional); }
+
+  .note { margin-top:28px; font:13px/1.5 var(--font-sans); color:var(--fg-muted); background:#fff; border-left:3px solid var(--brand-violet); border-radius:0 8px 8px 0; padding:14px 16px; }
+  .note b { color:var(--fg); }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Esfero — elegir un color seguro</h1>
+  <p class="lead">El magenta actual choca con el rojo de peligro. Acá está el problema y cuatro reemplazos, cada uno mostrado <b>al lado del rojo de peligro</b> para verificar que se distingan a golpe de vista.</p>
+
+  <div class="sec-title">El problema · magenta actual vs. rojo de peligro</div>
+  <div class="collide">
+    <div class="demo-card" style="--c:#C32E8B; --ct:#FBE6F1;">
+      <div class="ttl">Esfero Core Profundo</div>
+      <span class="demo-badge">Esfero</span>
+      <div class="pill-row">
+        <span class="pill" style="background:#FCEBEB;color:#A32D2D;">COMPLETO</span>
+        <span class="pill" style="background:#FCEBEB;color:#A32D2D;">Baja</span>
+      </div>
+    </div>
+    <div style="align-self:center; font:13px/1.5 var(--font-sans); color:var(--fg-muted); max-width:340px;">
+      → El borde magenta y los pills rojos viven en la misma familia tonal. La tarjeta “parece” en alerta. Esto es exactamente lo que querés evitar.
+    </div>
+  </div>
+
+  <div class="sec-title">Opciones de reemplazo</div>
+  <div class="opts">
+
+    <div class="opt win" style="--c:#0D9488; --ct:#E0F2F1;">
+      <div class="opt-swatch"><span class="tag">Recomendado</span></div>
+      <div class="opt-body">
+        <div class="opt-name">Teal</div>
+        <div class="opt-hex">#0D9488</div>
+        <span class="opt-badge">Esfero</span>
+        <div class="vs">
+          <span class="sq" style="background:#0D9488;"></span>
+          <span class="sq" style="background:#A32D2D;"></span>
+          <span class="lbl">vs peligro</span>
+        </div>
+        <div class="verdict good">✓ Máxima separación del rojo</div>
+      </div>
+    </div>
+
+    <div class="opt" style="--c:#7C3AED; --ct:#EDE9FE;">
+      <div class="opt-swatch"></div>
+      <div class="opt-body">
+        <div class="opt-name">Púrpura</div>
+        <div class="opt-hex">#7C3AED</div>
+        <span class="opt-badge">Esfero</span>
+        <div class="vs">
+          <span class="sq" style="background:#7C3AED;"></span>
+          <span class="sq" style="background:#A32D2D;"></span>
+          <span class="lbl">vs peligro</span>
+        </div>
+        <div class="verdict meh">⚠ Choca con el violeta de marca</div>
+      </div>
+    </div>
+
+    <div class="opt" style="--c:#DB2777; --ct:#FCE7F3;">
+      <div class="opt-swatch"></div>
+      <div class="opt-body">
+        <div class="opt-name">Rosa (actual+)</div>
+        <div class="opt-hex">#DB2777</div>
+        <span class="opt-badge">Esfero</span>
+        <div class="vs">
+          <span class="sq" style="background:#DB2777;"></span>
+          <span class="sq" style="background:#A32D2D;"></span>
+          <span class="lbl">vs peligro</span>
+        </div>
+        <div class="verdict bad">✗ Sigue cerca del rojo</div>
+      </div>
+    </div>
+
+    <div class="opt" style="--c:#0891B2; --ct:#E0F7FA;">
+      <div class="opt-swatch"></div>
+      <div class="opt-body">
+        <div class="opt-name">Cyan</div>
+        <div class="opt-hex">#0891B2</div>
+        <span class="opt-badge">Esfero</span>
+        <div class="vs">
+          <span class="sq" style="background:#0891B2;"></span>
+          <span class="sq" style="background:#2563EB;"></span>
+          <span class="lbl">vs Reformer</span>
+        </div>
+        <div class="verdict meh">⚠ Cerca del azul Reformer</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="sec-title">Las 4 modalidades juntas — con teal</div>
+  <div class="pill-row" style="gap:10px;">
+    <span class="pill" style="background:#EFF6FF;color:#2563EB;font-size:12px;padding:4px 12px;">Reformer</span>
+    <span class="pill" style="background:#E1F5EE;color:#1D9E75;font-size:12px;padding:4px 12px;">Mat</span>
+    <span class="pill" style="background:#FFFBEB;color:#D97706;font-size:12px;padding:4px 12px;">Funcional</span>
+    <span class="pill" style="background:#E0F2F1;color:#0D9488;font-size:12px;padding:4px 12px;">Esfero</span>
+    <span style="width:1px;height:24px;background:var(--border);margin:0 4px;"></span>
+    <span class="pill" style="background:#FCEBEB;color:#A32D2D;font-size:12px;padding:4px 12px;">Peligro / estado negativo</span>
+  </div>
+
+  <div class="note">
+    <b>Mi recomendación: Teal <code>#0D9488</code>.</b> Es la única opción que se separa con claridad del rojo (peligro), del azul (Reformer) y del violeta (marca). El púrpura y el cyan “casi” funcionan pero colisionan con colores que ya tienen significado. El rosa es el problema actual apenas maquillado.<br><br>
+    <b>La regla detrás:</b> en Triskel el <b>rojo es solo para estado negativo</b> (baja, riesgo, completo, impago). Ninguna modalidad debería vivir en la familia roja/rosa. Las 4 modalidades ocupan azul · verde · ámbar · teal, bien repartidas en la rueda de color.
+  </div>
+</div>
+</body>
+</html>

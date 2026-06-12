@@ -1,0 +1,202 @@
+{
+  "plugins": [
+    "react",
+    "import"
+  ],
+  "rules": {
+    "react/forbid-elements": [
+      "warn",
+      {
+        "forbid": []
+      }
+    ],
+    "no-restricted-imports": [
+      "warn",
+      {
+        "patterns": [
+          {
+            "group": [
+              "ui_kits/student-panel/**",
+              "ui_kits/teacher-panel/**"
+            ],
+            "message": "Import design-system components from 'index.js', not component internals."
+          }
+        ]
+      }
+    ],
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+        "message": "Raw hex color — use a design-system color token via var()."
+      },
+      {
+        "selector": "Literal[value=/\\b\\d+px\\b/]",
+        "message": "Raw px value — use a design-system spacing token via var()."
+      },
+      {
+        "selector": "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:DM Sans|DM Serif Display))/i]",
+        "message": "Font not provided by the design system. Available: DM Sans, DM Serif Display."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/index.js"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ],
+  "x-omelette": {
+    "components": {},
+    "tokens": [
+      "--bg",
+      "--bg-elevated",
+      "--bg-muted",
+      "--bg-sunken",
+      "--border",
+      "--border-strong",
+      "--bottomnav-height",
+      "--brand-cyan",
+      "--brand-magenta",
+      "--brand-violet",
+      "--brand-violet-deep",
+      "--brand-violet-medium",
+      "--brand-violet-tint",
+      "--brand-yellow",
+      "--duration",
+      "--duration-fast",
+      "--duration-slow",
+      "--ease-out",
+      "--fg",
+      "--fg-faint",
+      "--fg-muted",
+      "--fg-on-violet",
+      "--font-display",
+      "--font-mono",
+      "--font-sans",
+      "--mobile-max-width",
+      "--mod-funcional",
+      "--mod-funcional-tint",
+      "--mod-mat",
+      "--mod-mat-tint",
+      "--mod-reformer",
+      "--mod-reformer-tint",
+      "--modal-max-width",
+      "--radius",
+      "--radius-bottomsheet",
+      "--radius-lg",
+      "--radius-pill",
+      "--radius-sm",
+      "--shadow",
+      "--shadow-lg",
+      "--shadow-modal",
+      "--shadow-sm",
+      "--sidebar-width",
+      "--space-1",
+      "--space-2",
+      "--space-3",
+      "--space-4",
+      "--space-5",
+      "--space-6",
+      "--space-7",
+      "--space-8",
+      "--status-danger",
+      "--status-danger-tint",
+      "--status-info",
+      "--status-info-tint",
+      "--status-success",
+      "--status-success-tint",
+      "--status-warning",
+      "--status-warning-tint",
+      "--type-body",
+      "--type-body-lg",
+      "--type-button",
+      "--type-caption",
+      "--type-display",
+      "--type-h1",
+      "--type-h2",
+      "--type-h3",
+      "--type-label",
+      "--type-metric"
+    ],
+    "tokenKinds": {
+      "--brand-violet": "color",
+      "--brand-violet-deep": "color",
+      "--brand-violet-medium": "color",
+      "--brand-violet-tint": "color",
+      "--brand-magenta": "color",
+      "--brand-yellow": "color",
+      "--brand-cyan": "color",
+      "--mod-mat": "color",
+      "--mod-mat-tint": "color",
+      "--mod-reformer": "color",
+      "--mod-reformer-tint": "color",
+      "--mod-funcional": "color",
+      "--mod-funcional-tint": "color",
+      "--status-success": "color",
+      "--status-success-tint": "color",
+      "--status-warning": "color",
+      "--status-warning-tint": "color",
+      "--status-danger": "color",
+      "--status-danger-tint": "color",
+      "--status-info": "color",
+      "--status-info-tint": "color",
+      "--bg": "color",
+      "--bg-elevated": "color",
+      "--bg-muted": "color",
+      "--bg-sunken": "color",
+      "--fg": "color",
+      "--fg-muted": "color",
+      "--fg-faint": "color",
+      "--fg-on-violet": "color",
+      "--border": "color",
+      "--border-strong": "color",
+      "--radius-sm": "radius",
+      "--radius": "radius",
+      "--radius-lg": "radius",
+      "--radius-pill": "radius",
+      "--radius-bottomsheet": "radius",
+      "--shadow-sm": "shadow",
+      "--shadow": "shadow",
+      "--shadow-lg": "shadow",
+      "--shadow-modal": "shadow",
+      "--space-1": "spacing",
+      "--space-2": "spacing",
+      "--space-3": "spacing",
+      "--space-4": "spacing",
+      "--space-5": "spacing",
+      "--space-6": "spacing",
+      "--space-7": "spacing",
+      "--space-8": "spacing",
+      "--font-display": "font",
+      "--font-sans": "font",
+      "--font-mono": "font",
+      "--type-display": "font",
+      "--type-h1": "font",
+      "--type-h2": "font",
+      "--type-h3": "font",
+      "--type-body": "font",
+      "--type-body-lg": "font",
+      "--type-label": "font",
+      "--type-caption": "font",
+      "--type-button": "font",
+      "--type-metric": "font",
+      "--sidebar-width": "spacing",
+      "--bottomnav-height": "spacing",
+      "--mobile-max-width": "spacing",
+      "--modal-max-width": "spacing",
+      "--ease-out": "other",
+      "--duration-fast": "other",
+      "--duration": "other",
+      "--duration-slow": "other"
+    },
+    "fontFamilies": [
+      "DM Sans",
+      "DM Serif Display"
+    ]
+  }
+}

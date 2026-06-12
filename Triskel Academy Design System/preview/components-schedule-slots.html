@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Schedule slots" subtitle="Modality-colored class slots" viewport="700x130" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Schedule slots</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; padding: 24px; background: var(--bg); }
+  .card-wrap { width: 100%; }
+  /* prevent body min-height from inflating cards */
+</style>
+</head>
+<body>
+<style>
+  .grid { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .hslot { border-radius:8px;padding:10px 6px;text-align:center;border:1.5px solid transparent;}
+  .hslot.mat { background:#E1F5EE;border-color:#1D9E75;}
+  .hslot.reformer { background:#EFF6FF;border-color:#2563EB;}
+  .hslot.funcional { background:#FFFBEB;border-color:#D97706;}
+  .t { font:600 10px/1.2 var(--font-sans);color:var(--fg-muted);}
+  .m { font:600 11px/1.2 var(--font-sans);margin-top:2px;}
+  .m.mat { color:#1D9E75;} .m.reformer { color:#2563EB;} .m.funcional { color:#D97706;}
+  .n { font:10px/1.2 var(--font-sans);margin-top:2px;}
+</style>
+<div class="grid">
+  <div class="hslot reformer"><div class="t">08:00–09:00</div><div class="m reformer">Reformer</div><div class="n" style="color:#1D9E75;">3/4 · 1 libre</div></div>
+  <div class="hslot mat"><div class="t">09:30–10:30</div><div class="m mat">Mat</div><div class="n" style="color:#D97706;">5/6</div></div>
+  <div class="hslot funcional"><div class="t">11:00–12:00</div><div class="m funcional">Funcional</div><div class="n" style="color:#A32D2D;">6/6 · COMPLETO</div></div>
+</div></body></html>

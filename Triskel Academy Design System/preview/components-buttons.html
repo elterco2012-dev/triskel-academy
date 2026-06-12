@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Buttons" subtitle="Primary / secondary / danger × sizes" viewport="700x200" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Buttons</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; padding: 24px; background: var(--bg); }
+  .card-wrap { width: 100%; }
+  /* prevent body min-height from inflating cards */
+</style>
+</head>
+<body>
+<style>
+  .btn { padding:6px 14px;border:1px solid var(--border-strong);border-radius:9px;background:#fff;color:var(--fg);font:var(--type-button);cursor:pointer;}
+  .btn-p { background:var(--brand-violet);border-color:var(--brand-violet);color:#fff;}
+  .btn-danger { background:#FCEBEB;border-color:#A32D2D;color:#A32D2D;}
+  .btn-s { padding:4px 10px;font-size:11px;}
+  .btn-lg { padding:10px 18px;font-size:14px;font-weight:600;border-radius:10px;}
+  .row { display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
+  .lbl { font:var(--type-caption);min-width:90px;}
+</style>
+<div class="row"><div class="lbl">Primary</div>
+  <button class="btn btn-p">Ingresar</button>
+  <button class="btn btn-p btn-s">+ Nueva</button>
+  <button class="btn btn-p btn-lg">💳 Avisar pago</button>
+</div>
+<div class="row"><div class="lbl">Secondary</div>
+  <button class="btn">Cancelar</button>
+  <button class="btn btn-s">Editar</button>
+  <button class="btn">↩ Salir</button>
+</div>
+<div class="row"><div class="lbl">Danger</div>
+  <button class="btn btn-danger">Dar de baja</button>
+  <button class="btn btn-danger btn-s">Baja</button>
+</div></body></html>

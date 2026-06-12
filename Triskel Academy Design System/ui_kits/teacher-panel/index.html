@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Teacher Panel" name="Teacher Panel — UI Kit" subtitle="Desktop app · 5 screens · browser-framed" viewport="1320x820" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Triskel · Teacher Panel — UI Kit</title>
+<link rel="stylesheet" href="../../colors_and_type.css">
+<link rel="stylesheet" href="teacher-panel.css">
+<style>
+  html, body { height: 100%; background: #ECEEF2; }
+  body { margin: 0; }
+  .stage {
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+  }
+  .stage-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .kit-caption {
+    font: 500 12px var(--font-sans);
+    color: var(--fg-muted);
+    text-align: center;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  /* The .tp-root sits inside the ChromeWindow content area */
+  .tp-root { font-family: var(--font-sans); color: var(--fg); width: 100%; height: 100%; overflow: hidden; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="stage-inner">
+    <div id="root"></div>
+    <div class="kit-caption">Triskel Academy · Teacher Panel · Panel de gestión</div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="data.js"></script>
+<script type="text/babel" src="browser-window.jsx"></script>
+<script type="text/babel" src="TeacherPrimitives.jsx"></script>
+<script type="text/babel" src="TeacherScreens.jsx"></script>
+
+<script type="text/babel">
+const { useState } = React;
+
+function TPApp() {
+  const [auth, setAuth] = useState(false);
+  const [page, setPage] = useState("inicio");
+  const [db, setDb] = useState(window.TP_FIXTURE);
+  const [modal, setModal] = useState(null);
+  const [toast, setToast] = useState("");
+
+  const showToast = (txt) => { setToast(txt); setTimeout(() => setToast(""), 2200); };
+
+  if (!auth) {
+    return (
+      <div className="tp-root" data-screen-label="01 Login">
+        <TPLogin onLogin={() => { setAuth(true); showToast("¡Bienvenida, Amira!"); }} />
+        {toast && <div className="tp-msg">{toast}</div>}
+      </div>
+    );
+  }
+
+  const screenLabel = {
+    inicio:    "02 Inicio",
+    alumnas:   "03 Alumnas",
+    horarios:  "04 Horarios",
+    clases:    "05 Planificar",
+    historial: "06 Historial",
+    pagos:     "07 Pagos",
+  }[page] || page;
+
+  const handleSaveAlumna = (form) => {
+    if (!form.nombre) return;
+    const newId = Math.max(...db.alumnas.map(a => a.id)) + 1;
+    setDb({
+      ...db,
+      alumnas: [...db.alumnas, {
+        id: newId,
+        nombre: form.nombre,
+        apellido: form.apellido,
+        tel: form.tel,
+        estado: "activa",
+        dia_pago: form.dia_pago ? parseInt(form.dia_pago) : null,
+        nacimiento: form.nacimiento || null,
+      }],
+    });
+    setModal(null);
+    showToast("✓ Alumna agregada");
+  };
+
+  const handleMarkPagado = (alumnaId) => {
+    const inscs = window.TP_inscByAlumna(db, alumnaId);
+    const monto = inscs.reduce((s, i) => s + (i.precio || 0), 0);
+    setDb({
+      ...db,
+      pagos: [...db.pagos, {
+        id: Math.max(0, ...db.pagos.map(p => p.id)) + 1,
+        alumna_id: alumnaId,
+        mes: db.mesActual,
+        monto,
+        pagado: true,
+        fecha: new Date().toISOString().slice(0,10),
+      }],
+    });
+    showToast("✓ Pago registrado");
+  };
+
+  const badgePagos = db.alumnas.filter(a => a.estado === "activa" &&
+    !db.pagos.find(p => p.alumna_id === a.id && p.mes === db.mesActual && p.pagado)).length;
+
+  return (
+    <div className="tp-root" data-screen-label={screenLabel}>
+      <div className="tp-shell">
+        <TPSidebar
+          current={page}
+          onNav={setPage}
+          onOpenTarifas={() => showToast("Tarifas — no implementado en el kit")}
+          onOpenMensajes={() => showToast("Mensajes WA — no implementado en el kit")}
+          onToggleTheme={() => showToast("Modo oscuro — no implementado en el kit")}
+          onLogout={() => setAuth(false)}
+          onSearch={() => {}}
+          badgePagos={badgePagos > 0 ? badgePagos : null}
+        />
+        <main className="tp-main">
+          {page === "inicio"    && <TPInicio    db={db} />}
+          {page === "alumnas"   && <TPAlumnas   db={db}
+                                                onEdit={() => setModal({ kind: "alumna" })}
+                                                onOpenFicha={(id) => showToast("Abrir ficha #" + id)}
+                                                onNueva={() => setModal({ kind: "alumna" })} />}
+          {page === "horarios"  && <TPHorarios  db={db} onSlotClick={(s) => showToast("Slot " + window.TP_DIA_LABEL[s.dia] + " " + s.hora_inicio)} />}
+          {page === "clases"    && <TPInicio    db={db} /> /* placeholder — kit covers inicio/alumnas/horarios/pagos */ }
+          {page === "historial" && <TPInicio    db={db} />}
+          {page === "pagos"     && <TPPagos     db={db} onMarkPagado={handleMarkPagado} onNuevoPago={() => showToast("+ Pago manual")} />}
+        </main>
+      </div>
+      {modal?.kind === "alumna" && (
+        <TPModalAlumna onCancel={() => setModal(null)} onSave={handleSaveAlumna} />
+      )}
+      {toast && <div className="tp-msg">{toast}</div>}
+    </div>
+  );
+}
+
+function FramedTP() {
+  return (
+    <ChromeWindow
+      width={1280}
+      height={760}
+      tabs={[{ title: "Triskel · Panel" }]}
+      url="triskel.academy/panel"
+    >
+      <TPApp />
+    </ChromeWindow>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<FramedTP />);
+</script>
+</body>
+</html>

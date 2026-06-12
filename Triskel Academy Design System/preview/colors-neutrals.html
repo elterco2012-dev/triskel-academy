@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Colors" name="Neutrals" subtitle="Backgrounds, text, borders" viewport="700x230" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Neutrals</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; padding: 24px; background: var(--bg); }
+  .card-wrap { width: 100%; }
+  /* prevent body min-height from inflating cards */
+</style>
+</head>
+<body>
+<style>
+  .grid { display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  .sw { display:flex;flex-direction:column;gap:6px;}
+  .chip { height:52px;border-radius:9px;border:1px solid var(--border);}
+  .nm { font:600 11px/1.2 var(--font-sans);color:var(--fg);}
+  .hx { font:11px/1.2 ui-monospace,monospace;color:var(--fg-muted);}
+</style>
+<div class="grid">
+  <div class="sw"><div class="chip" style="background:#FFFFFF;"></div><div class="nm">bg-elevated</div><div class="hx">#FFFFFF</div></div>
+  <div class="sw"><div class="chip" style="background:#F8F8F6;"></div><div class="nm">bg</div><div class="hx">#F8F8F6</div></div>
+  <div class="sw"><div class="chip" style="background:#F3F4F2;"></div><div class="nm">bg-muted</div><div class="hx">#F3F4F2</div></div>
+  <div class="sw"><div class="chip" style="background:#EBEBEA;"></div><div class="nm">bg-sunken</div><div class="hx">#EBEBEA</div></div>
+  <div class="sw"><div class="chip" style="background:#9CA3AF;"></div><div class="nm">fg-faint</div><div class="hx">#9CA3AF</div></div>
+  <div class="sw"><div class="chip" style="background:#6B7280;"></div><div class="nm">fg-muted</div><div class="hx">#6B7280</div></div>
+  <div class="sw"><div class="chip" style="background:#1A1A1A;"></div><div class="nm" style="color:var(--fg);">fg</div><div class="hx">#1A1A1A</div></div>
+  <div class="sw"><div class="chip" style="background:rgba(0,0,0,0.07);"></div><div class="nm">border</div><div class="hx">0/7%</div></div>
+</div></body></html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Avatars" subtitle="Initials avatars in 5 sizes" viewport="700x170" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Avatars</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; padding: 24px; background: var(--bg); }
+  .card-wrap { width: 100%; }
+  /* prevent body min-height from inflating cards */
+</style>
+</head>
+<body>
+<style>
+  .row { display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .av { background:#EDE9F8;color:#5B3F9E;display:flex;align-items:center;justify-content:center;font-weight:600;border-radius:50%;flex-shrink:0;}
+  .a1 { width:30px;height:30px;font-size:11px;}
+  .a2 { width:36px;height:36px;font-size:13px;}
+  .a3 { width:48px;height:48px;font-size:16px;}
+  .a4 { width:64px;height:64px;font-size:22px;}
+  .a-profile { width:90px;height:90px;border-radius:50%;background:#e8dff0;border:3px solid var(--brand-violet);display:flex;align-items:center;justify-content:center;font-size:36px;}
+  .lbl { font:var(--type-caption);margin-top:6px;text-align:center;}
+</style>
+<div class="row">
+  <div><div class="av a1">MG</div><div class="lbl">30</div></div>
+  <div><div class="av a2">SP</div><div class="lbl">36</div></div>
+  <div><div class="av a3">LR</div><div class="lbl">48</div></div>
+  <div><div class="av a4">VA</div><div class="lbl">64</div></div>
+  <div><div class="a-profile">👤</div><div class="lbl">90 · profile (student)</div></div>
+</div></body></html>
