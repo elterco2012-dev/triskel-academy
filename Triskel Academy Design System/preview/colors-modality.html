@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Colors" name="Modality colors" subtitle="Reformer / Mat / Funcional + tints + badge ex" viewport="700x230" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Modality colors</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; padding: 24px; background: var(--bg); }
+  .card-wrap { width: 100%; }
+  /* prevent body min-height from inflating cards */
+</style>
+</head>
+<body>
+<style>
+  .row { display:grid;grid-template-columns:64px 1fr 1fr;gap:14px;align-items:center;margin-bottom:10px;}
+  .chip { height:48px;border-radius:9px;}
+  .tint { height:48px;border-radius:9px;}
+  .lbl { font:600 13px/1.2 var(--font-sans);color:var(--fg);}
+  .sub { font:var(--type-caption);font-family:ui-monospace,monospace;}
+  .badge { display:inline-flex;padding:2px 10px;border-radius:99px;font:500 11px/1.4 var(--font-sans);}
+</style>
+<div class="row">
+  <div class="chip" style="background:#2563EB;"></div>
+  <div><div class="lbl">Reformer</div><div class="sub">#2563EB · tint #EFF6FF</div></div>
+  <div><span class="badge" style="background:#EFF6FF;color:#2563EB;">Reformer</span></div>
+</div>
+<div class="row">
+  <div class="chip" style="background:#1D9E75;"></div>
+  <div><div class="lbl">Mat</div><div class="sub">#1D9E75 · tint #E1F5EE</div></div>
+  <div><span class="badge" style="background:#E1F5EE;color:#1D9E75;">Mat</span></div>
+</div>
+<div class="row">
+  <div class="chip" style="background:#D97706;"></div>
+  <div><div class="lbl">Funcional</div><div class="sub">#D97706 · tint #FFFBEB</div></div>
+  <div><span class="badge" style="background:#FFFBEB;color:#D97706;">Funcional</span></div>
+</div></body></html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Spacing" name="Shadows" subtitle="Violet-tinted shadow system (student panel)" viewport="700x180" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Shadows</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; padding: 24px; background: var(--bg); }
+  .card-wrap { width: 100%; }
+  /* prevent body min-height from inflating cards */
+</style>
+</head>
+<body>
+<style>
+  .grid { display:grid;grid-template-columns:repeat(4,1fr);gap:18px;padding:14px;}
+  .sw { display:flex;flex-direction:column;gap:8px;align-items:center;}
+  .box { width:84px;height:60px;background:#fff;border-radius:14px;}
+  .nm { font:600 11px/1.2 var(--font-sans);color:var(--fg);}
+  .hx { font:11px/1.2 ui-monospace,monospace;color:var(--fg-muted);}
+</style>
+<div class="grid">
+  <div class="sw"><div class="box" style="box-shadow:0 1px 2px rgba(108,91,123,0.06);"></div><div class="nm">shadow-sm</div><div class="hx">0 1 2 / 6%</div></div>
+  <div class="sw"><div class="box" style="box-shadow:0 2px 12px rgba(108,91,123,0.10);"></div><div class="nm">shadow</div><div class="hx">violet-tinted</div></div>
+  <div class="sw"><div class="box" style="box-shadow:0 8px 28px rgba(108,91,123,0.15);"></div><div class="nm">shadow-lg</div><div class="hx">0 8 28 / 15%</div></div>
+  <div class="sw"><div class="box" style="box-shadow:0 24px 48px rgba(0,0,0,0.25);"></div><div class="nm">shadow-modal</div><div class="hx">deep</div></div>
+</div></body></html>

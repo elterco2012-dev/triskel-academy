@@ -1,0 +1,7 @@
+/* ──────────────────────────────────────────────────────────────────
+   Triskel Academy — Design System entry point
+   Consumers should link THIS file. It pulls in the token + type
+   foundation. Product-specific kit CSS (ui_kits/*/*.css) is scoped and
+   loaded only inside its kit, not globally.
+   ────────────────────────────────────────────────────────────────── */
+@import url('colors_and_type.css');

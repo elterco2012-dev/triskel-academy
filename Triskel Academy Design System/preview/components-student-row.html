@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Student row" subtitle="List item — teacher panel Alumnas" viewport="700x170" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Student row</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; padding: 24px; background: var(--bg); }
+  .card-wrap { width: 100%; }
+  /* prevent body min-height from inflating cards */
+</style>
+</head>
+<body>
+<style>
+  .arow { background:#fff;border:1px solid rgba(0,0,0,0.07);border-radius:9px;padding:10px 14px;display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+  .av { width:36px;height:36px;border-radius:50%;background:#EDE9F8;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;color:#5B3F9E;flex-shrink:0;}
+  .aname { font:500 14px/1.2 var(--font-sans);text-decoration:underline;text-underline-offset:3px;cursor:pointer;}
+  .asub { font:11px/1.4 var(--font-sans);color:var(--fg-muted);margin-top:2px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .badge { display:inline-flex;padding:1px 8px;border-radius:99px;font:500 10px/1.4 var(--font-sans);}
+  .btn { padding:4px 10px;border:1px solid rgba(0,0,0,0.13);border-radius:9px;background:#fff;font:500 11px/1.2 var(--font-sans);cursor:pointer;}
+</style>
+<div class="arow">
+  <div class="av">MG</div>
+  <div style="flex:1;">
+    <div class="aname">María González</div>
+    <div class="asub">
+      <span class="badge" style="background:#EFF6FF;color:#2563EB;">Reformer</span><span>Lunes 09:30</span>
+      <a href="#" style="color:#1D9E75;text-decoration:none;">💬 WA</a>
+    </div>
+  </div>
+  <span class="badge" style="background:#E1F5EE;color:#1D9E75;">✓ Pagó</span>
+  <button class="btn">Editar</button>
+</div>
+<div class="arow">
+  <div class="av">SP</div>
+  <div style="flex:1;">
+    <div class="aname">Sofía Pérez</div>
+    <div class="asub">
+      <span class="badge" style="background:#E1F5EE;color:#1D9E75;">Mat</span><span>Martes 18:00</span>
+    </div>
+  </div>
+  <span class="badge" style="background:#fee2e2;color:#dc2626;">Pendiente</span>
+  <button class="btn">Editar</button>
+</div></body></html>

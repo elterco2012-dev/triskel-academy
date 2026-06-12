@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Inputs" subtitle="Default + focused state" viewport="700x180" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Inputs</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; padding: 24px; background: var(--bg); }
+  .card-wrap { width: 100%; }
+  /* prevent body min-height from inflating cards */
+</style>
+</head>
+<body>
+<style>
+  .stack { display:flex;flex-direction:column;gap:12px;}
+  .row { display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  label { font:600 12px/1.2 var(--font-sans);color:var(--fg-muted);display:block;margin-bottom:4px;}
+  input, select { width:100%;padding:8px 12px;border:1px solid rgba(0,0,0,0.13);border-radius:9px;font:var(--type-body);font-family:var(--font-sans);background:#F3F4F2;color:var(--fg);outline:none;}
+  input:focus { border-color:var(--brand-violet);background:#fff;}
+  .focused { border-color:#7C5CBF !important;background:#fff !important;}
+</style>
+<div class="stack">
+  <div class="row">
+    <div><label>Nombre</label><input value="María"></div>
+    <div><label>Apellido</label><input value="González"></div>
+  </div>
+  <div class="row">
+    <div><label>Email (focused)</label><input class="focused" value="maria@gmail.com"></div>
+    <div><label>Día de pago</label><input type="number" value="10"></div>
+  </div>
+</div></body></html>

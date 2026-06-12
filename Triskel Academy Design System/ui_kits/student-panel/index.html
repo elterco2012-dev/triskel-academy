@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Student Panel" name="Student Panel — UI Kit" subtitle="Mobile PWA · 5 screens · iOS-framed" viewport="1000x940" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Triskel · Student Panel — UI Kit</title>
+<link rel="stylesheet" href="../../colors_and_type.css">
+<link rel="stylesheet" href="student-panel.css">
+<style>
+  html, body { height: 100%; background: #ECEEF2; }
+  .stage {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 16px;
+    box-sizing: border-box;
+  }
+  .stage-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .kit-caption {
+    font: 500 12px var(--font-sans);
+    color: var(--fg-muted);
+    text-align: center;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  /* Nudge the bottom-nav up so the iOS home indicator does not overlap it. */
+  .sp-app .sp-bnav { bottom: 34px; }
+  /* Keep the bottom-sheet modal inside the device frame */
+  .sp-app .sp-modal-overlay { border-radius: 0 0 48px 48px; overflow: hidden; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="stage-inner">
+    <div id="root"></div>
+    <div class="kit-caption">Triskel Academy · Student Panel · Mi cuenta</div>
+  </div>
+</div>
+
+<!-- React + Babel (pinned versions, per system requirements) -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<!-- Data fixture -->
+<script src="data.js"></script>
+
+<!-- iOS frame -->
+<script type="text/babel" src="ios-frame.jsx"></script>
+
+<!-- UI kit -->
+<script type="text/babel" src="StudentPrimitives.jsx"></script>
+<script type="text/babel" src="StudentScreens.jsx"></script>
+
+<!-- Boot — wraps the SPApp in an IOSDevice frame -->
+<script type="text/babel">
+const { useState } = React;
+
+function SPApp() {
+  const [auth, setAuth] = useState(false);
+  const [page, setPage] = useState("inicio");
+  const [state, setState] = useState(window.SP_FIXTURE);
+  const [modal, setModal] = useState(null);
+  const [toast, setToast] = useState("");
+
+  const showToast = (txt) => {
+    setToast(txt);
+    setTimeout(() => setToast(""), 2200);
+  };
+
+  const mes = window.SP_mesActual();
+  const cobrado = state.pagos.find(p => p.mes === mes && p.pagado);
+  const aviso   = state.avisos.find(av => av.mes === mes && av.estado === "pendiente");
+  const pagoStatus = cobrado ? "ok" : aviso ? "aviso" : "sin";
+
+  const handleAvisar = (mes) => setModal({ kind: "aviso", mes });
+  const handleConfirmAviso = ({ mes, monto, nota }) => {
+    setState(s => ({
+      ...s,
+      avisos: [...s.avisos, { mes, monto, nota, estado: "pendiente" }],
+    }));
+    setModal(null);
+    showToast("✓ Aviso enviado a Amira");
+  };
+
+  if (!auth) {
+    return (
+      <div className="sp-app" data-screen-label="01 Login">
+        <SPAuthScreen onLogin={() => { setAuth(true); showToast("¡Hola, María!"); }} />
+        <SPToast text={toast} />
+      </div>
+    );
+  }
+
+  const screenLabel = {
+    inicio:   "02 Inicio",
+    horarios: "03 Horarios",
+    pagos:    "04 Pagos",
+    perfil:   "05 Perfil",
+  }[page];
+
+  return (
+    <div className="sp-app" data-screen-label={screenLabel}>
+      <SPHeader nombre={state.alumna.nombre.split(" ")[0]} onLogout={() => setAuth(false)} />
+      <div className="sp-content">
+        {page === "inicio"   && <SPInicio   state={state} onAvisar={handleAvisar} onEnableNotif={() => showToast("Notificaciones activadas")} />}
+        {page === "horarios" && <SPHorarios state={state} />}
+        {page === "pagos"    && <SPPagos    state={state} onAvisar={handleAvisar} />}
+        {page === "perfil"   && <SPPerfil   state={state} onPhoto={() => showToast("Subí una foto")} onLogout={() => setAuth(false)} />}
+      </div>
+      <SPBottomNav current={page} onNav={setPage} pagoStatus={pagoStatus} />
+      {modal?.kind === "aviso" && (
+        <SPModalAvisoPago
+          mes={modal.mes}
+          defaultMonto={state.pagos[0]?.monto || 25000}
+          onCancel={() => setModal(null)}
+          onConfirm={handleConfirmAviso}
+        />
+      )}
+      <SPToast text={toast} />
+    </div>
+  );
+}
+
+function FramedApp() {
+  return (
+    <IOSDevice width={402} height={844}>
+      <SPApp />
+    </IOSDevice>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<FramedApp />);
+</script>
+</body>
+</html>

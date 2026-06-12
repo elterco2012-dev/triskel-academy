@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Colors" name="Semantic colors" subtitle="Success / warning / danger with usage" viewport="700x220" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Semantic colors</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; padding: 24px; background: var(--bg); }
+  .card-wrap { width: 100%; }
+  /* prevent body min-height from inflating cards */
+</style>
+</head>
+<body>
+<style>
+  .row { display:grid;grid-template-columns:48px 1fr 1fr;gap:14px;align-items:center;margin-bottom:10px;}
+  .chip { height:40px;border-radius:9px;}
+  .lbl { font:600 13px/1.2 var(--font-sans);color:var(--fg);}
+  .sub { font:var(--type-caption);font-family:ui-monospace,monospace;}
+  .ex { padding:6px 12px;border-radius:9px;font:500 12px/1.2 var(--font-sans);display:inline-flex;align-items:center;gap:6px;}
+</style>
+<div class="row">
+  <div class="chip" style="background:#1D9E75;"></div>
+  <div><div class="lbl">Success</div><div class="sub">#1D9E75</div></div>
+  <div><span class="ex" style="background:#E1F5EE;color:#1D9E75;">✓ Pagada</span></div>
+</div>
+<div class="row">
+  <div class="chip" style="background:#D97706;"></div>
+  <div><div class="lbl">Warning</div><div class="sub">#D97706</div></div>
+  <div><span class="ex" style="background:#FFFBEB;color:#D97706;">⏳ Pendiente</span></div>
+</div>
+<div class="row">
+  <div class="chip" style="background:#A32D2D;"></div>
+  <div><div class="lbl">Danger</div><div class="sub">#A32D2D</div></div>
+  <div><span class="ex" style="background:#FCEBEB;color:#A32D2D;">⚠️ Vence hoy</span></div>
+</div></body></html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Colors" name="Brand violet" subtitle="Primary scale: tint → medium → 500 → deep" viewport="700x170" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Brand violet</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; padding: 24px; background: var(--bg); }
+  .card-wrap { width: 100%; }
+  /* prevent body min-height from inflating cards */
+</style>
+</head>
+<body>
+<style>
+  .sw { display:flex;flex-direction:column;gap:6px;}
+  .sw-chip { height:64px;border-radius:9px;border:1px solid var(--border);}
+  .sw-name { font:600 12px/1.2 var(--font-sans);color:var(--fg);}
+  .sw-hex { font:var(--type-caption);font-family:ui-monospace,monospace;}
+  .sw-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+</style>
+<div class="sw-grid">
+  <div class="sw"><div class="sw-chip" style="background:#EDE9F8;"></div><div class="sw-name">violet-tint</div><div class="sw-hex">#EDE9F8</div></div>
+  <div class="sw"><div class="sw-chip" style="background:#A07ED4;"></div><div class="sw-name">violet-medium</div><div class="sw-hex">#A07ED4</div></div>
+  <div class="sw"><div class="sw-chip" style="background:#7C5CBF;"></div><div class="sw-name">brand-violet</div><div class="sw-hex">#7C5CBF</div></div>
+  <div class="sw"><div class="sw-chip" style="background:#5B3F9E;"></div><div class="sw-name">violet-deep</div><div class="sw-hex">#5B3F9E</div></div>
+</div></body></html>

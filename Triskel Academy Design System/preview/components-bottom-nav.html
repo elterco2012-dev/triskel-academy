@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Bottom nav" subtitle="Student panel — 4 items" viewport="700x100" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Bottom nav</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; padding: 24px; background: var(--bg); }
+  .card-wrap { width: 100%; }
+  /* prevent body min-height from inflating cards */
+</style>
+</head>
+<body>
+<style>
+  .bnav { background:#fff;border-top:1px solid rgba(0,0,0,0.07);display:flex;border-radius:14px;overflow:hidden;}
+  .item { flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:9px 0 11px;font:10px/1.4 var(--font-sans);color:var(--fg-muted);gap:2px;text-decoration:none;}
+  .item.active { color:var(--brand-violet);}
+  .ico { font-size:20px;}
+</style>
+<div class="bnav">
+  <a class="item active" href="#"><span class="ico">🏠</span>Inicio</a>
+  <a class="item" href="#"><span class="ico">📅</span>Horarios</a>
+  <a class="item" href="#"><span class="ico">💳</span>Pagos</a>
+  <a class="item" href="#"><span class="ico">👤</span>Perfil</a>
+</div>
+<div style="margin-top:10px;font:var(--type-caption);">Student panel · 4 items · violet for active</div></body></html>

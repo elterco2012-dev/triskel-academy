@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Badges & chips" subtitle="Modality + pago status + student state" viewport="700x180" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Badges & chips</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; padding: 24px; background: var(--bg); }
+  .card-wrap { width: 100%; }
+  /* prevent body min-height from inflating cards */
+</style>
+</head>
+<body>
+<style>
+  .badge { display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:99px;font:500 11px/1.4 var(--font-sans);}
+  .row { display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;}
+  .lbl { font:var(--type-caption);min-width:90px;}
+</style>
+<div class="row"><div class="lbl">Modality</div>
+  <span class="badge" style="background:#EFF6FF;color:#2563EB;">Reformer</span>
+  <span class="badge" style="background:#E1F5EE;color:#1D9E75;">Mat</span>
+  <span class="badge" style="background:#FFFBEB;color:#D97706;">Funcional</span>
+</div>
+<div class="row"><div class="lbl">Pago status</div>
+  <span class="badge" style="background:#E1F5EE;color:#1D9E75;">✓ Pagó</span>
+  <span class="badge" style="background:#fee2e2;color:#dc2626;">Pendiente de pago</span>
+  <span class="badge" style="background:#FFFBEB;color:#D97706;">Vence día 10</span>
+</div>
+<div class="row"><div class="lbl">Student</div>
+  <span class="badge" style="background:#E1F5EE;color:#1D9E75;">Activa</span>
+  <span class="badge" style="background:#FFFBEB;color:#D97706;">⏸ Pausada</span>
+  <span class="badge" style="background:#FCEBEB;color:#A32D2D;">Baja</span>
+</div></body></html>
