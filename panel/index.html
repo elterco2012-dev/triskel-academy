@@ -3267,13 +3267,16 @@ function rRecordatorios(){
     </div>`;
   }
 
-  return`<div class="card alert-warn" style="border-left:4px solid var(--fun);margin-bottom:1.25rem;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
-      <div class="ctitle" style="margin:0;color:var(--fun);">⏰ Recordatorios — ${total} alumna${total!==1?'s':''}</div>
-      <button class="btn btn-s" onclick="openRecordatorioMasivo()" style="white-space:nowrap;">📲 Recordar a todas</button>
+  return`<div class="card" style="border-left:3px solid var(--fun);margin-bottom:1.25rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;">
+      <div style="display:flex;align-items:baseline;gap:8px;">
+        <div class="ctitle" style="margin:0;">Recordatorios de pago</div>
+        <span style="font-size:11px;font-weight:600;color:var(--th);">${total}</span>
+      </div>
+      <button class="btn btn-s" onclick="openRecordatorioMasivo()" style="white-space:nowrap;">Recordar a todas</button>
     </div>
-    ${rem.hoy.map(a=>remRow(a,'hoy','🔴 Vence HOY','var(--rd)')).join('')}
-    ${rem.atrasadas.map(a=>remRow(a,'atrasada',`🟠 Atrasada ${a.diff} día${a.diff!==1?'s':''}`,`var(--fun)`)).join('')}
+    ${rem.hoy.map(a=>remRow(a,'hoy',`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--rd);margin-right:4px;vertical-align:middle;"></span>Vence hoy`,'var(--rd)')).join('')}
+    ${rem.atrasadas.map(a=>remRow(a,'atrasada',`Atrasada ${a.diff} día${a.diff!==1?'s':''}`,`var(--tm)`)).join('')}
   </div>`;
 }
 
@@ -3531,39 +3534,53 @@ function getBirthdays(){
   return res.sort((a,b)=>a.diasFaltan-b.diasFaltan);
 }
 function rCumpleanos(){
-  const bd=getBirthdays();if(!bd.length)return'';
+  const bd=getBirthdays();if(!bd.length)return'<div class="card" style="margin-bottom:0;"><div class="ctitle">Próximos cumpleaños</div><div style="font-size:13px;color:var(--tm);">Sin cumpleaños próximos.</div></div>';
   const hoy=bd.filter(a=>a.diasFaltan===0);
   const proximos=bd.filter(a=>a.diasFaltan>0);
+  // Cumpleaños de HOY: tarjeta destacada pero sin relleno ámbar completo
   let html='';
   if(hoy.length){
-    html+=`<div class="card" style="border:2px solid var(--fun);background:var(--funl);margin-bottom:1rem;text-align:center;">
-      <div style="font-size:24px;margin-bottom:.25rem;">🎂🎉</div>
-      <div style="font-size:14px;font-weight:700;color:var(--fun);margin-bottom:.75rem;">¡Hoy cumple${hoy.length>1?'n':''}!</div>
+    html+=`<div class="card" style="margin-bottom:0;border-left:3px solid var(--fun);">
+      <div class="ctitle" style="margin-bottom:.5rem;">🎂 ¡Hoy cumple${hoy.length>1?'n':''}!</div>
       ${hoy.map(a=>{
         const wa=a.tel?`https://wa.me/${a.tel.replace(/\D/g,'')}?text=${encodeURIComponent(`¡Hola ${a.nombre}! 🌿🎂 ¡Felices ${a.turningAge} años! Desde Triskel Academy te deseamos un hermoso día. ¡Un abrazo grande! 🎉`)}`:null;
-        return`<div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:${hoy.length>1?'8px':'0'};">
-          <div class="avatar" style="width:36px;height:36px;font-size:14px;">${alumnaInits(a.nombre,a.apellido)}</div>
-          <div style="font-size:14px;font-weight:600;color:#92400e;">${a.nombre} ${a.apellido||''} · ${a.turningAge} años</div>
-          ${wa?`<a href="${wa}" target="_blank" style="padding:6px 16px;background:#f59e0b;color:#fff;border-radius:var(--rs);font-size:13px;font-weight:700;text-decoration:none;">🎊 Saludar por WA</a>`:''}
+        return`<div style="display:flex;align-items:center;gap:10px;">
+          <div class="avatar" style="width:32px;height:32px;font-size:12px;">${alumnaInits(a.nombre,a.apellido)}</div>
+          <div style="flex:1;font-size:13px;font-weight:500;">${a.nombre} ${a.apellido||''} · <span style="color:var(--fun);">${a.turningAge} años</span></div>
+          ${wa?`<a href="${wa}" target="_blank" style="padding:4px 10px;border:1px solid var(--fun);border-radius:var(--rs);background:var(--funl);color:var(--fun);font-size:11px;text-decoration:none;">🎊 Saludar</a>`:''}
         </div>`;
       }).join('')}
     </div>`;
+    // Si también hay próximos, volvemos al grid normal (el div de 2 col los envuelve)
+    if(proximos.length){
+      html+=`<div class="card" style="margin-bottom:0;">
+        <div class="ctitle">Próximos cumpleaños</div>
+        ${proximos.slice(0,3).map(a=>{
+          const wa=a.tel?`https://wa.me/${a.tel.replace(/\D/g,'')}?text=${encodeURIComponent(`¡Hola ${a.nombre}! 🌿🎉 ¡Felices ${a.turningAge} años! Desde Triskel Academy te deseamos un muy feliz cumpleaños. ¡Un abrazo!`)}`:null;
+          return`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--b);">
+            <div class="avatar" style="width:30px;height:30px;font-size:11px;">${alumnaInits(a.nombre,a.apellido)}</div>
+            <div style="flex:1;font-size:13px;">${a.nombre} ${a.apellido||''}</div>
+            <div style="font-size:12px;color:var(--tm);">${a.diaLabel}</div>
+            ${wa?`<a href="${wa}" target="_blank" style="padding:4px 8px;border:1px solid var(--fun);border-radius:var(--rs);background:var(--funl);color:var(--fun);font-size:11px;text-decoration:none;">Saludar</a>`:''}
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+    return html;
   }
-  if(proximos.length){
-    html+=`<div class="card" style="border-color:var(--fun);margin-bottom:1rem;">
-      <div class="ctitle" style="color:var(--fun);">🎂 Próximos cumpleaños</div>
-      ${proximos.map(a=>{
-        const wa=a.tel?`https://wa.me/${a.tel.replace(/\D/g,'')}?text=${encodeURIComponent(`¡Hola ${a.nombre}! 🌿🎉 ¡Felices ${a.turningAge} años! Desde Triskel Academy te deseamos un muy feliz cumpleaños. ¡Un abrazo!`)}`:null;
-        return`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--b);">
-          <div class="avatar" style="width:30px;height:30px;font-size:11px;">${alumnaInits(a.nombre,a.apellido)}</div>
-          <div style="flex:1;font-size:13px;font-weight:500;">${a.nombre} ${a.apellido||''}</div>
-          <div style="font-size:12px;color:var(--fun);font-weight:600;">${a.diaLabel}</div>
-          ${wa?`<a href="${wa}" target="_blank" style="padding:4px 10px;border:1px solid var(--fun);border-radius:var(--rs);background:var(--funl);color:var(--fun);font-size:11px;text-decoration:none;">💬 Saludar</a>`:''}
-        </div>`;
-      }).join('')}
-    </div>`;
-  }
-  return html;
+  // Solo próximos (sin hoy)
+  return`<div class="card" style="margin-bottom:0;">
+    <div class="ctitle">Próximos cumpleaños</div>
+    ${proximos.slice(0,4).map(a=>{
+      const wa=a.tel?`https://wa.me/${a.tel.replace(/\D/g,'')}?text=${encodeURIComponent(`¡Hola ${a.nombre}! 🌿🎉 ¡Felices ${a.turningAge} años! Desde Triskel Academy te deseamos un muy feliz cumpleaños. ¡Un abrazo!`)}`:null;
+      return`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--b);">
+        <div class="avatar" style="width:30px;height:30px;font-size:11px;">${alumnaInits(a.nombre,a.apellido)}</div>
+        <div style="flex:1;font-size:13px;">${a.nombre} ${a.apellido||''}</div>
+        <div style="font-size:12px;color:var(--tm);">${a.diaLabel}</div>
+        ${wa?`<a href="${wa}" target="_blank" style="padding:4px 8px;border:1px solid var(--fun);border-radius:var(--rs);background:var(--funl);color:var(--fun);font-size:11px;text-decoration:none;">Saludar</a>`:''}
+      </div>`;
+    }).join('')}
+  </div>`;
 }
 
 // ─── ALERTAS INTELIGENTES ─────────────────────────────────
@@ -3602,36 +3619,36 @@ function rAlertasInteligentes(){
   const totalAlertas=morosas.length+ausentes3.length;
   if(!totalAlertas)return'';
 
-  return`<div class="card" style="margin-bottom:1rem;border-left:4px solid var(--rd);background:var(--rl);">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem;">
-      <span style="font-size:16px;">🚨</span>
-      <div class="ctitle" style="margin:0;color:var(--rd);">Requiere atención (${totalAlertas})</div>
+  return`<div class="card" style="margin-bottom:1rem;border-left:3px solid var(--rd);">
+    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:.2rem;">
+      <div class="ctitle" style="margin:0;">Requiere atención</div>
+      <span style="font-size:11px;font-weight:600;color:var(--th);">${totalAlertas}</span>
     </div>
-    ${morosas.length?`
-    <div style="margin-bottom:.5rem;">
-      <div style="font-size:11px;font-weight:700;color:var(--rd);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.4rem;">Sin pago 2+ meses</div>
-      ${morosas.map(a=>{
-        const inscs=DB.inscripciones.filter(i=>i.alumna_id===a.id);
-        const mods=[...new Set(inscs.map(i=>i.triskel_horarios?.modalidad).filter(Boolean))];
-        return`<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid rgba(163,45,45,.1);">
-          <div style="width:28px;height:28px;border-radius:50%;background:var(--rd);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">${alumnaInits(a.nombre,a.apellido)}</div>
-          <div style="flex:1;">
-            <div style="font-size:13px;font-weight:600;color:var(--t);">${a.nombre} ${a.apellido||''}</div>
-            <div style="font-size:11px;color:var(--rd);">No pagó ${esInicioMes?mes2:mes1} ni ${esInicioMes?mes1:mes0}${mods.length?' · '+mods.map(m=>MOD_LABEL[m]).join(', '):''}</div>
-          </div>
-          <button onclick="goTo('pagos')" class="btn btn-s" style="font-size:11px;background:var(--rd);color:#fff;border-color:var(--rd);white-space:nowrap;">Ver pagos</button>
-        </div>`;
-      }).join('')}
-    </div>`:''}
-    ${ausentes3.length?`
-    <div>
-      <div style="font-size:11px;font-weight:700;color:var(--rd);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.4rem;">3+ ausencias seguidas</div>
-      ${ausentes3.map(a=>`<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid rgba(163,45,45,.1);">
-        <div style="width:28px;height:28px;border-radius:50%;background:var(--rd);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">${alumnaInits(a.nombre,a.apellido)}</div>
-        <div style="flex:1;font-size:13px;font-weight:600;color:var(--t);">${a.nombre} ${a.apellido||''}</div>
-        <span style="font-size:11px;color:var(--rd);font-weight:600;">Riesgo abandono</span>
-      </div>`).join('')}
-    </div>`:''}
+    <div style="font-size:12px;color:var(--tm);margin-bottom:.75rem;">Riesgo de abandono</div>
+    ${morosas.map(a=>{
+      const inscs=DB.inscripciones.filter(i=>i.alumna_id===a.id);
+      const mods=[...new Set(inscs.map(i=>i.triskel_horarios?.modalidad).filter(Boolean))];
+      const wa=a.tel?`<a href="https://wa.me/${a.tel}" target="_blank" style="padding:4px 10px;border:1px solid var(--mat);border-radius:var(--rs);background:var(--matl);color:var(--mat);font-size:11px;font-weight:500;text-decoration:none;white-space:nowrap;">💬 WA</a>`:'';
+      return`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--b);">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--vl);color:var(--vd);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;">${alumnaInits(a.nombre,a.apellido)}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:500;">${a.nombre} ${a.apellido||''}</div>
+          <div style="font-size:11px;color:var(--tm);">Sin pago ${esInicioMes?mes2:mes1} ni ${esInicioMes?mes1:mes0}${mods.length?' · '+mods.map(m=>MOD_LABEL[m]).join(', '):''}</div>
+        </div>
+        ${wa}
+      </div>`;
+    }).join('')}
+    ${ausentes3.map(a=>{
+      const wa=a.tel?`<a href="https://wa.me/${a.tel}" target="_blank" style="padding:4px 10px;border:1px solid var(--mat);border-radius:var(--rs);background:var(--matl);color:var(--mat);font-size:11px;font-weight:500;text-decoration:none;white-space:nowrap;">💬 WA</a>`:'';
+      return`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--b);">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--vl);color:var(--vd);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;">${alumnaInits(a.nombre,a.apellido)}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:500;">${a.nombre} ${a.apellido||''}</div>
+          <div style="font-size:11px;color:var(--tm);">3+ ausencias seguidas</div>
+        </div>
+        ${wa}
+      </div>`;
+    }).join('')}
   </div>`;
 }
 
@@ -4211,53 +4228,46 @@ function rInicio(){
 
   const ultimasClases=[...DB.clases].sort((a,b)=>b.fecha.localeCompare(a.fecha)).slice(0,5);
 
-  return`<div class="ptitle">Inicio</div>
-  ${rCumpleanos()}
-  ${rAlertasInteligentes()}
-  ${rEsperaAlerta()}
-  ${rAusencias()}
-  ${rRecordatorios()}
-  ${rVistaHoy()}
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:.75rem;">
-    <div class="metric"><div class="mlabel">Alumnas activas</div><div class="mval g">${activas}</div></div>
-    <div class="metric"><div class="mlabel">Pagaron ${mesLabel(mesActual)}</div><div class="mval g">${pagados}</div></div>
+  return`<div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1.5rem;">
+    <div class="ptitle" style="margin:0;">Inicio</div>
+    <button class="btn" style="border-color:var(--v);color:var(--v);font-weight:500;" onclick="openResumenMes()">Ver informe mensual →</button>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem;">
+    <div class="metric"><div class="mlabel">Alumnas activas</div><div class="mval" style="color:var(--v);">${activas}</div></div>
+    <div class="metric"><div class="mlabel">Pagaron ${mesLabel(mesActual)}</div><div class="mval" style="color:var(--v);">${pagados}</div></div>
     <div class="metric"><div class="mlabel">Pendientes</div><div class="mval" style="color:var(--fun);">${pendientes}</div></div>
     <div class="metric"><div class="mlabel">Recaudado ${mesLabel(mesActual)}</div><div class="mval">$${totalMes.toLocaleString('es-AR')}</div></div>
   </div>
-  <div class="card" style="margin-bottom:1.25rem;padding:.85rem 1rem;">
-    <div class="ctitle" style="margin-bottom:.6rem;">Desglose por medio — ${mesLabel(mesActual)}</div>
-    <div style="display:grid;grid-template-columns:repeat(${byMedio.otro>0?3:2},1fr);gap:8px;text-align:center;">
-      <div><div style="font-size:11px;color:var(--tm);margin-bottom:.2rem;">🏦 Transferencia</div><div style="font-size:1.1rem;font-weight:700;">$${byMedio.transferencia.toLocaleString('es-AR')}</div></div>
-      <div><div style="font-size:11px;color:var(--tm);margin-bottom:.2rem;">💵 Efectivo</div><div style="font-size:1.1rem;font-weight:700;">$${byMedio.efectivo.toLocaleString('es-AR')}</div></div>
-      ${byMedio.otro>0?`<div><div style="font-size:11px;color:var(--tm);margin-bottom:.2rem;">📎 Otro</div><div style="font-size:1.1rem;font-weight:700;">$${byMedio.otro.toLocaleString('es-AR')}</div></div>`:''}
-    </div>
-  </div>
+
+  ${rAlertasInteligentes()}
+  ${rRecordatorios()}
+  ${rEsperaAlerta()}
+  ${rAusencias()}
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
-    <div class="card">
+    ${rCumpleanos()}
+    <div class="card" style="margin-bottom:0;">
       <div class="ctitle">Alumnas por modalidad</div>
       <div style="display:flex;flex-direction:column;gap:8px;">
         <div style="display:flex;align-items:center;justify-content:space-between;">${modBadge('reformer')}<strong>${modCount.reformer}</strong></div>
         <div style="display:flex;align-items:center;justify-content:space-between;">${modBadge('mat')}<strong>${modCount.mat}</strong></div>
         <div style="display:flex;align-items:center;justify-content:space-between;">${modBadge('funcional')}<strong>${modCount.funcional}</strong></div>
-        <div style="display:flex;align-items:center;justify-content:space-between;">${modBadge('esferodinamia')}<strong>${modCount.esferodinamia}</strong></div>
+        ${modCount.esferodinamia?`<div style="display:flex;align-items:center;justify-content:space-between;">${modBadge('esferodinamia')}<strong>${modCount.esferodinamia}</strong></div>`:''}
       </div>
-    </div>
-    <div class="card">
-      <div class="ctitle">Últimas clases</div>
-      ${ultimasClases.length?ultimasClases.map(c=>{
-        const h=DB.horarios.find(x=>x.id===c.horario_id);
-        const nEjs=Array.isArray(c.ejercicios)?c.ejercicios.length:0;
-        return`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--b);">
-          <div style="flex:1;font-size:13px;">${c.fecha} ${h?modBadge(h.modalidad):''}</div>
-          <div style="font-size:11px;color:var(--tm);">${nEjs} ejs.</div>
-        </div>`;
-      }).join(''):`<div style="font-size:13px;color:var(--tm);">Sin clases registradas aún.</div>`}
+      ${(byMedio.transferencia||byMedio.efectivo||byMedio.otro)?`
+      <div style="margin-top:.85rem;padding-top:.75rem;border-top:1px solid var(--b);">
+        <div class="ctitle" style="margin-bottom:.5rem;">Desglose — ${mesLabel(mesActual)}</div>
+        <div style="display:grid;grid-template-columns:repeat(${byMedio.otro>0?3:2},1fr);gap:6px;text-align:center;">
+          <div><div style="font-size:10px;color:var(--tm);">🏦 Transferencia</div><div style="font-size:13px;font-weight:700;">$${byMedio.transferencia.toLocaleString('es-AR')}</div></div>
+          <div><div style="font-size:10px;color:var(--tm);">💵 Efectivo</div><div style="font-size:13px;font-weight:700;">$${byMedio.efectivo.toLocaleString('es-AR')}</div></div>
+          ${byMedio.otro>0?`<div><div style="font-size:10px;color:var(--tm);">📎 Otro</div><div style="font-size:13px;font-weight:700;">$${byMedio.otro.toLocaleString('es-AR')}</div></div>`:''}
+        </div>
+      </div>`:''}
     </div>
   </div>
-  <div style="margin-bottom:1rem;">
-    <button class="btn" style="width:100%;background:var(--ref);color:#fff;border-color:var(--ref);" onclick="openResumenMes()">📊 Ver informe mensual</button>
-  </div>
+
+  ${rVistaHoy()}
   ${rResumenSemana()}
   ${rProyeccionMes()}
   ${rGraficoIngresos()}
