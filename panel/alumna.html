@@ -477,7 +477,7 @@ function renderInicio(){
   let pagoCard='';
   if(cobrado){
     const notaIni=cobrado.nota||(avisoMesIni?.nota)||null;
-    pagoCard=`<div class="card" style="border-left:4px solid var(--mat);">
+    pagoCard=`<div class="card" style="border-left:3px solid var(--mat);">
       <div style="display:flex;align-items:center;gap:.5rem;">
         <div style="font-size:28px;">✅</div>
         <div>
@@ -489,7 +489,7 @@ function renderInicio(){
       </div>
     </div>`;
   }else if(aviso){
-    pagoCard=`<div class="card" style="border-left:4px solid #f59e0b;">
+    pagoCard=`<div class="card" style="border-left:3px solid #f59e0b;">
       <div style="display:flex;align-items:center;gap:.5rem;">
         <div style="font-size:28px;">⏳</div>
         <div>
@@ -834,7 +834,7 @@ function renderSalud(){
     <div style="font-size:18px;font-weight:700;margin-bottom:.25rem;">📋 Ficha de Salud</div>
     <div style="font-size:13px;color:var(--sub);margin-bottom:1.25rem;">Esta información es confidencial y la usa tu profesora para personalizar tus clases.</div>
 
-    ${!f.alumna_id?`<div style="background:#fffdf0;border:1.5px solid #ffc107;border-radius:12px;padding:.75rem 1rem;margin-bottom:1rem;font-size:13px;color:#856404;font-weight:600;">⚠️ Todavía no completaste tu ficha. ¡Te lleva 2 minutos!</div>`:''}
+    ${!f.alumna_id?`<div style="background:var(--white);border-left:3px solid #f59e0b;border-radius:var(--radius-sm);padding:.75rem 1rem;margin-bottom:1rem;font-size:13px;color:var(--txt);font-weight:600;">⚠️ Todavía no completaste tu ficha. ¡Te lleva 2 minutos!</div>`:''}
 
     <div style="background:var(--white);border-radius:14px;padding:1rem;margin-bottom:1rem;border:1.5px solid var(--border);">
       <div style="font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem;">Datos personales</div>
