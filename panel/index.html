@@ -4327,10 +4327,10 @@ function rAlumnas(){
     const diaHoy=new Date().getDate();
     const vencio=!a.dia_pago||a.dia_pago<=diaHoy;
     const pago=todoPago
-      ?`<span style="font-size:10px;background:var(--matl);color:var(--mat);padding:1px 7px;border-radius:99px;">✓ Pagó</span>`
+      ?`<span style="font-size:10px;background:var(--matl);color:var(--mat);padding:1px 7px;border-radius:99px;font-weight:500;">✓ Pagó</span>`
       :vencio
-        ?`<span style="font-size:10px;background:var(--rl);color:var(--rd);padding:1px 7px;border-radius:99px;">Pendiente de pago</span>`
-        :`<span style="font-size:10px;background:var(--fun);color:#fff;padding:1px 7px;border-radius:99px;">Vence día ${a.dia_pago}</span>`;
+        ?`<span style="font-size:10px;background:var(--rl);color:var(--rd);padding:1px 7px;border-radius:99px;font-weight:500;">Pendiente de pago</span>`
+        :`<span style="font-size:10px;background:var(--funl);color:var(--fun);padding:1px 7px;border-radius:99px;font-weight:500;">Vence día ${a.dia_pago}</span>`;
     return`<div class="arow" data-nombre="${(a.nombre+' '+(a.apellido||'')).toLowerCase()}">
       <div class="avatar">${alumnaInits(a.nombre,a.apellido)}</div>
       <div class="arow-info" style="flex:1;min-width:0;">
@@ -4338,7 +4338,7 @@ function rAlumnas(){
         <div class="asub" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;">
           ${inscs.map(i=>{const h=i.triskel_horarios;return`<span style="display:inline-flex;align-items:center;gap:3px;">${modBadge(h?.modalidad)}<span style="font-size:10px;color:var(--tm);">${h?DIA_LABEL[h.dia]+' '+h.hora_inicio:''}</span></span>`;}).join('')}
           ${a.tel?`<a href="https://wa.me/${a.tel}" target="_blank" style="font-size:11px;color:var(--mat);">💬 WA</a>`:''}
-          ${!fichaByAlumna(a.id)?`<span style="font-size:10px;background:#fff3cd;color:#856404;padding:1px 6px;border-radius:99px;border:1px solid #ffc107;">📋 Ficha pendiente</span>`:''}
+          ${!fichaByAlumna(a.id)?`<span style="font-size:10px;background:var(--funl);color:var(--fun);padding:1px 6px;border-radius:99px;border:1px solid var(--fun);">📋 Ficha pendiente</span>`:''}
         </div>
       </div>
       ${inscs.length>0?pago:''}
@@ -4367,7 +4367,7 @@ function rAlumnas(){
     ${activas.length?activas.map(alumnaCard).join(''):`<div style="text-align:center;padding:1.5rem 1rem;color:var(--tm);"><div style="font-size:32px;margin-bottom:.4rem;">📭</div><strong style="font-size:13px;color:var(--t);">Sin alumnas activas</strong><div style="font-size:12px;margin-top:.25rem;">Usá "+ Nueva alumna" para agregar la primera.</div></div>`}
   </div>
   ${pausadas.length?`<div class="card">
-    <div class="ctitle" style="color:var(--fun);">⏸ Pausadas (${pausadas.length})</div>
+    <div class="ctitle">⏸ Pausadas (${pausadas.length})</div>
     ${pausadas.map(alumnaCard).join('')}
   </div>`:''}
   ${otras.length?`<div class="card">
