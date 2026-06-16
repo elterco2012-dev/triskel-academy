@@ -3619,37 +3619,40 @@ function rAlertasInteligentes(){
   const totalAlertas=morosas.length+ausentes3.length;
   if(!totalAlertas)return'';
 
+  const LIMITE_ALERTAS=5;
+  function alertaRow(a,motivo){
+    const wa=a.tel?`<a href="https://wa.me/${a.tel}" target="_blank" style="padding:4px 10px;border:1px solid var(--mat);border-radius:var(--rs);background:var(--matl);color:var(--mat);font-size:11px;font-weight:500;text-decoration:none;white-space:nowrap;">💬 WA</a>`:'';
+    return`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--b);">
+      <div style="width:32px;height:32px;border-radius:50%;background:var(--vl);color:var(--vd);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;">${alumnaInits(a.nombre,a.apellido)}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:500;">${a.nombre} ${a.apellido||''}</div>
+        <div style="font-size:11px;color:var(--tm);">${motivo}</div>
+      </div>
+      ${wa}
+    </div>`;
+  }
+  const todasAlertas=[
+    ...morosas.map(a=>{const inscs=DB.inscripciones.filter(i=>i.alumna_id===a.id);const mods=[...new Set(inscs.map(i=>i.triskel_horarios?.modalidad).filter(Boolean))];return{a,motivo:`Sin pago ${esInicioMes?mes2:mes1} ni ${esInicioMes?mes1:mes0}${mods.length?' · '+mods.map(m=>MOD_LABEL[m]).join(', '):''}`};}),
+    ...ausentes3.map(a=>({a,motivo:'3+ ausencias seguidas'})),
+  ];
+  const visibles=todasAlertas.slice(0,LIMITE_ALERTAS);
+  const resto=todasAlertas.slice(LIMITE_ALERTAS);
+
   return`<div class="card" style="margin-bottom:1rem;border-left:3px solid var(--rd);">
     <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:.2rem;">
       <div class="ctitle" style="margin:0;">Requiere atención</div>
       <span style="font-size:11px;font-weight:600;color:var(--th);">${totalAlertas}</span>
     </div>
     <div style="font-size:12px;color:var(--tm);margin-bottom:.75rem;">Riesgo de abandono</div>
-    ${morosas.map(a=>{
-      const inscs=DB.inscripciones.filter(i=>i.alumna_id===a.id);
-      const mods=[...new Set(inscs.map(i=>i.triskel_horarios?.modalidad).filter(Boolean))];
-      const wa=a.tel?`<a href="https://wa.me/${a.tel}" target="_blank" style="padding:4px 10px;border:1px solid var(--mat);border-radius:var(--rs);background:var(--matl);color:var(--mat);font-size:11px;font-weight:500;text-decoration:none;white-space:nowrap;">💬 WA</a>`:'';
-      return`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--b);">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--vl);color:var(--vd);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;">${alumnaInits(a.nombre,a.apellido)}</div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:500;">${a.nombre} ${a.apellido||''}</div>
-          <div style="font-size:11px;color:var(--tm);">Sin pago ${esInicioMes?mes2:mes1} ni ${esInicioMes?mes1:mes0}${mods.length?' · '+mods.map(m=>MOD_LABEL[m]).join(', '):''}</div>
-        </div>
-        ${wa}
-      </div>`;
-    }).join('')}
-    ${ausentes3.map(a=>{
-      const wa=a.tel?`<a href="https://wa.me/${a.tel}" target="_blank" style="padding:4px 10px;border:1px solid var(--mat);border-radius:var(--rs);background:var(--matl);color:var(--mat);font-size:11px;font-weight:500;text-decoration:none;white-space:nowrap;">💬 WA</a>`:'';
-      return`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--b);">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--vl);color:var(--vd);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;">${alumnaInits(a.nombre,a.apellido)}</div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:500;">${a.nombre} ${a.apellido||''}</div>
-          <div style="font-size:11px;color:var(--tm);">3+ ausencias seguidas</div>
-        </div>
-        ${wa}
-      </div>`;
-    }).join('')}
+    ${visibles.map(({a,motivo})=>alertaRow(a,motivo)).join('')}
+    ${resto.length?`
+      <div id="alertas-extra" style="display:none;">
+        ${resto.map(({a,motivo})=>alertaRow(a,motivo)).join('')}
+      </div>
+      <button onclick="(function(btn){const el=document.getElementById('alertas-extra');const open=el.style.display!=='none';el.style.display=open?'none':'block';btn.textContent=open?'Ver las ${resto.length} restantes ↓':'Mostrar menos ↑';})(this)" style="margin-top:.5rem;background:none;border:none;padding:4px 0;font-size:12px;color:var(--v);font-weight:500;cursor:pointer;font-family:inherit;">Ver las ${resto.length} restantes ↓</button>
+    `:''}
   </div>`;
+
 }
 
 // ─── OBSERVACIONES ───────────────────────────────────────
