@@ -4430,15 +4430,15 @@ function goToHorarioDetalle(horarioId){
   const claseSem=DB.clases.find(c=>c.horario_id===horarioId&&c.fecha>=semStart&&c.fecha<=semEnd);
   const ejsSem=claseSem&&Array.isArray(claseSem.ejercicios)?claseSem.ejercicios:[];
   const ejsHtml=ejsSem.length
-    ?`<div style="margin-bottom:.75rem;background:var(--matl);border:1px solid var(--mat);border-radius:var(--rs);padding:.6rem .75rem;">
-        <div style="font-size:11px;font-weight:700;color:var(--mat);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.4rem;">Ejercicios de esta semana</div>
+    ?`<div style="margin-bottom:.75rem;background:var(--s);border-left:3px solid var(--mat);border-radius:var(--rs);padding:.6rem .75rem;">
+        <div style="font-size:11px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.4rem;">Ejercicios de esta semana</div>
         <ol style="margin:0;padding-left:1.1rem;display:flex;flex-direction:column;gap:3px;">
           ${ejsSem.map(e=>`<li style="font-size:12px;">${e.nombre}${e.vt?` <span style="color:var(--tm);">· ${e.vt}</span>`:''}</li>`).join('')}
         </ol>
         ${claseSem.notas?`<div style="font-size:11px;color:var(--tm);margin-top:.35rem;font-style:italic;">${claseSem.notas}</div>`:''}
         <button class="btn btn-s btn-p" onclick="openClaseParaHorario(${horarioId})" style="margin-top:.5rem;">✏️ Editar plan</button>
       </div>`
-    :`<div style="margin-bottom:.75rem;background:var(--funl);border:1px solid var(--fun);border-radius:var(--rs);padding:.6rem .75rem;font-size:12px;color:var(--t);display:flex;align-items:center;justify-content:space-between;">
+    :`<div style="margin-bottom:.75rem;background:var(--s);border-left:3px solid var(--fun);border-radius:var(--rs);padding:.6rem .75rem;font-size:12px;color:var(--t);display:flex;align-items:center;justify-content:space-between;">
         <span>Sin ejercicios planificados para esta semana</span>
         <button class="btn btn-s btn-p" onclick="openClaseParaHorario(${horarioId})">+ Planificar</button>
       </div>`;
@@ -4514,10 +4514,10 @@ function rClases(){
 
   // Sección HOY (solo semana actual)
   const slotshoy=(esFinDeSemana||!esSemanaActual)?[]:DB.horarios.filter(h=>h.dia===diaHoyKey).sort((a,b)=>a.hora_inicio.localeCompare(b.hora_inicio));
-  const secHoy=slotshoy.length?`<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid var(--mat);border-radius:var(--r);padding:1rem 1.2rem;margin-bottom:1.25rem;">
+  const secHoy=slotshoy.length?`<div class="card" style="border-left:3px solid var(--mat);margin-bottom:1.25rem;">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem;">
       <span style="font-size:16px;">📌</span>
-      <div style="font-size:14px;font-weight:700;color:var(--mat);">HOY — ${diasFull[diaHoyKey]} ${hoy.toLocaleDateString('es-AR',{day:'numeric',month:'long'})}</div>
+      <div style="font-size:14px;font-weight:700;">HOY — ${diasFull[diaHoyKey]} ${hoy.toLocaleDateString('es-AR',{day:'numeric',month:'long'})}</div>
     </div>
     <div style="display:flex;flex-direction:column;gap:8px;">
       ${slotshoy.map(h=>{
