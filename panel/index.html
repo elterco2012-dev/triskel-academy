@@ -4820,9 +4820,9 @@ function rPagos(){
   const alumnasPagaron=new Set(pagosDelMes.filter(p=>p.pagado).map(p=>p.alumna_id)).size;
   const alumnasPendientes=new Set(pagosDelMes.filter(p=>!p.pagado).map(p=>p.alumna_id)).size;
 
-  const avisosHtml=DB.avisos&&DB.avisos.length?`<div class="card alert-warn" style="border-left:4px solid var(--fun);margin-bottom:1rem;">
+  const avisosHtml=DB.avisos&&DB.avisos.length?`<div class="card" style="border-left:3px solid var(--fun);margin-bottom:1rem;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;">
-      <div class="ctitle" style="margin:0;color:var(--fun);">🔔 Avisos de pago pendientes (${DB.avisos.length})</div>
+      <div class="ctitle" style="margin:0;">🔔 Avisos de pago pendientes (${DB.avisos.length})</div>
     </div>
     ${DB.avisos.map(av=>{
       const a=alumnaById(av.alumna_id);
@@ -4862,7 +4862,7 @@ function rPagos(){
   </div>
   ${pendientes.length?`<div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
-      <div class="ctitle" style="margin:0;color:var(--fun);">Pendientes de pago</div>
+      <div class="ctitle" style="margin:0;">Pendientes de pago</div>
       <button class="btn btn-s" onclick="openRecordatorioMasivo()" style="white-space:nowrap;">📲 Recordar a todas</button>
     </div>
     ${pendientes.map(planRow).join('')}
