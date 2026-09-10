@@ -3341,7 +3341,19 @@ async function saveTarifasModal(){
   });
   const ok=await persistTarifas(t);
   closeModalTarifas();
-  if(ok) showMsg('✓ Tarifas guardadas en Supabase');
+  if(!ok){showMsg('✓ Tarifas guardadas localmente');return;}
+  showMsg('✓ Tarifas guardadas');
+  const aplicar=await openConfirm(
+    '¿Actualizar precios existentes?',
+    'Los nuevos precios se aplicarán a todas las inscripciones activas según modalidad y cantidad de días por semana. ¿Querés actualizar también las alumnas que ya están anotadas?',
+    'Sí, actualizar todas',
+    false
+  );
+  if(!aplicar)return;
+  const{data,error}=await rpc('triskel_apply_tarifas_to_inscripciones',{p_tarifas:t});
+  if(error){showMsg('❌ Error al actualizar: '+error.message);return;}
+  showMsg(`✓ ${data} inscripción${data!==1?'es':''} actualizada${data!==1?'s':''}`);
+  await loadAll();
 }
 async function actualizarPreciosMasivo(){
   const mod=document.getElementById('pm-modalidad').value;
